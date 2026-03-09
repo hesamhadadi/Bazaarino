@@ -4,6 +4,8 @@ export interface IBanner extends Document {
   title?: string;
   imageUrl: string;
   linkUrl?: string;
+  placement: 'home' | 'category';
+  categoryId?: string;
   startsAt: Date;
   endsAt: Date;
   isActive: boolean;
@@ -16,6 +18,12 @@ const BannerSchema = new Schema<IBanner>(
     title: String,
     imageUrl: { type: String, required: true },
     linkUrl: String,
+    placement: {
+      type: String,
+      enum: ['home', 'category'],
+      default: 'home',
+    },
+    categoryId: String,
     startsAt: { type: Date, required: true },
     endsAt: { type: Date, required: true },
     isActive: { type: Boolean, default: true },

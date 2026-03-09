@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const [allAds, setAllAds] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
+  const [housingCityImages, setHousingCityImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AdminTab>('pending');
   const [rejectionModal, setRejectionModal] = useState<{ open: boolean; adId: string }>({ open: false, adId: '' });
@@ -30,8 +31,17 @@ export default function AdminDashboard() {
     title: '',
     linkUrl: '',
     imageUrl: '',
+    placement: 'home',
+    categoryId: '',
     duration: '30d',
     customDays: 3,
+  });
+  const [cityImageUploading, setCityImageUploading] = useState(false);
+  const [cityImageSubmitting, setCityImageSubmitting] = useState(false);
+  const [cityImageForm, setCityImageForm] = useState({
+    city: 'rome',
+    title: '',
+    imageUrl: '',
   });
 
   useEffect(() => {
@@ -75,11 +85,20 @@ export default function AdminDashboard() {
     setBanners(data.banners || []);
   };
 
+  const fetchHousingCityImages = async () => {
+    const res = await fetch('/api/admin/housing-city-images');
+    const data = await res.json();
+    setHousingCityImages(data.items || []);
+  };
+
   const changeTab = async (tab: AdminTab) => {
     setActiveTab(tab);
     if (tab === 'all') await fetchAllAds();
     if (tab === 'users') await fetchUsers();
-    if (tab === 'banners') await fetchBanners();
+    if (tab === 'banners') {
+      await fetchBanners();
+      await fetchHousingCityImages();
+    }
   };
 
   const updateAdStatus = async (id: string, status: string, reason?: string) => {
@@ -166,6 +185,8 @@ export default function AdminDashboard() {
         title: bannerForm.title,
         linkUrl: bannerForm.linkUrl,
         imageUrl: bannerForm.imageUrl,
+        placement: bannerForm.placement,
+        categoryId: bannerForm.placement === 'category' ? bannerForm.categoryId : undefined,
         startsAt: now,
         endsAt,
       }),
@@ -175,7 +196,7 @@ export default function AdminDashboard() {
 
     if (res.ok) {
       toast.success('بنر ثبت شد');
-      setBannerForm({ title: '', linkUrl: '', imageUrl: '', duration: '30d', customDays: 3 });
+      setBannerForm({ title: '', linkUrl: '', imageUrl: '', placement: 'home', categoryId: '', duration: '30d', customDays: 3 });
       fetchBanners();
     } else {
       toast.error('ثبت بنر ناموفق بود');
@@ -194,6 +215,63 @@ export default function AdminDashboard() {
   const deleteBanner = async (id: string) => {
     await fetch(`/api/admin/banners?id=${id}`, { method: 'DELETE' });
     fetchBanners();
+  };
+
+  const handleCityImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCityImageUploading(true);
+    const formData = new FormData();
+    formData.append('images', file);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.urls?.[0]) {
+        setCityImageForm((prev) => ({ ...prev, imageUrl: data.urls[0] }));
+        toast.success('تصویر شهر آپلود شد');
+      } else {
+        toast.error(data.message || 'خطا در آپلود تصویر شهر');
+      }
+    } catch {
+      toast.error('خطای شبکه در آپلود تصویر شهر');
+    } finally {
+      setCityImageUploading(false);
+    }
+  };
+
+  const saveCityImage = async () => {
+    if (!cityImageForm.city || !cityImageForm.imageUrl) {
+      toast.error('شهر و تصویر الزامی است');
+      return;
+    }
+    setCityImageSubmitting(true);
+    const res = await fetch('/api/admin/housing-city-images', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cityImageForm),
+    });
+    setCityImageSubmitting(false);
+    if (res.ok) {
+      toast.success('عکس شهر ذخیره شد');
+      setCityImageForm((prev) => ({ ...prev, title: '', imageUrl: '' }));
+      fetchHousingCityImages();
+    } else {
+      toast.error('ذخیره عکس شهر ناموفق بود');
+    }
+  };
+
+  const toggleCityImageActive = async (id: string, isActive: boolean) => {
+    await fetch('/api/admin/housing-city-images', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, isActive: !isActive }),
+    });
+    fetchHousingCityImages();
+  };
+
+  const deleteCityImage = async (id: string) => {
+    await fetch(`/api/admin/housing-city-images?id=${id}`, { method: 'DELETE' });
+    fetchHousingCityImages();
   };
 
   const STATUS_LABELS: Record<string, string> = {
@@ -426,6 +504,16 @@ export default function AdminDashboard() {
               <div className="grid md:grid-cols-2 gap-3">
                 <input value={bannerForm.title} onChange={(e) => setBannerForm((p) => ({ ...p, title: e.target.value }))} placeholder="عنوان بنر (اختیاری)" className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
                 <input value={bannerForm.linkUrl} onChange={(e) => setBannerForm((p) => ({ ...p, linkUrl: e.target.value }))} placeholder="لینک مقصد (اختیاری)" className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                <select value={bannerForm.placement} onChange={(e) => setBannerForm((p) => ({ ...p, placement: e.target.value, categoryId: '' }))} className="border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                  <option value="home">نمایش در صفحه اصلی</option>
+                  <option value="category">نمایش در دسته‌بندی خاص</option>
+                </select>
+                {bannerForm.placement === 'category' && (
+                  <select value={bannerForm.categoryId} onChange={(e) => setBannerForm((p) => ({ ...p, categoryId: e.target.value }))} className="border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                    <option value="">انتخاب دسته‌بندی</option>
+                    {CATEGORIES.map((cat) => <option key={cat.id} value={cat.id}>{cat.label}</option>)}
+                  </select>
+                )}
                 <select value={bannerForm.duration} onChange={(e) => setBannerForm((p) => ({ ...p, duration: e.target.value }))} className="border border-gray-200 rounded-xl px-3 py-2 text-sm">
                   <option value="1d">۱ روز</option>
                   <option value="7d">۱ هفته</option>
@@ -457,6 +545,11 @@ export default function AdminDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800 line-clamp-1">{b.title || 'بدون عنوان'}</p>
                     <p className="text-xs text-gray-500 line-clamp-1">{b.linkUrl || 'بدون لینک'}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {b.placement === 'category'
+                        ? `محل نمایش: دسته ${CATEGORIES.find((c) => c.id === b.categoryId)?.label || b.categoryId}`
+                        : 'محل نمایش: صفحه اصلی'}
+                    </p>
                     <p className="text-xs text-gray-400 mt-1">از {new Date(b.startsAt).toLocaleDateString('fa-IR')} تا {new Date(b.endsAt).toLocaleDateString('fa-IR')}</p>
                   </div>
                   <button onClick={() => toggleBannerActive(b._id, b.isActive)} className={`px-3 py-1.5 rounded-lg text-xs ${b.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -467,6 +560,49 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               ))}
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <h3 className="font-semibold text-gray-800 mb-3">عکس شهرهای مسکن</h3>
+              <p className="text-xs text-gray-500 mb-3">این عکس‌ها در هدر جستجوی دسته «مسکن و ملک» برای شهر انتخابی نمایش داده می‌شوند.</p>
+
+              <div className="grid md:grid-cols-3 gap-3">
+                <select value={cityImageForm.city} onChange={(e) => setCityImageForm((p) => ({ ...p, city: e.target.value }))} className="border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                  {CITIES.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}
+                </select>
+                <input value={cityImageForm.title} onChange={(e) => setCityImageForm((p) => ({ ...p, title: e.target.value }))} placeholder="عنوان (اختیاری)" className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                <label className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 cursor-pointer text-sm">
+                  <ImagePlus size={16} />
+                  {cityImageUploading ? 'در حال آپلود...' : 'آپلود عکس شهر'}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleCityImageUpload} disabled={cityImageUploading} />
+                </label>
+              </div>
+              <div className="mt-3 flex items-center gap-3">
+                {cityImageForm.imageUrl && <span className="text-xs text-emerald-600">تصویر شهر آماده است ✅</span>}
+                <button onClick={saveCityImage} disabled={cityImageSubmitting} className="ms-auto bg-brand-500 text-white px-4 py-2 rounded-xl text-sm">
+                  ذخیره عکس شهر
+                </button>
+              </div>
+
+              <div className="space-y-3 mt-4">
+                {housingCityImages.map((item: any) => (
+                  <div key={item._id} className="bg-gray-50 rounded-xl border border-gray-100 p-3 flex items-center gap-3">
+                    <div className="w-20 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      <Image src={item.imageUrl} alt={item.title || item.city} width={80} height={48} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800">{CITIES.find((c) => c.value === item.city)?.label || item.city}</p>
+                      <p className="text-xs text-gray-500 line-clamp-1">{item.title || 'بدون عنوان'}</p>
+                    </div>
+                    <button onClick={() => toggleCityImageActive(item._id, item.isActive)} className={`px-3 py-1.5 rounded-lg text-xs ${item.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {item.isActive ? 'فعال' : 'غیرفعال'}
+                    </button>
+                    <button onClick={() => deleteCityImage(item._id)} className="p-2 rounded-lg bg-red-50 text-red-600">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

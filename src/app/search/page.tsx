@@ -4,6 +4,8 @@ import AdCard from '@/components/ads/AdCard';
 import { CATEGORIES, CITIES } from '@/lib/constants';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
+import Banner from '@/models/Banner';
+import HousingCityImage from '@/models/HousingCityImage';
 import Link from 'next/link';
 import { SlidersHorizontal } from 'lucide-react';
 
@@ -84,8 +86,44 @@ async function searchAds(params: SearchParams) {
   }
 }
 
+async function getCategoryBanners(category?: string) {
+  if (!category) return [];
+  try {
+    await connectDB();
+    const now = new Date();
+    const banners = await Banner.find({
+      isActive: true,
+      placement: 'category',
+      categoryId: category,
+      startsAt: { $lte: now },
+      endsAt: { $gte: now },
+    })
+      .sort({ createdAt: -1 })
+      .limit(2)
+      .lean();
+    return JSON.parse(JSON.stringify(banners));
+  } catch {
+    return [];
+  }
+}
+
+async function getHousingCityImage(city?: string, category?: string) {
+  if (!city || category !== 'real-estate') return null;
+  try {
+    await connectDB();
+    const item = await HousingCityImage.findOne({ city, isActive: true }).lean();
+    return item ? JSON.parse(JSON.stringify(item)) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function SearchPage({ searchParams }: { searchParams: SearchParams }) {
-  const { ads, total, page, totalPages } = await searchAds(searchParams);
+  const [{ ads, total, page, totalPages }, categoryBanners, housingCityImage] = await Promise.all([
+    searchAds(searchParams),
+    getCategoryBanners(searchParams.category),
+    getHousingCityImage(searchParams.city, searchParams.category),
+  ]);
   const selectedCategory = CATEGORIES.find(c => c.id === searchParams.category);
   const selectedSubcategories = selectedCategory?.subcategories || [];
   const selectedCity = CITIES.find((c) => c.value === searchParams.city);
@@ -99,7 +137,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           <div
             className="rounded-2xl overflow-hidden h-40 md:h-52 relative mb-4 border border-gray-200"
             style={{
-              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0.05)), url(https://source.unsplash.com/1600x500/?${selectedCity.value},italy,city)`,
+              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0.05)), url(${housingCityImage?.imageUrl || `https://source.unsplash.com/1600x500/?${selectedCity.value},italy,city`})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
@@ -108,8 +146,26 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               <div className="text-white">
                 <p className="text-xs opacity-90">شهر انتخابی</p>
                 <h2 className="text-xl md:text-2xl font-bold">{selectedCity.label}</h2>
+                {housingCityImage?.title && <p className="text-xs mt-1 opacity-90">{housingCityImage.title}</p>}
               </div>
             </div>
+          </div>
+        )}
+
+        {categoryBanners.length > 0 && (
+          <div className="grid md:grid-cols-2 gap-3 mb-4">
+            {categoryBanners.map((b: any) => (
+              <Link key={b._id} href={b.linkUrl || '#'} className="block rounded-2xl overflow-hidden border border-gray-100">
+                <div className="relative h-24 md:h-28">
+                  <img src={b.imageUrl} alt={b.title || 'banner'} className="w-full h-full object-cover" />
+                  {b.title && (
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                      <p className="text-white text-xs font-semibold line-clamp-1">{b.title}</p>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
           </div>
         )}
 

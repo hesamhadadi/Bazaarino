@@ -40,6 +40,7 @@ async function getActiveBanners() {
     const now = new Date();
     const banners = await Banner.find({
       isActive: true,
+      $or: [{ placement: 'home' }, { placement: { $exists: false } }],
       startsAt: { $lte: now },
       endsAt: { $gte: now },
     })
