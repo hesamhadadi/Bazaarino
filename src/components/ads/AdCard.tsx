@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Clock, Eye, Sparkles } from 'lucide-react';
-import { CATEGORIES, getCityLabel } from '@/lib/constants';
+import { getCityLabel } from '@/lib/constants';
+import FavoriteButton from '@/components/ads/FavoriteButton';
+import CategoryIcon from '@/components/ui/CategoryIcon';
 
 interface AdCardProps {
   ad: {
@@ -42,7 +44,6 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function AdCard({ ad }: AdCardProps) {
-  const category = CATEGORIES.find(c => c.id === ad.category);
   const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= new Date());
 
   return (
@@ -54,8 +55,8 @@ export default function AdCard({ ad }: AdCardProps) {
           {ad.images?.[0] ? (
             <Image src={ad.images[0]} alt={ad.title} fill className="object-cover" sizes="(max-width: 640px) 50vw, 25vw" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-4xl">{category?.icon || '📦'}</span>
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <CategoryIcon categoryId={ad.category} size={34} />
             </div>
           )}
           {isFeaturedActive && (
@@ -64,8 +65,9 @@ export default function AdCard({ ad }: AdCardProps) {
               ویژه پلاس
             </div>
           )}
+          <FavoriteButton adId={ad._id} className="absolute top-2 left-2 w-7 h-7 shadow-sm" />
           {ad.category === 'real-estate' && ad.housing?.residenceEligible && (
-            <div className="absolute top-2 left-2 bg-emerald-600/95 text-white text-[10px] px-2 py-1 rounded-full">
+            <div className="absolute top-11 left-2 bg-emerald-600/95 text-white text-[10px] px-2 py-1 rounded-full">
               رزیدنسا
             </div>
           )}

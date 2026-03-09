@@ -6,7 +6,8 @@ import { useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Link from 'next/link';
-import { FileText, Plus, Settings, LogOut, User, MapPin } from 'lucide-react';
+import Image from 'next/image';
+import { FileText, Plus, Settings, LogOut, User, Heart } from 'lucide-react';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -32,8 +33,14 @@ export default function ProfilePage() {
         {/* Profile Header */}
         <div className="bg-gradient-to-bl from-brand-500 to-orange-400 rounded-3xl p-6 text-white mb-5">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-              <span className="text-3xl font-bold">{session.user.name?.[0]}</span>
+            <div className="w-16 h-16 bg-white/20 rounded-2xl overflow-hidden">
+              <Image
+                src={session.user.image || '/default-avatar.svg'}
+                alt={session.user.name || 'avatar'}
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold">{session.user.name}</h1>
@@ -61,6 +68,13 @@ export default function ProfilePage() {
             <FileText size={20} className="text-brand-500" />
             <span className="font-medium">آگهی‌های من</span>
           </Link>
+          <Link
+            href="/favorites"
+            className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3 text-gray-700"
+          >
+            <Heart size={20} className="text-rose-500" />
+            <span className="font-medium">علاقه‌مندی‌ها</span>
+          </Link>
         </div>
 
         {/* Menu */}
@@ -72,6 +86,10 @@ export default function ProfilePage() {
           <Link href="/profile/ads" className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 border-b border-gray-50 transition-colors">
             <FileText size={18} className="text-gray-400" />
             <span className="text-gray-700">مدیریت آگهی‌ها</span>
+          </Link>
+          <Link href="/favorites" className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 border-b border-gray-50 transition-colors">
+            <Heart size={18} className="text-rose-400" />
+            <span className="text-gray-700">علاقه‌مندی‌ها</span>
           </Link>
           {session.user.role === 'admin' && (
             <Link href="/admin" className="flex items-center gap-3 px-5 py-4 hover:bg-orange-50 border-b border-gray-50 transition-colors">

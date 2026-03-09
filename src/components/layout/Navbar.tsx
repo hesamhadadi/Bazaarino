@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
-import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart } from 'lucide-react';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -41,8 +42,8 @@ export default function Navbar() {
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-xl transition-colors"
                   >
-                    <div className="w-7 h-7 bg-brand-100 rounded-full flex items-center justify-center">
-                      <User size={14} className="text-brand-600" />
+                    <div className="w-7 h-7 rounded-full overflow-hidden bg-brand-100">
+                      <Image src={session.user.image || '/default-avatar.svg'} alt={session.user.name || 'avatar'} width={28} height={28} className="w-full h-full object-cover" />
                     </div>
                     <span className="text-sm font-medium">{session.user.name}</span>
                     <ChevronDown size={14} />
@@ -65,6 +66,14 @@ export default function Navbar() {
                       >
                         <FileText size={14} />
                         آگهی‌های من
+                      </Link>
+                      <Link
+                        href="/favorites"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Heart size={14} />
+                        علاقه‌مندی‌ها
                       </Link>
                       {session.user.role === 'admin' && (
                         <Link
@@ -128,6 +137,9 @@ export default function Navbar() {
                 </Link>
                 <Link href="/profile/ads" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                   <FileText size={16} /> آگهی‌های من
+                </Link>
+                <Link href="/favorites" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
+                  <Heart size={16} /> علاقه‌مندی‌ها
                 </Link>
                 {session.user.role === 'admin' && (
                   <Link href="/admin" className="flex items-center gap-2 text-orange-600 px-2 py-2.5" onClick={() => setMenuOpen(false)}>

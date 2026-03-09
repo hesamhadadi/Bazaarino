@@ -8,6 +8,7 @@ import Banner from '@/models/Banner';
 import HousingCityImage from '@/models/HousingCityImage';
 import Link from 'next/link';
 import { SlidersHorizontal } from 'lucide-react';
+import CategoryIcon from '@/components/ui/CategoryIcon';
 
 interface SearchParams {
   q?: string;
@@ -235,7 +236,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
                 searchParams.category === cat.id ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200'
               }`}
             >
-              <span>{cat.icon}</span>
+              <CategoryIcon categoryId={cat.id} size={13} />
               {cat.label}
             </Link>
           ))}

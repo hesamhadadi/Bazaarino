@@ -18,8 +18,13 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const pathname = req.nextUrl.pathname;
         
-        // Admin and profile require auth
-        if (pathname.startsWith('/admin') || pathname.startsWith('/profile') || pathname === '/ads/new') {
+        // Admin/profile/favorites/new-ad require auth
+        if (
+          pathname.startsWith('/admin') ||
+          pathname.startsWith('/profile') ||
+          pathname.startsWith('/favorites') ||
+          pathname === '/ads/new'
+        ) {
           return !!token;
         }
         return true;
@@ -29,5 +34,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*', '/ads/new'],
+  matcher: ['/admin/:path*', '/profile/:path*', '/favorites/:path*', '/ads/new'],
 };

@@ -8,6 +8,7 @@ import { Search, ChevronLeft, TrendingUp, MapPin } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import Banner from '@/models/Banner';
+import CategoryIcon from '@/components/ui/CategoryIcon';
 
 export const dynamic = 'force-dynamic';
 
@@ -160,7 +161,9 @@ export default async function HomePage() {
                 href={`/search?category=${cat.id}`}
                 className="flex flex-col items-center gap-1.5 p-2 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all group"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform">{cat.icon}</span>
+                <span className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${cat.color}`}>
+                  <CategoryIcon categoryId={cat.id} size={20} />
+                </span>
                 <span className="text-xs text-gray-600 text-center leading-tight line-clamp-2">{cat.label}</span>
               </Link>
             ))}

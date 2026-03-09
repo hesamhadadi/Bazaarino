@@ -50,7 +50,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
-          image: user.avatar,
+          image: user.avatar || '/default-avatar.svg',
         };
       },
     }),
@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
             const newUser = await User.create({
               name: user.name,
               email: user.email!.toLowerCase(),
-              avatar: user.image,
+              avatar: user.image || '/default-avatar.svg',
               role: 'user',
               isActive: true,
             });
@@ -80,10 +80,16 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        if (user.name) token.name = user.name;
+        if (user.image) token.picture = user.image;
+      }
+      if (trigger === 'update') {
+        if (session?.name) token.name = session.name;
+        if ('image' in (session || {})) token.picture = (session as any)?.image || null;
       }
       // Ensure id is always Mongo ObjectId, especially for Google users with provider sub IDs.
       if (token.email && (!token.id || !mongoose.Types.ObjectId.isValid(token.id))) {
@@ -102,6 +108,8 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string;
         session.user.role = (token.role as string) || 'user';
+        session.user.name = (token.name as string) || session.user.name;
+        session.user.image = (token.picture as string) || session.user.image;
       }
       return session;
     },

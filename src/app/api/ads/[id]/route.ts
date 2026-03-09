@@ -45,21 +45,17 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     const body = await request.json();
 
-    // Admin can change status
+    // Admin can change status / featured flags
     if (isAdmin && body.status) {
       ad.status = body.status;
       if (body.rejectionReason) ad.rejectionReason = body.rejectionReason;
-      if (body.isFeatured !== undefined) {
-        ad.isFeatured = body.isFeatured;
-        if (body.isFeatured) {
-          if (body.featuredUntil) {
-            ad.featuredUntil = new Date(body.featuredUntil);
-          } else {
-            ad.featuredUntil = undefined;
-          }
-        } else {
-          ad.featuredUntil = undefined;
-        }
+    }
+    if (isAdmin && body.isFeatured !== undefined) {
+      ad.isFeatured = body.isFeatured;
+      if (body.isFeatured) {
+        ad.featuredUntil = body.featuredUntil ? new Date(body.featuredUntil) : undefined;
+      } else {
+        ad.featuredUntil = undefined;
       }
     }
 

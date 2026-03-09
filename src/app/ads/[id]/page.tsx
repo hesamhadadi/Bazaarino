@@ -6,8 +6,11 @@ import '@/models/User';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdImageGallery from '@/components/ads/AdImageGallery';
+import FavoriteButton from '@/components/ads/FavoriteButton';
+import CategoryIcon from '@/components/ui/CategoryIcon';
+import Image from 'next/image';
 import { CATEGORIES, getCityLabel } from '@/lib/constants';
-import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2 } from 'lucide-react';
+import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +75,10 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
           <Link href="/" className="hover:text-gray-600">خانه</Link>
           <ChevronRight size={12} />
           <Link href={`/search?category=${ad.category}`} className="hover:text-gray-600">
-            {category?.icon} {category?.label}
+            <span className="inline-flex items-center gap-1">
+              <CategoryIcon categoryId={ad.category} size={13} />
+              {category?.label}
+            </span>
           </Link>
         </div>
 
@@ -98,7 +104,10 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                     </div>
                   )}
                 </div>
-                <Share2 size={18} className="text-gray-400 flex-shrink-0 mt-1" />
+                <div className="flex items-center gap-2">
+                  <FavoriteButton adId={ad._id} className="w-9 h-9 border border-gray-200" />
+                  <Share2 size={18} className="text-gray-400 flex-shrink-0 mt-1" />
+                </div>
               </div>
               <div className="text-2xl font-bold text-orange-600 mb-4">{formatPrice(ad.price, ad.priceType)}</div>
               <div className="flex flex-wrap gap-2 mb-5">
@@ -133,17 +142,29 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                       {ad.housing?.deposit ? `€${Number(ad.housing.deposit).toLocaleString()}` : 'ثبت نشده'}
                     </p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3">
+                  <div className={`rounded-xl p-3 ${ad.housing?.residenceEligible ? 'bg-emerald-50 border border-emerald-100' : 'bg-gray-50'}`}>
                     <p className="text-xs text-gray-400 mb-1">رزیدنسا</p>
-                    <p className="text-sm font-semibold text-gray-700">{ad.housing?.residenceEligible ? 'دارد' : 'ندارد'}</p>
+                    <p className={`text-sm font-semibold flex items-center gap-1 ${ad.housing?.residenceEligible ? 'text-emerald-700' : 'text-gray-700'}`}>
+                      {ad.housing?.residenceEligible && <BadgeCheck size={14} />}
+                      {ad.housing?.residenceEligible ? 'دارد' : 'ندارد'}
+                    </p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3">
+                  <div className={`rounded-xl p-3 ${
+                    ad.housing?.preferredGender === 'female'
+                      ? 'bg-pink-50 border border-pink-100'
+                      : ad.housing?.preferredGender === 'male'
+                        ? 'bg-sky-50 border border-sky-100'
+                        : 'bg-gray-50'
+                  }`}>
                     <p className="text-xs text-gray-400 mb-1">مناسب برای</p>
                     <p className="text-sm font-semibold text-gray-700">{preferredGenderLabel(ad.housing?.preferredGender)}</p>
                   </div>
                   <div className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs text-gray-400 mb-1">تعداد هم‌خانه</p>
-                    <p className="text-sm font-semibold text-gray-700">{ad.housing?.roommatesCount ?? 'ثبت نشده'}</p>
+                    <p className="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                      <Users size={14} className="text-gray-500" />
+                      {ad.housing?.roommatesCount ?? 'ثبت نشده'}
+                    </p>
                   </div>
                 </div>
               )}
@@ -154,8 +175,8 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
             <div className="bg-white rounded-2xl p-4 border border-gray-100">
               <h2 className="font-semibold text-gray-800 mb-3">اطلاعات فروشنده</h2>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                  <span className="text-orange-600 font-bold text-lg">{ad.userId?.name?.[0] || '?'}</span>
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-orange-100">
+                  <Image src={ad.userId?.avatar || '/default-avatar.svg'} alt={ad.userId?.name || 'user'} width={48} height={48} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <p className="font-medium text-gray-800">{ad.userId?.name}</p>

@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       phone,
       city,
+      avatar: '/default-avatar.svg',
     });
 
     return NextResponse.json(
