@@ -143,3 +143,71 @@ select {
 .featured-glow {
   box-shadow: 0 0 0 2px #f97316, 0 4px 15px rgba(249, 115, 22, 0.2);
 }
+
+/* Hero look and lightweight motion */
+.hero-cinematic {
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-cinematic::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(1000px 400px at 20% 0%, rgba(255,255,255,0.2), transparent 60%),
+    linear-gradient(120deg, rgba(0,0,0,0.22), rgba(0,0,0,0.08) 55%, rgba(0,0,0,0.18));
+  pointer-events: none;
+}
+
+.hero-cinematic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.16), transparent 38%);
+  pointer-events: none;
+}
+
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.09) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0));
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0));
+}
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeUp 500ms ease-out forwards;
+}
+
+.fade-up-delay-1 { animation-delay: 120ms; }
+.fade-up-delay-2 { animation-delay: 220ms; }
+
+.soft-float {
+  animation: softFloat 5.5s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes softFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up, .fade-up-delay-1, .fade-up-delay-2, .soft-float {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -40,10 +40,14 @@ export default async function HomePage() {
       <Navbar />
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-bl from-brand-600 via-brand-500 to-orange-400 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8 md:py-14">
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center gap-2 mb-3">
+      <div
+        className="hero-cinematic text-white"
+        style={{ backgroundImage: "url('/hero-italy.svg')" }}
+      >
+        <div className="hero-grid absolute inset-0"></div>
+        <div className="relative max-w-7xl mx-auto px-4 py-10 md:py-16">
+          <div className="text-center mb-6 fade-up">
+            <div className="flex items-center justify-center gap-2 mb-3 opacity-95">
               <div className="flex gap-1">
                 <span className="w-3 h-5 bg-green-400 rounded-sm opacity-80"></span>
                 <span className="w-3 h-5 bg-white/80 rounded-sm"></span>
@@ -51,19 +55,19 @@ export default async function HomePage() {
               </div>
               <span className="text-white/80 text-sm">نیازمندی ایرانیان ایتالیا</span>
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold mb-2">بازارینو</h1>
-            <p className="text-white/80 text-sm md:text-base">خرید، فروش و اجاره در شهرهای ایتالیا</p>
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-3 drop-shadow-[0_6px_30px_rgba(0,0,0,0.35)]">بازارینو</h1>
+            <p className="text-white/90 text-sm md:text-lg font-medium">خرید، فروش و اجاره در شهرهای ایتالیا</p>
           </div>
 
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-3xl mx-auto fade-up fade-up-delay-1 soft-float">
             <form action="/search" method="GET">
-              <div className="flex gap-2 bg-white rounded-2xl p-2 shadow-xl">
+              <div className="flex gap-2 bg-white/95 backdrop-blur-sm rounded-2xl p-2 shadow-[0_10px_40px_rgba(0,0,0,0.18)] border border-white/30">
                 <input
                   type="text"
                   name="q"
                   placeholder="دنبال چی می‌گردی؟"
-                  className="flex-1 px-3 py-2 text-gray-800 outline-none text-sm bg-transparent"
+                  className="flex-1 px-3 py-2 text-gray-800 outline-none text-sm bg-transparent placeholder:text-gray-400"
                 />
                 <select
                   name="city"
@@ -76,13 +80,20 @@ export default async function HomePage() {
                 </select>
                 <button
                   type="submit"
-                  className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-colors"
+                  className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-colors shadow-lg shadow-orange-300/30"
                 >
                   <Search size={16} />
                   <span className="hidden sm:inline">جستجو</span>
                 </button>
               </div>
             </form>
+          </div>
+
+          <div className="fade-up fade-up-delay-2 mt-5 flex justify-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/25 text-xs text-white/90">
+              <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full"></span>
+              آگهی‌های جدید هر روز به‌روزرسانی می‌شوند
+            </div>
           </div>
         </div>
       </div>

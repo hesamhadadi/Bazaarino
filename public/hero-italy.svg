@@ -1,0 +1,49 @@
+<svg width="1600" height="720" viewBox="0 0 1600 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1600" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316"/>
+      <stop offset="1" stop-color="#EA580C"/>
+    </linearGradient>
+    <radialGradient id="g2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1180 190) rotate(140) scale(520 300)">
+      <stop stop-color="#FDE68A" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#FDE68A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g3" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(360 160) rotate(20) scale(500 280)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="720" fill="url(#g1)"/>
+  <rect width="1600" height="720" fill="url(#g2)"/>
+  <rect width="1600" height="720" fill="url(#g3)"/>
+
+  <g opacity="0.17" stroke="#fff" stroke-width="2">
+    <path d="M0 440C220 390 420 500 650 450C870 402 1050 500 1250 460C1400 430 1500 440 1600 455"/>
+    <path d="M0 480C220 430 420 540 650 495C870 448 1050 540 1250 500C1400 470 1500 480 1600 495"/>
+    <path d="M0 520C220 470 420 580 650 540C870 492 1050 580 1250 540C1400 510 1500 520 1600 535"/>
+  </g>
+
+  <g opacity="0.18" fill="#fff">
+    <rect x="60" y="390" width="40" height="150" rx="6"/>
+    <rect x="108" y="430" width="24" height="110" rx="5"/>
+    <rect x="138" y="410" width="38" height="130" rx="6"/>
+    <rect x="186" y="445" width="28" height="95" rx="5"/>
+    <rect x="220" y="398" width="44" height="142" rx="6"/>
+
+    <rect x="1260" y="420" width="32" height="120" rx="6"/>
+    <rect x="1298" y="390" width="48" height="150" rx="6"/>
+    <rect x="1352" y="440" width="30" height="100" rx="5"/>
+    <rect x="1388" y="405" width="42" height="135" rx="6"/>
+    <rect x="1438" y="430" width="26" height="110" rx="5"/>
+  </g>
+
+  <g opacity="0.36">
+    <circle cx="300" cy="130" r="3" fill="#fff"/>
+    <circle cx="410" cy="92" r="2.5" fill="#fff"/>
+    <circle cx="540" cy="150" r="2.5" fill="#fff"/>
+    <circle cx="990" cy="120" r="3" fill="#fff"/>
+    <circle cx="1140" cy="90" r="2.5" fill="#fff"/>
+    <circle cx="1260" cy="160" r="2.5" fill="#fff"/>
+  </g>
+</svg>
