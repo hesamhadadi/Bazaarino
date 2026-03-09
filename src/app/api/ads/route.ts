@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import connectDB from '@/lib/mongodb';
+import Ad from '@/models/Ad';
+import { resolveSessionUserId } from '@/lib/session-user';
+
+export async function GET(request: NextRequest) {
+  try {
+    await connectDB();
+
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const city = searchParams.get('city');
+    const category = searchParams.get('category');
+    const subcategory = searchParams.get('subcategory');
+    const q = searchParams.get('q');
+    const featured = searchParams.get('featured');
+    const status = searchParams.get('status') || 'approved';
+
+    const query: any = { status };
+
+    if (city) query.city = city;
+    if (category) query.category = category;
+    if (subcategory) query.subcategory = subcategory;
+    if (featured === 'true') query.isFeatured = true;
+    if (q) query.$text = { $search: q };
+
+    const skip = (page - 1) * limit;
+
+    const [ads, total] = await Promise.all([
+      Ad.find(query)
+        .populate('userId', 'name avatar phone')
+        .sort({ isFeatured: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Ad.countDocuments(query),
+    ]);
+
+    return NextResponse.json({
+      ads,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Get ads error:', error);
+    return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ message: 'لطفاً وارد شوید' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      title, description, price, priceType, currency,
+      category, subcategory, city, images,
+      phone, email, showPhone, showEmail,
+    } = body;
+
+    if (!title || !description || !category || !subcategory || !city) {
+      return NextResponse.json({ message: 'فیلدهای الزامی را پر کنید' }, { status: 400 });
+    }
+
+    await connectDB();
+    const userId = await resolveSessionUserId(session.user);
+    if (!userId) {
+      return NextResponse.json({ message: 'کاربر معتبر یافت نشد، لطفاً دوباره وارد شوید' }, { status: 401 });
+    }
+
+    const ad = await Ad.create({
+      title,
+      description,
+      price: price ? parseFloat(price) : undefined,
+      priceType: priceType || 'fixed',
+      currency: currency || 'EUR',
+      category,
+      subcategory,
+      city,
+      images: images || [],
+      phone,
+      email,
+      showPhone: showPhone !== false,
+      showEmail: showEmail === true,
+      userId,
+      status: 'pending',
+    });
+
+    return NextResponse.json({ message: 'آگهی با موفقیت ثبت شد و در انتظار تأیید است', ad }, { status: 201 });
+  } catch (error: any) {
+    console.error('Create ad error:', error);
+    return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
+  }
+}

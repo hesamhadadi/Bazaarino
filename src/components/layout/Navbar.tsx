@@ -1,0 +1,152 @@
+'use client';
+
+import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
+import { useState } from 'react';
+import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown } from 'lucide-react';
+
+export default function Navbar() {
+  const { data: session } = useSession();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  return (
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex gap-0.5">
+              <span className="w-2 h-7 bg-green-600 rounded-sm"></span>
+              <span className="w-2 h-7 bg-gray-200 rounded-sm"></span>
+              <span className="w-2 h-7 bg-red-600 rounded-sm"></span>
+            </div>
+            <span className="text-xl font-bold text-gray-800">بازارینو</span>
+          </Link>
+
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-3">
+            {session ? (
+              <>
+                <Link
+                  href="/ads/new"
+                  className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm"
+                >
+                  <Plus size={16} />
+                  آگهی رایگان
+                </Link>
+
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-xl transition-colors"
+                  >
+                    <div className="w-7 h-7 bg-brand-100 rounded-full flex items-center justify-center">
+                      <User size={14} className="text-brand-600" />
+                    </div>
+                    <span className="text-sm font-medium">{session.user.name}</span>
+                    <ChevronDown size={14} />
+                  </button>
+
+                  {userMenuOpen && (
+                    <div className="absolute left-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User size={14} />
+                        پروفایل من
+                      </Link>
+                      <Link
+                        href="/profile/ads"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <FileText size={14} />
+                        آگهی‌های من
+                      </Link>
+                      {session.user.role === 'admin' && (
+                        <Link
+                          href="/admin"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Settings size={14} />
+                          پنل مدیریت
+                        </Link>
+                      )}
+                      <hr className="my-1 border-gray-100" />
+                      <button
+                        onClick={() => { signOut(); setUserMenuOpen(false); }}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <LogOut size={14} />
+                        خروج
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="text-gray-600 hover:text-gray-800 text-sm font-medium px-3 py-2"
+                >
+                  ورود
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                >
+                  ثبت‌نام
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-gray-600 p-2"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-gray-100 py-3 space-y-1">
+            {session ? (
+              <>
+                <Link href="/ads/new" className="flex items-center gap-2 text-brand-600 font-medium px-2 py-2.5" onClick={() => setMenuOpen(false)}>
+                  <Plus size={16} /> ثبت آگهی رایگان
+                </Link>
+                <Link href="/profile" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
+                  <User size={16} /> پروفایل من
+                </Link>
+                <Link href="/profile/ads" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
+                  <FileText size={16} /> آگهی‌های من
+                </Link>
+                {session.user.role === 'admin' && (
+                  <Link href="/admin" className="flex items-center gap-2 text-orange-600 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
+                    <Settings size={16} /> پنل مدیریت
+                  </Link>
+                )}
+                <button onClick={() => signOut()} className="flex items-center gap-2 text-red-600 px-2 py-2.5 w-full">
+                  <LogOut size={16} /> خروج
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login" className="block text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>ورود</Link>
+                <Link href="/auth/register" className="block text-brand-600 font-medium px-2 py-2.5" onClick={() => setMenuOpen(false)}>ثبت‌نام</Link>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
