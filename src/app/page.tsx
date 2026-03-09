@@ -9,6 +9,7 @@ import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import Banner from '@/models/Banner';
 import CategoryIcon from '@/components/ui/CategoryIcon';
+import CityIcon from '@/components/ui/CityIcon';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ async function getLatestAds() {
     await connectDB();
     const now = new Date();
     const ads = await Ad.find({ status: 'approved' })
+      .populate('userId', 'name avatar role')
       .sort({ createdAt: -1 })
       .lean();
     const normalized = ads.map((ad: any) => ({
@@ -35,6 +37,7 @@ async function getFeaturedAds() {
     const now = new Date();
     const ads = await Ad.find({ status: 'approved', isFeatured: true })
       .or([{ featuredUntil: { $exists: false } }, { featuredUntil: { $gte: now } }])
+      .populate('userId', 'name avatar role')
       .sort({ createdAt: -1 })
       .limit(4)
       .lean();
@@ -159,12 +162,12 @@ export default async function HomePage() {
               <Link
                 key={cat.id}
                 href={`/search?category=${cat.id}`}
-                className="flex flex-col items-center gap-1.5 p-2 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all group"
+                className="h-24 md:h-28 flex flex-col items-center justify-center gap-2 p-2 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:bg-gray-50 transition-all group"
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${cat.color}`}>
-                  <CategoryIcon categoryId={cat.id} size={20} />
+                <span className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100 text-gray-700 group-hover:scale-105 transition-transform">
+                  <CategoryIcon categoryId={cat.id} size={19} />
                 </span>
-                <span className="text-xs text-gray-600 text-center leading-tight line-clamp-2">{cat.label}</span>
+                <span className="hidden md:block text-xs text-gray-600 text-center leading-tight line-clamp-1">{cat.label}</span>
               </Link>
             ))}
           </div>
@@ -182,6 +185,7 @@ export default async function HomePage() {
                 href={`/search?city=${city.value}`}
                 className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-xs hover:border-brand-300 hover:text-brand-600 transition-colors"
               >
+                <CityIcon city={city.value} size={12} />
                 {city.label}
               </Link>
             ))}

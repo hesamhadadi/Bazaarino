@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   try {
     await connectDB();
 
-    const ad = await Ad.findById(params.id).populate('userId', 'name avatar phone email city createdAt').lean();
+    const ad = await Ad.findById(params.id).populate('userId', 'name avatar phone email city createdAt role').lean();
 
     if (!ad) {
       return NextResponse.json({ message: 'آگهی یافت نشد' }, { status: 404 });

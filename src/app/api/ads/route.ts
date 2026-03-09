@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 
     const [ads, total] = await Promise.all([
       Ad.find(query)
-        .populate('userId', 'name avatar phone')
+        .populate('userId', 'name avatar phone role')
         .sort(sortOption)
         .skip(skip)
         .limit(limit)

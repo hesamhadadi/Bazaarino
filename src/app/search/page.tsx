@@ -9,6 +9,7 @@ import HousingCityImage from '@/models/HousingCityImage';
 import Link from 'next/link';
 import { SlidersHorizontal } from 'lucide-react';
 import CategoryIcon from '@/components/ui/CategoryIcon';
+import CityIcon from '@/components/ui/CityIcon';
 
 interface SearchParams {
   q?: string;
@@ -81,7 +82,7 @@ async function searchAds(params: SearchParams) {
     const sortOption = sortMap[params.sort || 'newest'] || sortMap.newest;
 
     const [ads, total] = await Promise.all([
-      Ad.find(query).sort(sortOption).skip(skip).limit(limit).lean(),
+      Ad.find(query).populate('userId', 'name avatar role').sort(sortOption).skip(skip).limit(limit).lean(),
       Ad.countDocuments(query),
     ]);
     const now = new Date();
@@ -208,10 +209,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               <Link
                 key={city.value}
                 href={`/search?${withParams(searchParams, { city: city.value, page: undefined })}`}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                className={`flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs border transition-colors ${
                   searchParams.city === city.value ? 'bg-brand-500 text-white border-brand-500' : 'bg-white text-gray-600 border-gray-200'
                 }`}
               >
+                <CityIcon city={city.value} size={11} />
                 {city.label.split(' ')[0]}
               </Link>
             ))}

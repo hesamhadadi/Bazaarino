@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Clock, Eye, Sparkles } from 'lucide-react';
+import { MapPin, Clock, Eye, Sparkles, BadgeCheck } from 'lucide-react';
 import { getCityLabel } from '@/lib/constants';
 import FavoriteButton from '@/components/ads/FavoriteButton';
 import CategoryIcon from '@/components/ui/CategoryIcon';
@@ -21,6 +21,11 @@ interface AdCardProps {
     housing?: {
       residenceEligible?: boolean;
     };
+    userId?: {
+      name?: string;
+      avatar?: string;
+      role?: string;
+    } | string;
     views: number;
     createdAt: string;
   };
@@ -45,6 +50,8 @@ function timeAgo(dateStr: string): string {
 
 export default function AdCard({ ad }: AdCardProps) {
   const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= new Date());
+  const adUser = typeof ad.userId === 'object' ? ad.userId : null;
+  const isAdminPoster = adUser?.role === 'admin';
 
   return (
     <Link href={`/ads/${ad._id}`}>
@@ -78,15 +85,30 @@ export default function AdCard({ ad }: AdCardProps) {
         <div className="p-3">
           <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2 leading-relaxed">{ad.title}</h3>
           <div className="text-orange-600 font-bold text-sm mb-2">{formatPrice(ad.price, ad.priceType)}</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+                <Image src={adUser?.avatar || '/default-avatar.svg'} alt={adUser?.name || 'user'} width={24} height={24} className="w-full h-full object-cover" />
+              </div>
+              <span className="text-[11px] text-gray-500 truncate inline-flex items-center gap-1">
+                {adUser?.name || 'کاربر بازارینو'}
+                {isAdminPoster && <BadgeCheck size={12} className="text-sky-500 fill-sky-500/20" />}
+              </span>
+            </div>
+            <div className="text-[11px] text-gray-400 inline-flex items-center gap-1">
+              <Clock size={10} />
+              {timeAgo(ad.createdAt)}
+            </div>
+          </div>
           <div className="flex items-center justify-between text-xs text-gray-400">
             <div className="flex items-center gap-1">
               <MapPin size={10} />
               <span>{getCityLabel(ad.city)}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock size={10} />
-              <span>{timeAgo(ad.createdAt)}</span>
-            </div>
+            <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full text-[11px]">
+              <CategoryIcon categoryId={ad.category} size={11} />
+              دسته
+            </span>
           </div>
         </div>
       </div>

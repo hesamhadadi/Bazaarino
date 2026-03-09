@@ -18,7 +18,7 @@ async function getAd(id: string) {
   try {
     await connectDB();
     const ad = await Ad.findById(id)
-      .populate('userId', 'name avatar phone email city createdAt')
+      .populate('userId', 'name avatar phone email city createdAt role')
       .lean();
 
     if (!ad) {
@@ -179,7 +179,10 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   <Image src={ad.userId?.avatar || '/default-avatar.svg'} alt={ad.userId?.name || 'user'} width={48} height={48} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800">{ad.userId?.name}</p>
+                  <p className="font-medium text-gray-800 inline-flex items-center gap-1">
+                    {ad.userId?.name}
+                    {ad.userId?.role === 'admin' && <BadgeCheck size={14} className="text-sky-500 fill-sky-500/20" />}
+                  </p>
                   <p className="text-xs text-gray-400">عضو بازارینو</p>
                 </div>
               </div>
