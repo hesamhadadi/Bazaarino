@@ -10,8 +10,11 @@ import FavoriteButton from '@/components/ads/FavoriteButton';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel } from '@/lib/constants';
-import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck } from 'lucide-react';
+import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus } from 'lucide-react';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
+import nextDynamic from 'next/dynamic';
+
+const HousingLocationPreview = nextDynamic(() => import('@/components/maps/HousingLocationPreview'), { ssr: false });
 
 export const dynamic = 'force-dynamic';
 
@@ -170,15 +173,40 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 </div>
               )}
 
+              {ad.category === 'real-estate' && ad.housing?.location && (
+                <div className="mt-5">
+                  <h3 className="font-semibold text-gray-800 mb-2">نقشه موقعیت</h3>
+                  <HousingLocationPreview point={ad.housing.location} />
+                  {ad.housing.address && (
+                    <p className="text-xs text-gray-500 mt-2">آدرس ثبت‌شده: {ad.housing.address}</p>
+                  )}
+                </div>
+              )}
+
               {ad.category === 'real-estate' && ad.housing?.nearby?.length > 0 && (
                 <div className="mt-5">
                   <h3 className="font-semibold text-gray-800 mb-2">فاصله تقریبی از نقاط مهم</h3>
                   <div className="grid md:grid-cols-2 gap-2">
                     {ad.housing.nearby.map((item: any) => (
                       <div key={item.key} className="bg-gray-50 border border-gray-100 rounded-xl p-3">
-                        <p className="text-sm font-semibold text-gray-700">{item.label}</p>
-                        <p className="text-xs text-gray-500 mt-1">فاصله: {toFaDigits(item.distanceKm)} کیلومتر</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          {item.icon === 'grocery' && <ShoppingCart size={16} className="text-emerald-600" />}
+                          {item.icon === 'university' && <GraduationCap size={16} className="text-indigo-600" />}
+                          {item.icon === 'metro' && <Train size={16} className="text-sky-600" />}
+                          {item.icon === 'bus' && <Bus size={16} className="text-orange-600" />}
+                          <p className="text-sm font-semibold text-gray-700">{item.label}</p>
+                        </div>
+                        <p className="text-xs text-gray-500">فاصله: {toFaDigits(item.distanceKm)} کیلومتر</p>
                         <p className="text-xs text-gray-500">زمان: {toFaDigits(item.driveMinutes)} دقیقه با خودرو • {toFaDigits(item.walkMinutes)} دقیقه پیاده</p>
+                        {item.metroName && (
+                          <p className="text-xs text-gray-500 mt-1">ایستگاه مترو: {item.metroName}</p>
+                        )}
+                        {item.metroLines?.length ? (
+                          <p className="text-xs text-gray-500">خطوط مترو: {item.metroLines.join('، ')}</p>
+                        ) : null}
+                        {item.busLines?.length ? (
+                          <p className="text-xs text-gray-500">خطوط اتوبوس: {item.busLines.join('، ')}</p>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -189,7 +217,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
 
           <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 border border-gray-100">
-              <h2 className="font-semibold text-gray-800 mb-3">اطلاعات فروشنده</h2>
+              <h2 className="font-semibold text-gray-800 mb-3">اطلاعات صاحب آگهی</h2>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-orange-100">
                   <Image src={ad.userId?.avatar || '/default-avatar.svg'} alt={ad.userId?.name || 'user'} width={48} height={48} className="w-full h-full object-cover" />
@@ -206,18 +234,18 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 {ad.showPhone && ad.phone && (
                   <>
                     <a href={`tel:${ad.phone}`}
-                      className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-medium transition-colors text-sm">
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-2xl font-semibold transition-colors text-sm shadow-sm">
                       <Phone size={16} /> تماس تلفنی
                     </a>
                     <a href={`https://wa.me/${ad.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-3 rounded-xl font-medium transition-colors text-sm">
-                      💬 واتساپ
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#25D366] to-[#1FAE58] text-white py-3 rounded-2xl font-semibold transition-colors text-sm shadow-sm">
+                      <span className="text-lg">💬</span> واتساپ
                     </a>
                   </>
                 )}
                 {ad.showEmail && ad.email && (
                   <a href={`mailto:${ad.email}`}
-                    className="flex items-center justify-center gap-2 w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-medium transition-colors text-sm">
+                    className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-sky-500 to-blue-600 text-white py-3 rounded-2xl font-semibold transition-colors text-sm shadow-sm">
                     <Mail size={16} /> ارسال ایمیل
                   </a>
                 )}

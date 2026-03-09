@@ -204,7 +204,7 @@ export default async function HomePage() {
                 همه <ChevronLeft size={14} />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-stretch auto-rows-fr">
               {featuredAds.map((ad: any) => (
                 <AdCard key={ad._id} ad={ad} />
               ))}
@@ -222,18 +222,29 @@ export default async function HomePage() {
           </div>
 
           {latestAds.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch auto-rows-fr">
               {latestAds.map((ad: any) => (
                 <AdCard key={ad._id} ad={ad} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-              <p className="text-5xl mb-4">📦</p>
-              <p className="text-gray-500 mb-4">هنوز آگهی‌ای ثبت نشده</p>
-              <Link href="/ads/new" className="bg-brand-500 text-white px-6 py-2.5 rounded-xl text-sm font-medium">
-                اولین آگهی رو ثبت کن!
-              </Link>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <p className="text-sm text-gray-500 mb-4">در حال بارگذاری آگهی‌ها...</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch auto-rows-fr">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-gray-100 overflow-hidden bg-gray-50 animate-pulse">
+                    <div className="aspect-[4/3] bg-gray-200"></div>
+                    <div className="p-3 space-y-2">
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-xs text-gray-500">
+                اگر آگهی‌ای ثبت نشده، اولین آگهی را بساز.
+              </div>
             </div>
           )}
         </section>

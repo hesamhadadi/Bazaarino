@@ -36,6 +36,10 @@ export interface IAd extends Document {
       distanceKm: number;
       driveMinutes: number;
       walkMinutes: number;
+      icon?: string;
+      metroName?: string;
+      metroLines?: string[];
+      busLines?: string[];
     }>;
   };
   expiresAt?: Date;
@@ -155,6 +159,10 @@ const AdSchema = new Schema<IAd>(
           distanceKm: { type: Number },
           driveMinutes: { type: Number },
           walkMinutes: { type: Number },
+          icon: { type: String },
+          metroName: { type: String },
+          metroLines: [{ type: String }],
+          busLines: [{ type: String }],
         },
       ],
     },

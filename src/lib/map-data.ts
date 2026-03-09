@@ -19,16 +19,23 @@ export const CITY_CENTERS: Record<string, LatLng> = {
   other: { lat: 42.5, lng: 12.5 },
 };
 
-type POI = LatLng & { key: string; label: string };
+type POI = LatLng & {
+  key: string;
+  label: string;
+  icon?: 'grocery' | 'university' | 'metro' | 'bus';
+  metroName?: string;
+  metroLines?: string[];
+  busLines?: string[];
+};
 
 const TURIN_POIS: POI[] = [
-  { key: 'lidl', label: 'فروشگاه لیدل', lat: 45.0636, lng: 7.6826 },
-  { key: 'carrefour', label: 'فروشگاه کرفور', lat: 45.0707, lng: 7.6869 },
-  { key: 'ins', label: 'فروشگاه اینس', lat: 45.0605, lng: 7.6762 },
-  { key: 'polito', label: 'دانشگاه پلی‌تکنیک تورین', lat: 45.0622, lng: 7.6628 },
-  { key: 'unito', label: 'دانشگاه UniTo', lat: 45.0698, lng: 7.6936 },
-  { key: 'metro', label: 'ایستگاه مترو', lat: 45.0625, lng: 7.6781 },
-  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 45.0676, lng: 7.6702 },
+  { key: 'lidl', label: 'فروشگاه لیدل', lat: 45.0636, lng: 7.6826, icon: 'grocery' },
+  { key: 'carrefour', label: 'فروشگاه کرفور', lat: 45.0707, lng: 7.6869, icon: 'grocery' },
+  { key: 'ins', label: 'فروشگاه اینس', lat: 45.0605, lng: 7.6762, icon: 'grocery' },
+  { key: 'polito', label: 'دانشگاه پلی‌تکنیک تورین', lat: 45.0622, lng: 7.6628, icon: 'university' },
+  { key: 'unito', label: 'دانشگاه UniTo', lat: 45.0698, lng: 7.6936, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو', lat: 45.0625, lng: 7.6781, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 45.0676, lng: 7.6702, icon: 'bus' },
 ];
 
 const POIS_BY_CITY: Record<string, POI[]> = {
@@ -60,6 +67,10 @@ export function computeHousingNearby(city: string, point?: LatLng | null) {
       distanceKm,
       driveMinutes,
       walkMinutes,
+      icon: poi.icon,
+      metroName: poi.metroName,
+      metroLines: poi.metroLines,
+      busLines: poi.busLines,
     };
   });
 }

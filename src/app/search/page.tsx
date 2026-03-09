@@ -164,7 +164,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         )}
 
         {categoryBanners.length > 0 && (
-          <div className="grid md:grid-cols-2 gap-3 mb-4">
+            <div className="grid md:grid-cols-2 gap-3 mb-4 items-stretch auto-rows-fr">
             {categoryBanners.map((b: any) => (
               <Link key={b._id} href={b.linkUrl || '#'} className="block rounded-2xl overflow-hidden border border-gray-100">
                 <div className="relative h-24 md:h-28">
@@ -327,7 +327,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         {/* Ads Grid */}
         {ads.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch auto-rows-fr">
               {ads.map((ad: any) => (
                 <AdCard key={ad._id} ad={ad} />
               ))}
