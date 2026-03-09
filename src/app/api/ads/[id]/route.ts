@@ -49,7 +49,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (isAdmin && body.status) {
       ad.status = body.status;
       if (body.rejectionReason) ad.rejectionReason = body.rejectionReason;
-      if (body.isFeatured !== undefined) ad.isFeatured = body.isFeatured;
+      if (body.isFeatured !== undefined) {
+        ad.isFeatured = body.isFeatured;
+        if (body.isFeatured) {
+          if (body.featuredUntil) {
+            ad.featuredUntil = new Date(body.featuredUntil);
+          } else {
+            ad.featuredUntil = undefined;
+          }
+        } else {
+          ad.featuredUntil = undefined;
+        }
+      }
     }
 
     // Owner can update content

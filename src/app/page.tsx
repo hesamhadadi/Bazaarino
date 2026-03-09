@@ -14,10 +14,15 @@ export const dynamic = 'force-dynamic';
 async function getLatestAds() {
   try {
     await connectDB();
+    const now = new Date();
     const ads = await Ad.find({ status: 'approved' })
-      .sort({ isFeatured: -1, createdAt: -1 })
+      .sort({ createdAt: -1 })
       .lean();
-    return JSON.parse(JSON.stringify(ads));
+    const normalized = ads.map((ad: any) => ({
+      ...ad,
+      isFeatured: ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now),
+    }));
+    return JSON.parse(JSON.stringify(normalized));
   } catch {
     return [];
   }
@@ -26,7 +31,9 @@ async function getLatestAds() {
 async function getFeaturedAds() {
   try {
     await connectDB();
+    const now = new Date();
     const ads = await Ad.find({ status: 'approved', isFeatured: true })
+      .or([{ featuredUntil: { $exists: false } }, { featuredUntil: { $gte: now } }])
       .sort({ createdAt: -1 })
       .limit(4)
       .lean();

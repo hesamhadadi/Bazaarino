@@ -30,7 +30,11 @@ export async function GET(request: NextRequest) {
     if (city) query.city = city;
     if (category) query.category = category;
     if (subcategory) query.subcategory = subcategory;
-    if (featured === 'true') query.isFeatured = true;
+    if (featured === 'true') {
+      const now = new Date();
+      query.isFeatured = true;
+      query.$and = [...(query.$and || []), { $or: [{ featuredUntil: { $exists: false } }, { featuredUntil: { $gte: now } }] }];
+    }
     if (priceType) query.priceType = priceType;
     if (hasImage === 'true') query.images = { $exists: true, $ne: [] };
     if (residence === 'yes') query['housing.residenceEligible'] = true;

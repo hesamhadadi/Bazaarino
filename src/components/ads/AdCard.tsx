@@ -15,6 +15,7 @@ interface AdCardProps {
     category: string;
     images: string[];
     isFeatured: boolean;
+    featuredUntil?: string;
     housing?: {
       residenceEligible?: boolean;
     };
@@ -42,11 +43,12 @@ function timeAgo(dateStr: string): string {
 
 export default function AdCard({ ad }: AdCardProps) {
   const category = CATEGORIES.find(c => c.id === ad.category);
+  const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= new Date());
 
   return (
     <Link href={`/ads/${ad._id}`}>
       <div className={`bg-white rounded-2xl overflow-hidden border cursor-pointer hover:-translate-y-0.5 hover:shadow-lg transition-all ${
-        ad.isFeatured ? 'border-orange-300 shadow-orange-100 shadow-md' : 'border-gray-100'
+        isFeaturedActive ? 'border-orange-300 shadow-orange-100 shadow-md' : 'border-gray-100'
       }`}>
         <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
           {ad.images?.[0] ? (
@@ -56,7 +58,7 @@ export default function AdCard({ ad }: AdCardProps) {
               <span className="text-4xl">{category?.icon || '📦'}</span>
             </div>
           )}
-          {ad.isFeatured && (
+          {isFeaturedActive && (
             <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg shadow-orange-300/40">
               <Sparkles size={10} />
               ویژه پلاس

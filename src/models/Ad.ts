@@ -18,6 +18,7 @@ export interface IAd extends Document {
   showEmail: boolean;
   views: number;
   isFeatured: boolean;
+  featuredUntil?: Date;
   rejectionReason?: string;
   housing?: {
     deposit?: number;
@@ -103,6 +104,9 @@ const AdSchema = new Schema<IAd>(
     isFeatured: {
       type: Boolean,
       default: false,
+    },
+    featuredUntil: {
+      type: Date,
     },
     rejectionReason: String,
     housing: {

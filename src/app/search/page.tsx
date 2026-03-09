@@ -44,7 +44,11 @@ async function searchAds(params: SearchParams) {
     if (params.city) query.city = params.city;
     if (params.category) query.category = params.category;
     if (params.subcategory) query.subcategory = params.subcategory;
-    if (params.featured === 'true') query.isFeatured = true;
+    if (params.featured === 'true') {
+      const now = new Date();
+      query.isFeatured = true;
+      query.$and = [...(query.$and || []), { $or: [{ featuredUntil: { $exists: false } }, { featuredUntil: { $gte: now } }] }];
+    }
     if (params.hasImage === 'true') query.images = { $exists: true, $ne: [] };
     if (params.residence === 'yes') query['housing.residenceEligible'] = true;
     if (params.residence === 'no') query['housing.residenceEligible'] = { $ne: true };
@@ -79,8 +83,13 @@ async function searchAds(params: SearchParams) {
       Ad.find(query).sort(sortOption).skip(skip).limit(limit).lean(),
       Ad.countDocuments(query),
     ]);
+    const now = new Date();
+    const normalized = ads.map((ad: any) => ({
+      ...ad,
+      isFeatured: ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now),
+    }));
 
-    return { ads: JSON.parse(JSON.stringify(ads)), total, page, totalPages: Math.ceil(total / limit) };
+    return { ads: JSON.parse(JSON.stringify(normalized)), total, page, totalPages: Math.ceil(total / limit) };
   } catch {
     return { ads: [], total: 0, page: 1, totalPages: 0 };
   }

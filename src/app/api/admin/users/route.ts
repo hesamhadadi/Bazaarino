@@ -44,13 +44,23 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userId, isActive } = body;
-    if (!userId || typeof isActive !== 'boolean') {
+    const { userId, isActive, role } = body;
+    if (!userId) {
+      return NextResponse.json({ message: 'شناسه کاربر الزامی است' }, { status: 400 });
+    }
+    if (isActive === undefined && role === undefined) {
       return NextResponse.json({ message: 'پارامتر نامعتبر' }, { status: 400 });
+    }
+    if (role !== undefined && !['user', 'admin'].includes(role)) {
+      return NextResponse.json({ message: 'نقش نامعتبر است' }, { status: 400 });
     }
 
     await connectDB();
-    const user = await User.findByIdAndUpdate(userId, { isActive }, { new: true });
+    const updates: any = {};
+    if (typeof isActive === 'boolean') updates.isActive = isActive;
+    if (role !== undefined) updates.role = role;
+
+    const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     return NextResponse.json({ user });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });

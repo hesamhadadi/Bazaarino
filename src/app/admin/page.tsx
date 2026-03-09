@@ -6,10 +6,29 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { CheckCircle, XCircle, Eye, Users, FileText, Clock, Star, BarChart3, UserCheck, UserX, ImagePlus, Trash2 } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Users, FileText, Clock, Star, BarChart3, UserCheck, UserX, ImagePlus, Trash2, Filter, RotateCcw, ShieldCheck } from 'lucide-react';
 import { CITIES, CATEGORIES } from '@/lib/constants';
 
 type AdminTab = 'pending' | 'all' | 'users' | 'banners';
+type AdFilters = {
+  q: string;
+  city: string;
+  category: string;
+  dateFrom: string;
+  dateTo: string;
+  isFeatured: 'all' | 'true' | 'false';
+  status: 'all' | 'pending' | 'approved' | 'rejected' | 'expired' | 'sold';
+};
+
+const DEFAULT_AD_FILTERS: AdFilters = {
+  q: '',
+  city: '',
+  category: '',
+  dateFrom: '',
+  dateTo: '',
+  isFeatured: 'all',
+  status: 'all',
+};
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -43,6 +62,8 @@ export default function AdminDashboard() {
     title: '',
     imageUrl: '',
   });
+  const [adFilters, setAdFilters] = useState<AdFilters>(DEFAULT_AD_FILTERS);
+  const [featureDurations, setFeatureDurations] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/auth/login');
@@ -51,9 +72,24 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (session?.user?.role === 'admin') {
-      Promise.all([fetchStats(), fetchPendingAds()]).finally(() => setLoading(false));
+      Promise.all([fetchStats(), fetchPendingAds(DEFAULT_AD_FILTERS)]).finally(() => setLoading(false));
     }
   }, [session]);
+
+  const isFeaturedActive = (ad: any) => ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= new Date());
+
+  const buildAdFilterQuery = (status: string, filters: AdFilters) => {
+    const params = new URLSearchParams();
+    params.set('status', status);
+    params.set('limit', status === 'pending' ? '150' : '250');
+    if (filters.q) params.set('q', filters.q);
+    if (filters.city) params.set('city', filters.city);
+    if (filters.category) params.set('category', filters.category);
+    if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params.set('dateTo', filters.dateTo);
+    if (filters.isFeatured !== 'all') params.set('isFeatured', filters.isFeatured);
+    return params.toString();
+  };
 
   const fetchStats = async () => {
     const res = await fetch('/api/admin/stats');
@@ -61,14 +97,15 @@ export default function AdminDashboard() {
     setStats(data.stats);
   };
 
-  const fetchPendingAds = async () => {
-    const res = await fetch('/api/admin/ads?status=pending&limit=100');
+  const fetchPendingAds = async (filters: AdFilters = adFilters) => {
+    const res = await fetch(`/api/admin/ads?${buildAdFilterQuery('pending', filters)}`);
     const data = await res.json();
     setPendingAds(data.ads || []);
   };
 
-  const fetchAllAds = async () => {
-    const res = await fetch('/api/admin/ads?status=all&limit=200');
+  const fetchAllAds = async (filters: AdFilters = adFilters) => {
+    const query = buildAdFilterQuery(filters.status, filters);
+    const res = await fetch(`/api/admin/ads?${query}`);
     const data = await res.json();
     setAllAds(data.ads || []);
   };
@@ -93,12 +130,23 @@ export default function AdminDashboard() {
 
   const changeTab = async (tab: AdminTab) => {
     setActiveTab(tab);
-    if (tab === 'all') await fetchAllAds();
+    if (tab === 'all') await fetchAllAds(adFilters);
     if (tab === 'users') await fetchUsers();
     if (tab === 'banners') {
       await fetchBanners();
       await fetchHousingCityImages();
     }
+  };
+
+  const applyAdFilters = async () => {
+    if (activeTab === 'pending') await fetchPendingAds(adFilters);
+    if (activeTab === 'all') await fetchAllAds(adFilters);
+  };
+
+  const resetAdFilters = async () => {
+    setAdFilters(DEFAULT_AD_FILTERS);
+    if (activeTab === 'pending') await fetchPendingAds(DEFAULT_AD_FILTERS);
+    if (activeTab === 'all') await fetchAllAds(DEFAULT_AD_FILTERS);
   };
 
   const updateAdStatus = async (id: string, status: string, reason?: string) => {
@@ -119,13 +167,24 @@ export default function AdminDashboard() {
     }
   };
 
-  const toggleFeatured = async (id: string, current: boolean) => {
+  const setFeaturedForDays = async (id: string, days: number) => {
+    const featuredUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     await fetch(`/api/ads/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isFeatured: !current }),
+      body: JSON.stringify({ isFeatured: true, featuredUntil }),
     });
-    toast.success(!current ? 'آگهی ویژه شد' : 'از ویژه خارج شد');
+    toast.success(`آگهی برای ${days} روز ویژه شد`);
+    fetchAllAds();
+  };
+
+  const removeFeatured = async (id: string) => {
+    await fetch(`/api/ads/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isFeatured: false }),
+    });
+    toast.success('آگهی از حالت ویژه خارج شد');
     fetchAllAds();
   };
 
@@ -140,6 +199,22 @@ export default function AdminDashboard() {
       toast.success(!isActive ? 'کاربر فعال شد' : 'کاربر غیرفعال شد');
       fetchUsers();
       fetchStats();
+    }
+  };
+
+  const toggleUserRole = async (userId: string, role: 'user' | 'admin') => {
+    const nextRole = role === 'admin' ? 'user' : 'admin';
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, role: nextRole }),
+    });
+
+    if (res.ok) {
+      toast.success(nextRole === 'admin' ? 'کاربر ادمین شد' : 'ادمین به کاربر عادی تبدیل شد');
+      fetchUsers();
+    } else {
+      toast.error('تغییر نقش انجام نشد');
     }
   };
 
@@ -410,6 +485,81 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {(activeTab === 'pending' || activeTab === 'all') && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+              <Filter size={16} />
+              فیلتر آگهی‌ها
+            </div>
+            <div className="grid md:grid-cols-3 gap-3">
+              <input
+                value={adFilters.q}
+                onChange={(e) => setAdFilters((prev) => ({ ...prev, q: e.target.value }))}
+                placeholder="جستجو عنوان/توضیحات"
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              />
+              <select
+                value={adFilters.city}
+                onChange={(e) => setAdFilters((prev) => ({ ...prev, city: e.target.value }))}
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              >
+                <option value="">همه شهرها</option>
+                {CITIES.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}
+              </select>
+              <select
+                value={adFilters.category}
+                onChange={(e) => setAdFilters((prev) => ({ ...prev, category: e.target.value }))}
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              >
+                <option value="">همه دسته‌ها</option>
+                {CATEGORIES.map((cat) => <option key={cat.id} value={cat.id}>{cat.label}</option>)}
+              </select>
+              <input
+                type="date"
+                value={adFilters.dateFrom}
+                onChange={(e) => setAdFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              />
+              <input
+                type="date"
+                value={adFilters.dateTo}
+                onChange={(e) => setAdFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              />
+              <select
+                value={adFilters.isFeatured}
+                onChange={(e) => setAdFilters((prev) => ({ ...prev, isFeatured: e.target.value as AdFilters['isFeatured'] }))}
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              >
+                <option value="all">ویژه و عادی</option>
+                <option value="true">فقط ویژه</option>
+                <option value="false">فقط عادی</option>
+              </select>
+              {activeTab === 'all' && (
+                <select
+                  value={adFilters.status}
+                  onChange={(e) => setAdFilters((prev) => ({ ...prev, status: e.target.value as AdFilters['status'] }))}
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                >
+                  <option value="all">همه وضعیت‌ها</option>
+                  <option value="approved">تأیید شده</option>
+                  <option value="pending">در انتظار</option>
+                  <option value="rejected">رد شده</option>
+                  <option value="expired">منقضی</option>
+                  <option value="sold">فروخته شد</option>
+                </select>
+              )}
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button onClick={applyAdFilters} className="bg-brand-500 text-white px-4 py-2 rounded-xl text-sm">اعمال فیلتر</button>
+              <button onClick={resetAdFilters} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm">
+                <RotateCcw size={14} />
+                پاک‌کردن
+              </button>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'pending' && (
           <div>
             {pendingAds.length === 0 ? (
@@ -436,6 +586,7 @@ export default function AdminDashboard() {
                           <span>👤 {ad.userId?.name}</span>
                           <span>📧 {ad.userId?.email}</span>
                           <span>🏙️ {ad.city}</span>
+                          <span>🗓️ {new Date(ad.createdAt).toLocaleDateString('fa-IR')}</span>
                         </div>
                         <div className="flex gap-2 mt-3">
                           <button onClick={() => updateAdStatus(ad._id, 'approved')} className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><CheckCircle size={14} /> تأیید</button>
@@ -461,11 +612,37 @@ export default function AdminDashboard() {
                   <Link href={`/ads/${ad._id}`} target="_blank" className="font-medium text-gray-800 hover:text-brand-600 text-sm line-clamp-1">{ad.title}</Link>
                   <p className="text-xs text-gray-400">{ad.userId?.name} • {ad.city}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[ad.status] || ''}`}>{STATUS_LABELS[ad.status]}</span>
-                  <button onClick={() => toggleFeatured(ad._id, ad.isFeatured)} className={`p-1.5 rounded-lg transition-colors ${ad.isFeatured ? 'bg-orange-100 text-orange-500' : 'bg-gray-100 text-gray-400 hover:bg-orange-50'}`}>
-                    <Star size={14} fill={ad.isFeatured ? 'currentColor' : 'none'} />
-                  </button>
+                  {isFeaturedActive(ad) ? (
+                    <>
+                      <span className="text-[11px] px-2 py-1 rounded-full bg-orange-50 text-orange-600">
+                        ویژه تا {ad.featuredUntil ? new Date(ad.featuredUntil).toLocaleDateString('fa-IR') : 'نامحدود'}
+                      </span>
+                      <button onClick={() => removeFeatured(ad._id)} className="p-1.5 rounded-lg bg-red-50 text-red-500 transition-colors">
+                        <Star size={14} fill="currentColor" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <select
+                        value={featureDurations[ad._id] || 7}
+                        onChange={(e) => setFeatureDurations((prev) => ({ ...prev, [ad._id]: Number(e.target.value) }))}
+                        className="border border-gray-200 rounded-lg px-2 py-1 text-xs"
+                      >
+                        <option value={1}>۱ روز</option>
+                        <option value={7}>۷ روز</option>
+                        <option value={30}>۳۰ روز</option>
+                      </select>
+                      <button
+                        onClick={() => setFeaturedForDays(ad._id, featureDurations[ad._id] || 7)}
+                        className="inline-flex items-center gap-1 bg-orange-500 text-white px-2 py-1 rounded-lg text-xs"
+                      >
+                        <Star size={12} />
+                        ویژه کن
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -486,12 +663,23 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => toggleUserActive(u._id, u.isActive)}
-                  className={`px-3 py-2 rounded-xl text-xs font-medium ${u.isActive ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}
-                >
-                  {u.isActive ? 'غیرفعال کن' : 'فعال کن'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleUserRole(u._id, u.role)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium ${
+                      u.role === 'admin' ? 'bg-purple-50 text-purple-700' : 'bg-indigo-50 text-indigo-700'
+                    }`}
+                  >
+                    <ShieldCheck size={13} />
+                    {u.role === 'admin' ? 'تبدیل به کاربر' : 'ادمین کن'}
+                  </button>
+                  <button
+                    onClick={() => toggleUserActive(u._id, u.isActive)}
+                    className={`px-3 py-2 rounded-xl text-xs font-medium ${u.isActive ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}
+                  >
+                    {u.isActive ? 'غیرفعال کن' : 'فعال کن'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

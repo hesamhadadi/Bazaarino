@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import '@/models/User';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
+import AdImageGallery from '@/components/ads/AdImageGallery';
 import { CATEGORIES, getCityLabel } from '@/lib/constants';
 import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2 } from 'lucide-react';
 
@@ -58,6 +58,8 @@ function timeAgo(dateStr: string): string {
 export default async function AdDetailPage({ params }: { params: { id: string } }) {
   const ad = await getAd(params.id);
   if (!ad) notFound();
+  const now = new Date();
+  const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now);
 
   const category = CATEGORIES.find(c => c.id === ad.category);
   const subcategory = category?.subcategories?.find((s: any) => s.value === ad.subcategory);
@@ -78,20 +80,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
           <div className="md:col-span-2 space-y-4">
             <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
               {ad.images?.length > 0 ? (
-                <div>
-                  <div className="relative aspect-[4/3]">
-                    <Image src={ad.images[0]} alt={ad.title} fill className="object-cover" priority />
-                  </div>
-                  {ad.images.length > 1 && (
-                    <div className="flex gap-2 p-2 overflow-x-auto">
-                      {ad.images.map((img: string, i: number) => (
-                        <div key={i} className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border border-gray-200">
-                          <Image src={img} alt="" fill className="object-cover" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <AdImageGallery images={ad.images} title={ad.title} />
               ) : (
                 <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
                   <span className="text-6xl">{category?.icon || '📦'}</span>
@@ -101,7 +90,14 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
 
             <div className="bg-white rounded-2xl p-5 border border-gray-100">
               <div className="flex items-start justify-between gap-3 mb-3">
-                <h1 className="text-xl font-bold text-gray-900 leading-snug">{ad.title}</h1>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900 leading-snug">{ad.title}</h1>
+                  {isFeaturedActive && (
+                    <div className="inline-flex mt-2 items-center gap-1 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-xs px-2.5 py-1 rounded-full">
+                      ✨ آگهی ویژه
+                    </div>
+                  )}
+                </div>
                 <Share2 size={18} className="text-gray-400 flex-shrink-0 mt-1" />
               </div>
               <div className="text-2xl font-bold text-orange-600 mb-4">{formatPrice(ad.price, ad.priceType)}</div>
