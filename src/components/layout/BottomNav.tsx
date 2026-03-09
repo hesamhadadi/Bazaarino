@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Home, Search, Plus, Heart, User } from 'lucide-react';
+import { Home, Search, Plus, Heart, User, Newspaper } from 'lucide-react';
 
 const navItems = [
   { href: '/', icon: Home, label: 'خانه' },
   { href: '/search', icon: Search, label: 'جستجو' },
   { href: '/ads/new', icon: Plus, label: 'آگهی', special: true },
-  { href: '/favorites', icon: Heart, label: 'علاقه‌مندی' },
+  { href: '/news', icon: Newspaper, label: 'اخبار' },
+  { href: '/favorites', icon: Heart, label: 'علاقه‌مندی', hideOnMobile: true },
   { href: '/profile', icon: User, label: 'حساب' },
 ];
 
@@ -22,7 +23,8 @@ export default function BottomNav() {
   return (
     <nav className="bottom-nav md:hidden">
       <div className="flex items-center justify-around py-2">
-        {navItems.map(({ href, icon: Icon, label, special }) => {
+        {navItems.map(({ href, icon: Icon, label, special, hideOnMobile }) => {
+          if (hideOnMobile) return null;
           const isActive = pathname === href;
           if (special) {
             return (

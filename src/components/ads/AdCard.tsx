@@ -87,12 +87,12 @@ export default function AdCard({ ad }: AdCardProps) {
         <div className="p-3 flex-1 flex flex-col">
           <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2 leading-relaxed">{ad.title}</h3>
           <div className="text-orange-600 font-bold text-sm mb-2">{formatPrice(ad.price, ad.priceType)}</div>
-          <div className="flex items-center justify-between mb-2 min-h-[26px]">
+          <div className="flex flex-col gap-1 mb-2">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                 <Image src={adUser?.avatar || '/default-avatar.svg'} alt={adUser?.name || 'user'} width={24} height={24} className="w-full h-full object-cover" />
               </div>
-              <span className="text-[11px] text-gray-500 truncate inline-flex items-center gap-1">
+              <span className="text-[11px] text-gray-500 truncate inline-flex items-center gap-1 max-w-[120px] sm:max-w-[160px]">
                 {adUser?.name || 'کاربر بازارینو'}
                 {isAdminPoster && <BadgeCheck size={12} className="text-sky-500 fill-sky-500/20" />}
               </span>
@@ -102,12 +102,12 @@ export default function AdCard({ ad }: AdCardProps) {
               {timeAgo(ad.createdAt)}
             </div>
           </div>
-          <div className="flex items-center justify-between text-xs text-gray-400 mt-auto">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs text-gray-400 mt-auto">
+            <div className="flex items-center gap-1 min-w-0">
               <MapPin size={10} />
-              <span>{getCityLabel(ad.city)}</span>
+              <span className="truncate max-w-[86px] sm:max-w-none">{getCityLabel(ad.city)}</span>
             </div>
-            <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full text-[11px]">
+            <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px]">
               <CategoryIcon categoryId={ad.category} size={11} />
               {category?.label || 'متفرقه'}
             </span>

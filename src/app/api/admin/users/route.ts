@@ -51,7 +51,7 @@ export async function PATCH(request: NextRequest) {
     if (isActive === undefined && role === undefined) {
       return NextResponse.json({ message: 'پارامتر نامعتبر' }, { status: 400 });
     }
-    if (role !== undefined && !['user', 'admin'].includes(role)) {
+    if (role !== undefined && !['user', 'admin', 'editor'].includes(role)) {
       return NextResponse.json({ message: 'نقش نامعتبر است' }, { status: 400 });
     }
 

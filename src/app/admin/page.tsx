@@ -202,16 +202,15 @@ export default function AdminDashboard() {
     }
   };
 
-  const toggleUserRole = async (userId: string, role: 'user' | 'admin') => {
-    const nextRole = role === 'admin' ? 'user' : 'admin';
+  const updateUserRole = async (userId: string, role: 'user' | 'admin' | 'editor') => {
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, role: nextRole }),
+      body: JSON.stringify({ userId, role }),
     });
 
     if (res.ok) {
-      toast.success(nextRole === 'admin' ? 'کاربر ادمین شد' : 'ادمین به کاربر عادی تبدیل شد');
+      toast.success('نقش کاربر بروزرسانی شد');
       fetchUsers();
     } else {
       toast.error('تغییر نقش انجام نشد');
@@ -659,20 +658,23 @@ export default function AdminDashboard() {
                   <div className="text-xs text-gray-400 mt-1 flex gap-3">
                     <span>آگهی‌ها: {u.adsCount}</span>
                     <span>ثبت‌نام: {new Date(u.createdAt).toLocaleDateString('fa-IR')}</span>
-                    <span>{u.role === 'admin' ? 'ادمین' : 'کاربر'}</span>
+                    <span>{u.role === 'admin' ? 'ادمین' : u.role === 'editor' ? 'نویسنده' : 'کاربر'}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleUserRole(u._id, u.role)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium ${
-                      u.role === 'admin' ? 'bg-purple-50 text-purple-700' : 'bg-indigo-50 text-indigo-700'
-                    }`}
-                  >
+                  <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-indigo-50 text-indigo-700">
                     <ShieldCheck size={13} />
-                    {u.role === 'admin' ? 'تبدیل به کاربر' : 'ادمین کن'}
-                  </button>
+                    <select
+                      value={u.role}
+                      onChange={(e) => updateUserRole(u._id, e.target.value as any)}
+                      className="bg-transparent text-xs outline-none"
+                    >
+                      <option value="user">کاربر</option>
+                      <option value="editor">نویسنده</option>
+                      <option value="admin">ادمین</option>
+                    </select>
+                  </div>
                   <button
                     onClick={() => toggleUserActive(u._id, u.isActive)}
                     className={`px-3 py-2 rounded-xl text-xs font-medium ${u.isActive ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}

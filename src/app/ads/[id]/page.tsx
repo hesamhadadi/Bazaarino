@@ -173,19 +173,17 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 </div>
               )}
 
-              {ad.category === 'real-estate' && ad.housing?.location && (
-                <div className="mt-5">
-                  <h3 className="font-semibold text-gray-800 mb-2">نقشه موقعیت</h3>
-                  <HousingLocationPreview point={ad.housing.location} />
-                  {ad.housing.address && (
-                    <p className="text-xs text-gray-500 mt-2">آدرس ثبت‌شده: {ad.housing.address}</p>
-                  )}
-                </div>
-              )}
-
               {ad.category === 'real-estate' && ad.housing?.nearby?.length > 0 && (
                 <div className="mt-5">
                   <h3 className="font-semibold text-gray-800 mb-2">فاصله تقریبی از نقاط مهم</h3>
+                  {ad.housing?.location && (
+                    <div className="mb-3">
+                      <HousingLocationPreview point={ad.housing.location} />
+                      {ad.housing.address && (
+                        <p className="text-xs text-gray-500 mt-2">آدرس ثبت‌شده: {ad.housing.address}</p>
+                      )}
+                    </div>
+                  )}
                   <div className="grid md:grid-cols-2 gap-2">
                     {ad.housing.nearby.map((item: any) => (
                       <div key={item.key} className="bg-gray-50 border border-gray-100 rounded-xl p-3">
@@ -210,6 +208,16 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {ad.category === 'real-estate' && ad.housing?.location && (!ad.housing?.nearby || ad.housing.nearby.length === 0) && (
+                <div className="mt-5">
+                  <h3 className="font-semibold text-gray-800 mb-2">نقشه موقعیت</h3>
+                  <HousingLocationPreview point={ad.housing.location} />
+                  {ad.housing.address && (
+                    <p className="text-xs text-gray-500 mt-2">آدرس ثبت‌شده: {ad.housing.address}</p>
+                  )}
                 </div>
               )}
             </div>

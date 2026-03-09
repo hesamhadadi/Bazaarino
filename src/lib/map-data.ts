@@ -34,8 +34,8 @@ const TURIN_POIS: POI[] = [
   { key: 'ins', label: 'فروشگاه اینس', lat: 45.0605, lng: 7.6762, icon: 'grocery' },
   { key: 'polito', label: 'دانشگاه پلی‌تکنیک تورین', lat: 45.0622, lng: 7.6628, icon: 'university' },
   { key: 'unito', label: 'دانشگاه UniTo', lat: 45.0698, lng: 7.6936, icon: 'university' },
-  { key: 'metro', label: 'ایستگاه مترو', lat: 45.0625, lng: 7.6781, icon: 'metro' },
-  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 45.0676, lng: 7.6702, icon: 'bus' },
+  { key: 'metro', label: 'ایستگاه مترو', lat: 45.0625, lng: 7.6781, icon: 'metro', metroName: 'Porta Nuova', metroLines: ['M1'] },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 45.0676, lng: 7.6702, icon: 'bus', busLines: ['۴', '۱۱', '۱۵'] },
 ];
 
 const POIS_BY_CITY: Record<string, POI[]> = {

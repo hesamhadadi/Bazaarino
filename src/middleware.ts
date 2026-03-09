@@ -23,7 +23,8 @@ export default withAuth(
           pathname.startsWith('/admin') ||
           pathname.startsWith('/profile') ||
           pathname.startsWith('/favorites') ||
-          pathname === '/ads/new'
+          pathname === '/ads/new' ||
+          pathname.startsWith('/news/new')
         ) {
           return !!token;
         }
@@ -34,5 +35,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*', '/favorites/:path*', '/ads/new'],
+  matcher: ['/admin/:path*', '/profile/:path*', '/favorites/:path*', '/ads/new', '/news/new'],
 };
