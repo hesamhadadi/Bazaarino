@@ -3,19 +3,31 @@ import Image from 'next/image';
 import Link from 'next/link';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
+import '@/models/User';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import { CATEGORIES, getCityLabel } from '@/lib/constants';
 import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 async function getAd(id: string) {
   try {
     await connectDB();
-    const ad = await Ad.findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true })
+    const ad = await Ad.findById(id)
       .populate('userId', 'name avatar phone email city createdAt')
       .lean();
-    return ad ? JSON.parse(JSON.stringify(ad)) : null;
-  } catch {
+
+    if (!ad) {
+      return null;
+    }
+
+    // Keep view counting separate to avoid null results from findAndUpdate edge-cases.
+    await Ad.findByIdAndUpdate(id, { $inc: { views: 1 } });
+
+    return JSON.parse(JSON.stringify(ad));
+  } catch (error) {
+    console.error('Ad detail getAd error:', error);
     return null;
   }
 }

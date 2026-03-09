@@ -12,7 +12,6 @@ async function getLatestAds() {
     await connectDB();
     const ads = await Ad.find({ status: 'approved' })
       .sort({ isFeatured: -1, createdAt: -1 })
-      .limit(12)
       .lean();
     return JSON.parse(JSON.stringify(ads));
   } catch {

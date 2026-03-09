@@ -17,6 +17,11 @@ export async function GET(request: NextRequest) {
     const subcategory = searchParams.get('subcategory');
     const q = searchParams.get('q');
     const featured = searchParams.get('featured');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const priceType = searchParams.get('priceType');
+    const hasImage = searchParams.get('hasImage');
+    const sort = searchParams.get('sort') || 'newest';
     const status = searchParams.get('status') || 'approved';
 
     const query: any = { status };
@@ -25,14 +30,31 @@ export async function GET(request: NextRequest) {
     if (category) query.category = category;
     if (subcategory) query.subcategory = subcategory;
     if (featured === 'true') query.isFeatured = true;
+    if (priceType) query.priceType = priceType;
+    if (hasImage === 'true') query.images = { $exists: true, $ne: [] };
+
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
     if (q) query.$text = { $search: q };
 
     const skip = (page - 1) * limit;
+    const sortMap: Record<string, Record<string, 1 | -1>> = {
+      newest: { isFeatured: -1, createdAt: -1 },
+      oldest: { createdAt: 1 },
+      priceAsc: { price: 1, createdAt: -1 },
+      priceDesc: { price: -1, createdAt: -1 },
+      popular: { views: -1, createdAt: -1 },
+    };
+    const sortOption = sortMap[sort] || sortMap.newest;
 
     const [ads, total] = await Promise.all([
       Ad.find(query)
         .populate('userId', 'name avatar phone')
-        .sort({ isFeatured: -1, createdAt: -1 })
+        .sort(sortOption)
         .skip(skip)
         .limit(limit)
         .lean(),

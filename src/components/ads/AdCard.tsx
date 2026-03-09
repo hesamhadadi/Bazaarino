@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Clock, Eye, Star } from 'lucide-react';
+import { MapPin, Clock, Eye, Sparkles } from 'lucide-react';
 import { CATEGORIES, getCityLabel } from '@/lib/constants';
 
 interface AdCardProps {
@@ -54,8 +54,9 @@ export default function AdCard({ ad }: AdCardProps) {
             </div>
           )}
           {ad.isFeatured && (
-            <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-              <Star size={10} fill="white" /> ویژه
+            <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg shadow-orange-300/40">
+              <Sparkles size={10} />
+              ویژه پلاس
             </div>
           )}
           <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
