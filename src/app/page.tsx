@@ -9,6 +9,8 @@ import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import Banner from '@/models/Banner';
 
+export const dynamic = 'force-dynamic';
+
 async function getLatestAds() {
   try {
     await connectDB();
