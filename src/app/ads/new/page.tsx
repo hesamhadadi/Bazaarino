@@ -23,6 +23,10 @@ const adSchema = z.object({
   price: z.string().optional(),
   phone: z.string().optional(),
   showPhone: z.boolean().optional(),
+  deposit: z.string().optional(),
+  residenceEligible: z.boolean().optional(),
+  preferredGender: z.enum(['male', 'female', 'any']).optional(),
+  roommatesCount: z.string().optional(),
 });
 
 type AdForm = z.infer<typeof adSchema>;
@@ -87,7 +91,16 @@ export default function NewAdPage() {
       const res = await fetch('/api/ads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, images }),
+        body: JSON.stringify({
+          ...data,
+          images,
+          housing: category === 'real-estate' ? {
+            deposit: data.deposit ? Number(data.deposit) : undefined,
+            residenceEligible: data.residenceEligible === true,
+            preferredGender: data.preferredGender || 'any',
+            roommatesCount: data.roommatesCount ? Number(data.roommatesCount) : undefined,
+          } : undefined,
+        }),
       });
 
       const result = await res.json();
@@ -194,6 +207,49 @@ export default function NewAdPage() {
                 </select>
                 {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
               </div>
+
+              {category === 'real-estate' && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-3">
+                  <h3 className="text-sm font-semibold text-amber-800">جزئیات مسکن</h3>
+
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">مبلغ رهن (€)</label>
+                    <input
+                      {...register('deposit')}
+                      type="number"
+                      min="0"
+                      placeholder="مثلاً 2000"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">مناسب برای</label>
+                      <select {...register('preferredGender')} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                        <option value="any">فرقی ندارد</option>
+                        <option value="female">خانم</option>
+                        <option value="male">آقا</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">تعداد هم‌خانه</label>
+                      <input
+                        {...register('roommatesCount')}
+                        type="number"
+                        min="0"
+                        placeholder="مثلاً 2"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="checkbox" {...register('residenceEligible')} className="accent-brand-500" />
+                    این واحد قابلیت رزیدنسا دارد
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 

@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     const priceType = searchParams.get('priceType');
     const hasImage = searchParams.get('hasImage');
     const sort = searchParams.get('sort') || 'newest';
+    const residence = searchParams.get('residence');
     const status = searchParams.get('status') || 'approved';
 
     const query: any = { status };
@@ -32,6 +33,8 @@ export async function GET(request: NextRequest) {
     if (featured === 'true') query.isFeatured = true;
     if (priceType) query.priceType = priceType;
     if (hasImage === 'true') query.images = { $exists: true, $ne: [] };
+    if (residence === 'yes') query['housing.residenceEligible'] = true;
+    if (residence === 'no') query['housing.residenceEligible'] = { $ne: true };
 
     if (minPrice || maxPrice) {
       query.price = {};
@@ -89,6 +92,7 @@ export async function POST(request: NextRequest) {
       title, description, price, priceType, currency,
       category, subcategory, city, images,
       phone, email, showPhone, showEmail,
+      housing,
     } = body;
 
     if (!title || !description || !category || !subcategory || !city) {
@@ -115,6 +119,14 @@ export async function POST(request: NextRequest) {
       email,
       showPhone: showPhone !== false,
       showEmail: showEmail === true,
+      housing: category === 'real-estate' ? {
+        deposit: housing?.deposit ? Number(housing.deposit) : undefined,
+        residenceEligible: housing?.residenceEligible === true,
+        preferredGender: housing?.preferredGender || 'any',
+        roommatesCount: housing?.roommatesCount !== undefined && housing?.roommatesCount !== null
+          ? Number(housing.roommatesCount)
+          : undefined,
+      } : undefined,
       userId,
       status: 'pending',
     });

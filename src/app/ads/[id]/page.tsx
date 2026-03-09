@@ -40,6 +40,12 @@ function formatPrice(price?: number, priceType?: string): string {
   return `€${price.toLocaleString()}`;
 }
 
+function preferredGenderLabel(value?: string): string {
+  if (value === 'female') return 'خانم';
+  if (value === 'male') return 'آقا';
+  return 'فرقی ندارد';
+}
+
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (diff < 60) return 'همین الان';
@@ -114,9 +120,37 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
                   <Clock size={12} /> {timeAgo(ad.createdAt)}
                 </span>
+                {ad.category === 'real-estate' && ad.housing?.residenceEligible && (
+                  <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 text-xs px-3 py-1.5 rounded-full font-semibold">
+                    🏛️ رزیدنسا دارد
+                  </span>
+                )}
               </div>
               <h2 className="font-semibold text-gray-800 mb-2">توضیحات</h2>
               <p className="text-gray-600 text-sm leading-loose whitespace-pre-wrap">{ad.description}</p>
+
+              {ad.category === 'real-estate' && (
+                <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">رهن</p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {ad.housing?.deposit ? `€${Number(ad.housing.deposit).toLocaleString()}` : 'ثبت نشده'}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">رزیدنسا</p>
+                    <p className="text-sm font-semibold text-gray-700">{ad.housing?.residenceEligible ? 'دارد' : 'ندارد'}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">مناسب برای</p>
+                    <p className="text-sm font-semibold text-gray-700">{preferredGenderLabel(ad.housing?.preferredGender)}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">تعداد هم‌خانه</p>
+                    <p className="text-sm font-semibold text-gray-700">{ad.housing?.roommatesCount ?? 'ثبت نشده'}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

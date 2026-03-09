@@ -23,6 +23,10 @@ const adSchema = z.object({
   price: z.string().optional(),
   phone: z.string().optional(),
   showPhone: z.boolean().optional(),
+  deposit: z.string().optional(),
+  residenceEligible: z.boolean().optional(),
+  preferredGender: z.enum(['male', 'female', 'any']).optional(),
+  roommatesCount: z.string().optional(),
 });
 
 type AdForm = z.infer<typeof adSchema>;
@@ -69,6 +73,10 @@ export default function EditAdPage() {
         price: ad.price?.toString(),
         phone: ad.phone,
         showPhone: ad.showPhone,
+        deposit: ad.housing?.deposit?.toString(),
+        residenceEligible: ad.housing?.residenceEligible,
+        preferredGender: ad.housing?.preferredGender || 'any',
+        roommatesCount: ad.housing?.roommatesCount?.toString(),
       });
       setImages(ad.images || []);
     } catch {
@@ -104,7 +112,16 @@ export default function EditAdPage() {
       const res = await fetch(`/api/ads/${adId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, images }),
+        body: JSON.stringify({
+          ...data,
+          images,
+          housing: category === 'real-estate' ? {
+            deposit: data.deposit ? Number(data.deposit) : undefined,
+            residenceEligible: data.residenceEligible === true,
+            preferredGender: data.preferredGender || 'any',
+            roommatesCount: data.roommatesCount ? Number(data.roommatesCount) : undefined,
+          } : undefined,
+        }),
       });
 
       if (res.ok) {
@@ -169,6 +186,34 @@ export default function EditAdPage() {
                 {CITIES.map(city => <option key={city.value} value={city.value}>{city.label}</option>)}
               </select>
             </div>
+
+            {category === 'real-estate' && (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-3">
+                <h3 className="text-sm font-semibold text-amber-800">جزئیات مسکن</h3>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">مبلغ رهن (€)</label>
+                  <input {...register('deposit')} type="number" min="0" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">مناسب برای</label>
+                    <select {...register('preferredGender')} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                      <option value="any">فرقی ندارد</option>
+                      <option value="female">خانم</option>
+                      <option value="male">آقا</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">تعداد هم‌خانه</label>
+                    <input {...register('roommatesCount')} type="number" min="0" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input type="checkbox" {...register('residenceEligible')} className="accent-brand-500" />
+                  این واحد قابلیت رزیدنسا دارد
+                </label>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl p-4 border border-gray-100">

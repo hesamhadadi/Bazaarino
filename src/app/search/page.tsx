@@ -17,6 +17,7 @@ interface SearchParams {
   priceType?: string;
   featured?: string;
   hasImage?: string;
+  residence?: string;
   sort?: string;
   page?: string;
 }
@@ -43,6 +44,8 @@ async function searchAds(params: SearchParams) {
     if (params.subcategory) query.subcategory = params.subcategory;
     if (params.featured === 'true') query.isFeatured = true;
     if (params.hasImage === 'true') query.images = { $exists: true, $ne: [] };
+    if (params.residence === 'yes') query['housing.residenceEligible'] = true;
+    if (params.residence === 'no') query['housing.residenceEligible'] = { $ne: true };
     if (params.priceType && params.priceType !== 'all') query.priceType = params.priceType;
 
     if (params.minPrice || params.maxPrice) {
@@ -85,12 +88,31 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const { ads, total, page, totalPages } = await searchAds(searchParams);
   const selectedCategory = CATEGORIES.find(c => c.id === searchParams.category);
   const selectedSubcategories = selectedCategory?.subcategories || [];
+  const selectedCity = CITIES.find((c) => c.value === searchParams.city);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-4 pb-24 md:pb-10">
+        {selectedCity && (
+          <div
+            className="rounded-2xl overflow-hidden h-40 md:h-52 relative mb-4 border border-gray-200"
+            style={{
+              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0.05)), url(https://source.unsplash.com/1600x500/?${selectedCity.value},italy,city)`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div className="absolute inset-0 flex items-end p-4">
+              <div className="text-white">
+                <p className="text-xs opacity-90">شهر انتخابی</p>
+                <h2 className="text-xl md:text-2xl font-bold">{selectedCity.label}</h2>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Search header */}
         <div className="mb-4">
           <form method="GET" className="flex gap-2 mb-4">
@@ -189,6 +211,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               <option value="priceAsc">ارزان‌ترین</option>
               <option value="priceDesc">گران‌ترین</option>
               <option value="oldest">قدیمی‌ترین</option>
+            </select>
+
+            <select name="residence" defaultValue={searchParams.residence || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <option value="">رزیدنسا: همه</option>
+              <option value="yes">فقط دارای رزیدنسا</option>
+              <option value="no">فقط بدون رزیدنسا</option>
             </select>
 
             <div className="flex items-center gap-3 col-span-2 md:col-span-6 text-xs text-gray-600 mt-1">

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdCard from '@/components/ads/AdCard';
@@ -6,6 +7,7 @@ import { CATEGORIES, CITIES } from '@/lib/constants';
 import { Search, ChevronLeft, TrendingUp, MapPin } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
+import Banner from '@/models/Banner';
 
 async function getLatestAds() {
   try {
@@ -32,8 +34,26 @@ async function getFeaturedAds() {
   }
 }
 
+async function getActiveBanners() {
+  try {
+    await connectDB();
+    const now = new Date();
+    const banners = await Banner.find({
+      isActive: true,
+      startsAt: { $lte: now },
+      endsAt: { $gte: now },
+    })
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean();
+    return JSON.parse(JSON.stringify(banners));
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [latestAds, featuredAds] = await Promise.all([getLatestAds(), getFeaturedAds()]);
+  const [latestAds, featuredAds, banners] = await Promise.all([getLatestAds(), getFeaturedAds(), getActiveBanners()]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -99,6 +119,25 @@ export default async function HomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pb-24 md:pb-10">
+        {banners.length > 0 && (
+          <section className="py-5">
+            <div className="grid md:grid-cols-3 gap-3">
+              {banners.map((banner: any) => (
+                <Link key={banner._id} href={banner.linkUrl || '#'} className="block rounded-2xl overflow-hidden border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="relative h-28 md:h-32">
+                    <Image src={banner.imageUrl} alt={banner.title || 'banner'} fill className="object-cover" />
+                    {banner.title && (
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                        <p className="text-white text-xs font-semibold line-clamp-1">{banner.title}</p>
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Categories */}
         <section className="py-6">
           <div className="flex items-center justify-between mb-4">

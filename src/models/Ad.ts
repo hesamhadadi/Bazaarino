@@ -19,6 +19,12 @@ export interface IAd extends Document {
   views: number;
   isFeatured: boolean;
   rejectionReason?: string;
+  housing?: {
+    deposit?: number;
+    residenceEligible?: boolean;
+    preferredGender?: 'male' | 'female' | 'any';
+    roommatesCount?: number;
+  };
   expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -99,6 +105,26 @@ const AdSchema = new Schema<IAd>(
       default: false,
     },
     rejectionReason: String,
+    housing: {
+      deposit: {
+        type: Number,
+        min: [0, 'رهن نمی‌تواند منفی باشد'],
+      },
+      residenceEligible: {
+        type: Boolean,
+        default: false,
+      },
+      preferredGender: {
+        type: String,
+        enum: ['male', 'female', 'any'],
+        default: 'any',
+      },
+      roommatesCount: {
+        type: Number,
+        min: [0, 'تعداد هم‌خانه نمی‌تواند منفی باشد'],
+        max: [30, 'تعداد هم‌خانه نامعتبر است'],
+      },
+    },
     expiresAt: {
       type: Date,
       default: () => new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
