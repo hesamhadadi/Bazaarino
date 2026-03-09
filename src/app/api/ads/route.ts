@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import { resolveSessionUserId } from '@/lib/session-user';
+import { computeHousingNearby } from '@/lib/map-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -109,6 +110,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'کاربر معتبر یافت نشد، لطفاً دوباره وارد شوید' }, { status: 401 });
     }
 
+    const housingPayload = category === 'real-estate' ? {
+      deposit: housing?.deposit ? Number(housing.deposit) : undefined,
+      residenceEligible: housing?.residenceEligible === true,
+      preferredGender: housing?.preferredGender || 'any',
+      roommatesCount: housing?.roommatesCount !== undefined && housing?.roommatesCount !== null
+        ? Number(housing.roommatesCount)
+        : undefined,
+      address: housing?.address || undefined,
+      location: housing?.location?.lat !== undefined && housing?.location?.lng !== undefined
+        ? { lat: Number(housing.location.lat), lng: Number(housing.location.lng) }
+        : undefined,
+    } : undefined;
+
+    const nearby = category === 'real-estate' && housingPayload?.location
+      ? computeHousingNearby(city, housingPayload.location)
+      : [];
+
     const ad = await Ad.create({
       title,
       description,
@@ -123,14 +141,7 @@ export async function POST(request: NextRequest) {
       email,
       showPhone: showPhone !== false,
       showEmail: showEmail === true,
-      housing: category === 'real-estate' ? {
-        deposit: housing?.deposit ? Number(housing.deposit) : undefined,
-        residenceEligible: housing?.residenceEligible === true,
-        preferredGender: housing?.preferredGender || 'any',
-        roommatesCount: housing?.roommatesCount !== undefined && housing?.roommatesCount !== null
-          ? Number(housing.roommatesCount)
-          : undefined,
-      } : undefined,
+      housing: housingPayload ? { ...housingPayload, nearby } : undefined,
       userId,
       status: 'pending',
     });

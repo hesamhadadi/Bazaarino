@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Clock, Eye, Sparkles, BadgeCheck } from 'lucide-react';
-import { getCityLabel } from '@/lib/constants';
+import { getCategoryById, getCityLabel } from '@/lib/constants';
 import FavoriteButton from '@/components/ads/FavoriteButton';
 import CategoryIcon from '@/components/ui/CategoryIcon';
+import { formatFaNumber, toFaDigits } from '@/lib/locale';
 
 interface AdCardProps {
   ad: {
@@ -36,26 +37,27 @@ function formatPrice(price?: number, priceType?: string): string {
   if (priceType === 'negotiable') return 'توافقی';
   if (priceType === 'exchange') return 'معاوضه';
   if (!price) return 'توافقی';
-  return `€${price.toLocaleString()}`;
+  return `€${formatFaNumber(price)}`;
 }
 
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (diff < 60) return 'همین الان';
-  if (diff < 3600) return `${Math.floor(diff / 60)} دقیقه پیش`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} ساعت پیش`;
-  if (diff < 2592000) return `${Math.floor(diff / 86400)} روز پیش`;
-  return `${Math.floor(diff / 2592000)} ماه پیش`;
+  if (diff < 3600) return `${toFaDigits(Math.floor(diff / 60))} دقیقه پیش`;
+  if (diff < 86400) return `${toFaDigits(Math.floor(diff / 3600))} ساعت پیش`;
+  if (diff < 2592000) return `${toFaDigits(Math.floor(diff / 86400))} روز پیش`;
+  return `${toFaDigits(Math.floor(diff / 2592000))} ماه پیش`;
 }
 
 export default function AdCard({ ad }: AdCardProps) {
   const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= new Date());
   const adUser = typeof ad.userId === 'object' ? ad.userId : null;
   const isAdminPoster = adUser?.role === 'admin';
+  const category = getCategoryById(ad.category);
 
   return (
     <Link href={`/ads/${ad._id}`}>
-      <div className={`bg-white rounded-2xl overflow-hidden border cursor-pointer hover:-translate-y-0.5 hover:shadow-lg transition-all ${
+      <div className={`h-full flex flex-col bg-white rounded-2xl overflow-hidden border cursor-pointer hover:-translate-y-0.5 hover:shadow-lg transition-all ${
         isFeaturedActive ? 'border-orange-300 shadow-orange-100 shadow-md' : 'border-gray-100'
       }`}>
         <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
@@ -79,13 +81,13 @@ export default function AdCard({ ad }: AdCardProps) {
             </div>
           )}
           <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Eye size={10} /> {ad.views}
+            <Eye size={10} /> {toFaDigits(ad.views)}
           </div>
         </div>
-        <div className="p-3">
+        <div className="p-3 flex-1 flex flex-col">
           <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2 leading-relaxed">{ad.title}</h3>
           <div className="text-orange-600 font-bold text-sm mb-2">{formatPrice(ad.price, ad.priceType)}</div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2 min-h-[26px]">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                 <Image src={adUser?.avatar || '/default-avatar.svg'} alt={adUser?.name || 'user'} width={24} height={24} className="w-full h-full object-cover" />
@@ -100,14 +102,14 @@ export default function AdCard({ ad }: AdCardProps) {
               {timeAgo(ad.createdAt)}
             </div>
           </div>
-          <div className="flex items-center justify-between text-xs text-gray-400">
+          <div className="flex items-center justify-between text-xs text-gray-400 mt-auto">
             <div className="flex items-center gap-1">
               <MapPin size={10} />
               <span>{getCityLabel(ad.city)}</span>
             </div>
             <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full text-[11px]">
               <CategoryIcon categoryId={ad.category} size={11} />
-              دسته
+              {category?.label || 'متفرقه'}
             </span>
           </div>
         </div>

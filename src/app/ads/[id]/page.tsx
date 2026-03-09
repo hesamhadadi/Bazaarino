@@ -11,6 +11,7 @@ import CategoryIcon from '@/components/ui/CategoryIcon';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel } from '@/lib/constants';
 import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck } from 'lucide-react';
+import { formatFaNumber, toFaDigits } from '@/lib/locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ function formatPrice(price?: number, priceType?: string): string {
   if (priceType === 'negotiable') return 'توافقی';
   if (priceType === 'exchange') return 'معاوضه';
   if (!price) return 'توافقی';
-  return `€${price.toLocaleString()}`;
+  return `€${formatFaNumber(price)}`;
 }
 
 function preferredGenderLabel(value?: string): string {
@@ -52,10 +53,10 @@ function preferredGenderLabel(value?: string): string {
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (diff < 60) return 'همین الان';
-  if (diff < 3600) return `${Math.floor(diff / 60)} دقیقه پیش`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} ساعت پیش`;
-  if (diff < 2592000) return `${Math.floor(diff / 86400)} روز پیش`;
-  return `${Math.floor(diff / 2592000)} ماه پیش`;
+  if (diff < 3600) return `${toFaDigits(Math.floor(diff / 60))} دقیقه پیش`;
+  if (diff < 86400) return `${toFaDigits(Math.floor(diff / 3600))} ساعت پیش`;
+  if (diff < 2592000) return `${toFaDigits(Math.floor(diff / 86400))} روز پیش`;
+  return `${toFaDigits(Math.floor(diff / 2592000))} ماه پیش`;
 }
 
 export default async function AdDetailPage({ params }: { params: { id: string } }) {
@@ -89,7 +90,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 <AdImageGallery images={ad.images} title={ad.title} />
               ) : (
                 <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
-                  <span className="text-6xl">{category?.icon || '📦'}</span>
+                  <CategoryIcon categoryId={ad.category} size={56} className="text-gray-400" />
                 </div>
               )}
             </div>
@@ -120,7 +121,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   </span>
                 )}
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
-                  <Eye size={12} /> {ad.views} بازدید
+                  <Eye size={12} /> {toFaDigits(ad.views)} بازدید
                 </span>
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
                   <Clock size={12} /> {timeAgo(ad.createdAt)}
@@ -139,7 +140,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   <div className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs text-gray-400 mb-1">رهن</p>
                     <p className="text-sm font-semibold text-gray-700">
-                      {ad.housing?.deposit ? `€${Number(ad.housing.deposit).toLocaleString()}` : 'ثبت نشده'}
+                      {ad.housing?.deposit ? `€${formatFaNumber(Number(ad.housing.deposit))}` : 'ثبت نشده'}
                     </p>
                   </div>
                   <div className={`rounded-xl p-3 ${ad.housing?.residenceEligible ? 'bg-emerald-50 border border-emerald-100' : 'bg-gray-50'}`}>
@@ -163,8 +164,23 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                     <p className="text-xs text-gray-400 mb-1">تعداد هم‌خانه</p>
                     <p className="text-sm font-semibold text-gray-700 flex items-center gap-1">
                       <Users size={14} className="text-gray-500" />
-                      {ad.housing?.roommatesCount ?? 'ثبت نشده'}
+                      {ad.housing?.roommatesCount !== undefined && ad.housing?.roommatesCount !== null ? toFaDigits(ad.housing.roommatesCount) : 'ثبت نشده'}
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {ad.category === 'real-estate' && ad.housing?.nearby?.length > 0 && (
+                <div className="mt-5">
+                  <h3 className="font-semibold text-gray-800 mb-2">فاصله تقریبی از نقاط مهم</h3>
+                  <div className="grid md:grid-cols-2 gap-2">
+                    {ad.housing.nearby.map((item: any) => (
+                      <div key={item.key} className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                        <p className="text-sm font-semibold text-gray-700">{item.label}</p>
+                        <p className="text-xs text-gray-500 mt-1">فاصله: {toFaDigits(item.distanceKm)} کیلومتر</p>
+                        <p className="text-xs text-gray-500">زمان: {toFaDigits(item.driveMinutes)} دقیقه با خودرو • {toFaDigits(item.walkMinutes)} دقیقه پیاده</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

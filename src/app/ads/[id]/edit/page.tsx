@@ -9,9 +9,13 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { CATEGORIES, CITIES } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
+import dynamic from 'next/dynamic';
 import { Upload, X, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import type { LatLng } from '@/lib/map-data';
+
+const HousingLocationPicker = dynamic(() => import('@/components/maps/HousingLocationPicker'), { ssr: false });
 
 const adSchema = z.object({
   title: z.string().min(5).max(100),
@@ -27,6 +31,9 @@ const adSchema = z.object({
   residenceEligible: z.boolean().optional(),
   preferredGender: z.enum(['male', 'female', 'any']).optional(),
   roommatesCount: z.string().optional(),
+  address: z.string().optional(),
+  locationLat: z.string().optional(),
+  locationLng: z.string().optional(),
 });
 
 type AdForm = z.infer<typeof adSchema>;
@@ -40,6 +47,7 @@ export default function EditAdPage() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingAd, setLoadingAd] = useState(true);
+  const [location, setLocation] = useState<LatLng | null>(null);
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<AdForm>({
     resolver: zodResolver(adSchema),
@@ -77,7 +85,13 @@ export default function EditAdPage() {
         residenceEligible: ad.housing?.residenceEligible,
         preferredGender: ad.housing?.preferredGender || 'any',
         roommatesCount: ad.housing?.roommatesCount?.toString(),
+        address: ad.housing?.address || '',
+        locationLat: ad.housing?.location?.lat ? String(ad.housing.location.lat) : '',
+        locationLng: ad.housing?.location?.lng ? String(ad.housing.location.lng) : '',
       });
+      if (ad.housing?.location?.lat && ad.housing?.location?.lng) {
+        setLocation({ lat: ad.housing.location.lat, lng: ad.housing.location.lng });
+      }
       setImages(ad.images || []);
     } catch {
       toast.error('خطا در دریافت آگهی');
@@ -120,6 +134,10 @@ export default function EditAdPage() {
             residenceEligible: data.residenceEligible === true,
             preferredGender: data.preferredGender || 'any',
             roommatesCount: data.roommatesCount ? Number(data.roommatesCount) : undefined,
+            address: data.address || undefined,
+            location: data.locationLat && data.locationLng
+              ? { lat: Number(data.locationLat), lng: Number(data.locationLng) }
+              : undefined,
           } : undefined,
         }),
       });
@@ -212,6 +230,27 @@ export default function EditAdPage() {
                   <input type="checkbox" {...register('residenceEligible')} className="accent-brand-500" />
                   این واحد قابلیت رزیدنسا دارد
                 </label>
+
+                <div className="pt-1">
+                  <label className="block text-xs text-gray-600 mb-1">آدرس دقیق روی نقشه</label>
+                  <input
+                    {...register('address')}
+                    placeholder="مثلاً: Via Roma 12"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2"
+                  />
+                  <HousingLocationPicker
+                    city={watch('city') || 'turin'}
+                    value={location}
+                    onChange={(val) => {
+                      setLocation(val);
+                      setValue('locationLat', String(val.lat));
+                      setValue('locationLng', String(val.lng));
+                    }}
+                  />
+                  <p className="text-[11px] text-gray-500 mt-2">روی نقشه کلیک کن تا لوکیشن ثبت شود. نقشه بر اساس شهر انتخابی مرکز می‌گیرد.</p>
+                  <input type="hidden" {...register('locationLat')} />
+                  <input type="hidden" {...register('locationLng')} />
+                </div>
               </div>
             )}
           </div>

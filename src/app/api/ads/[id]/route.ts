@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import { resolveSessionUserId } from '@/lib/session-user';
+import { computeHousingNearby } from '@/lib/map-data';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -65,6 +66,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       allowedFields.forEach(field => {
         if (body[field] !== undefined) (ad as any)[field] = body[field];
       });
+      if (body.housing && ad.category === 'real-estate') {
+        const location = body.housing?.location?.lat !== undefined && body.housing?.location?.lng !== undefined
+          ? { lat: Number(body.housing.location.lat), lng: Number(body.housing.location.lng) }
+          : null;
+        const city = body.city || ad.city;
+        (ad as any).housing.nearby = computeHousingNearby(city, location);
+      }
       // Reset to pending when owner edits
       if (!isAdmin) ad.status = 'pending';
     }

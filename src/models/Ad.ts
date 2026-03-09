@@ -25,6 +25,18 @@ export interface IAd extends Document {
     residenceEligible?: boolean;
     preferredGender?: 'male' | 'female' | 'any';
     roommatesCount?: number;
+    address?: string;
+    location?: {
+      lat: number;
+      lng: number;
+    };
+    nearby?: Array<{
+      key: string;
+      label: string;
+      distanceKm: number;
+      driveMinutes: number;
+      walkMinutes: number;
+    }>;
   };
   expiresAt?: Date;
   createdAt: Date;
@@ -128,6 +140,23 @@ const AdSchema = new Schema<IAd>(
         min: [0, 'تعداد هم‌خانه نمی‌تواند منفی باشد'],
         max: [30, 'تعداد هم‌خانه نامعتبر است'],
       },
+      address: {
+        type: String,
+        trim: true,
+      },
+      location: {
+        lat: { type: Number },
+        lng: { type: Number },
+      },
+      nearby: [
+        {
+          key: { type: String },
+          label: { type: String },
+          distanceKm: { type: Number },
+          driveMinutes: { type: Number },
+          walkMinutes: { type: Number },
+        },
+      ],
     },
     expiresAt: {
       type: Date,
