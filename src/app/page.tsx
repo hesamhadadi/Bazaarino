@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdCard from '@/components/ads/AdCard';
 import LatestAdsSection from '@/components/home/LatestAdsSection';
-import { CATEGORIES, CITIES } from '@/lib/constants';
+import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
 import { Search, ChevronLeft, TrendingUp, MapPin } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
@@ -77,7 +77,7 @@ export default async function HomePage() {
       {/* Hero Section */}
       <div
         className="hero-cinematic text-white"
-        style={{ backgroundImage: "url('/hero-italy.svg')" }}
+        style={{ backgroundImage: "url('/hero-europe.svg')" }}
       >
         <div className="hero-grid absolute inset-0"></div>
         <div className="relative max-w-7xl mx-auto px-4 py-10 md:py-16">
@@ -88,10 +88,10 @@ export default async function HomePage() {
                 <span className="w-3 h-5 bg-white/80 rounded-sm"></span>
                 <span className="w-3 h-5 bg-red-400 rounded-sm opacity-80"></span>
               </div>
-              <span className="text-white/80 text-sm">نیازمندی ایرانیان ایتالیا</span>
+              <span className="text-white/80 text-sm">نیازمندی ایرانیان اروپا</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-3 drop-shadow-[0_6px_30px_rgba(0,0,0,0.35)]">بازارینو</h1>
-            <p className="text-white/90 text-sm md:text-lg font-medium">خرید، فروش و اجاره در شهرهای ایتالیا</p>
+            <p className="text-white/90 text-sm md:text-lg font-medium">خرید، فروش و اجاره در شهرهای اروپا</p>
           </div>
 
           {/* Search Bar */}
@@ -104,6 +104,15 @@ export default async function HomePage() {
                   placeholder="دنبال چی می‌گردی؟"
                   className="flex-1 px-3 py-2 text-gray-800 outline-none text-sm bg-transparent placeholder:text-gray-400"
                 />
+                <select
+                  name="country"
+                  className="text-gray-600 text-sm bg-gray-50 border-0 rounded-xl px-3 py-2 outline-none"
+                >
+                  <option value="">همه کشورها</option>
+                  {COUNTRIES.map((country) => (
+                    <option key={country.value} value={country.value}>{country.label}</option>
+                  ))}
+                </select>
                 <select
                   name="city"
                   className="text-gray-600 text-sm bg-gray-50 border-0 rounded-xl px-3 py-2 outline-none"

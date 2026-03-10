@@ -17,11 +17,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex gap-0.5">
-              <span className="w-2 h-7 bg-green-600 rounded-sm"></span>
-              <span className="w-2 h-7 bg-gray-200 rounded-sm"></span>
-              <span className="w-2 h-7 bg-red-600 rounded-sm"></span>
-            </div>
+            <Image src="/logo-eu.svg" alt="bazaarino" width={28} height={28} />
             <span className="text-xl font-bold text-gray-800">بازارینو</span>
           </Link>
 

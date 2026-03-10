@@ -23,6 +23,14 @@ const cityIconMap: Record<string, any> = {
   bergamo: Castle,
   brescia: Building2,
   padua: Landmark,
+  berlin: Building2,
+  munich: Castle,
+  hamburg: Waves,
+  frankfurt: Building2,
+  cologne: Landmark,
+  london: Landmark,
+  manchester: Building2,
+  birmingham: Building2,
 };
 
 export default function CityIcon({ city, size = 13, className }: CityIconProps) {

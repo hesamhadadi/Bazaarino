@@ -13,7 +13,7 @@ import { StarRating } from '@/components/ui/StarRating';
 import RateUser from '@/components/ads/RateUser';
 import ReportForm from '@/components/ads/ReportForm';
 import Image from 'next/image';
-import { CATEGORIES, getCityLabel } from '@/lib/constants';
+import { CATEGORIES, getCityLabel, getCountryLabel, getCountryByCity } from '@/lib/constants';
 import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle } from 'lucide-react';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
 import nextDynamic from 'next/dynamic';
@@ -86,6 +86,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
   const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now);
 
   const category = CATEGORIES.find(c => c.id === ad.category);
+  const countryLabel = getCountryLabel(ad.country || getCountryByCity(ad.city));
   const subcategory = category?.subcategories?.find((s: any) => s.value === ad.subcategory);
 
   return (
@@ -133,7 +134,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
               <div className="text-2xl font-bold text-orange-600 mb-4">{formatPrice(ad.price, ad.priceType)}</div>
               <div className="flex flex-wrap gap-2 mb-5">
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
-                  <MapPin size={12} /> {getCityLabel(ad.city)}
+                  <MapPin size={12} /> {getCityLabel(ad.city)} · {countryLabel}
                 </span>
                 {subcategory && (
                   <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">

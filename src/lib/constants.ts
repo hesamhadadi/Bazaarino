@@ -1,20 +1,34 @@
+export const COUNTRIES = [
+  { value: 'italy', label: 'ایتالیا' },
+  { value: 'germany', label: 'آلمان' },
+  { value: 'uk', label: 'انگلستان' },
+];
+
 export const CITIES = [
-  { value: 'rome', label: 'رم (Roma)' },
-  { value: 'milan', label: 'میلان (Milano)' },
-  { value: 'florence', label: 'فلورانس (Firenze)' },
-  { value: 'venice', label: 'ونیز (Venezia)' },
-  { value: 'naples', label: 'ناپل (Napoli)' },
-  { value: 'turin', label: 'تورین (Torino)' },
-  { value: 'bologna', label: 'بولونیا (Bologna)' },
-  { value: 'genoa', label: 'جنوا (Genova)' },
-  { value: 'palermo', label: 'پالرمو (Palermo)' },
-  { value: 'catania', label: 'کاتانیا (Catania)' },
-  { value: 'verona', label: 'ورونا (Verona)' },
-  { value: 'bari', label: 'باری (Bari)' },
-  { value: 'bergamo', label: 'برگامو (Bergamo)' },
-  { value: 'brescia', label: 'برشیا (Brescia)' },
-  { value: 'padua', label: 'پادوا (Padova)' },
-  { value: 'other', label: 'سایر شهرها' },
+  { value: 'rome', label: 'رم (Roma)', country: 'italy' },
+  { value: 'milan', label: 'میلان (Milano)', country: 'italy' },
+  { value: 'florence', label: 'فلورانس (Firenze)', country: 'italy' },
+  { value: 'venice', label: 'ونیز (Venezia)', country: 'italy' },
+  { value: 'naples', label: 'ناپل (Napoli)', country: 'italy' },
+  { value: 'turin', label: 'تورین (Torino)', country: 'italy' },
+  { value: 'bologna', label: 'بولونیا (Bologna)', country: 'italy' },
+  { value: 'genoa', label: 'جنوا (Genova)', country: 'italy' },
+  { value: 'palermo', label: 'پالرمو (Palermo)', country: 'italy' },
+  { value: 'catania', label: 'کاتانیا (Catania)', country: 'italy' },
+  { value: 'verona', label: 'ورونا (Verona)', country: 'italy' },
+  { value: 'bari', label: 'باری (Bari)', country: 'italy' },
+  { value: 'bergamo', label: 'برگامو (Bergamo)', country: 'italy' },
+  { value: 'brescia', label: 'برشیا (Brescia)', country: 'italy' },
+  { value: 'padua', label: 'پادوا (Padova)', country: 'italy' },
+  { value: 'berlin', label: 'برلین (Berlin)', country: 'germany' },
+  { value: 'munich', label: 'مونیخ (Munich)', country: 'germany' },
+  { value: 'hamburg', label: 'هامبورگ (Hamburg)', country: 'germany' },
+  { value: 'frankfurt', label: 'فرانکفورت (Frankfurt)', country: 'germany' },
+  { value: 'cologne', label: 'کلن (Cologne)', country: 'germany' },
+  { value: 'london', label: 'لندن (London)', country: 'uk' },
+  { value: 'manchester', label: 'منچستر (Manchester)', country: 'uk' },
+  { value: 'birmingham', label: 'بیرمنگام (Birmingham)', country: 'uk' },
+  { value: 'other', label: 'سایر شهرها', country: 'other' },
 ];
 
 export const CATEGORIES = [
@@ -157,4 +171,18 @@ export const getAllSubcategories = () => {
 
 export const getCityLabel = (value: string) => {
   return CITIES.find(c => c.value === value)?.label || value;
+};
+
+export const getCitiesByCountry = (country?: string) => {
+  if (!country) return CITIES;
+  return CITIES.filter(c => c.country === country);
+};
+
+export const getCountryByCity = (value?: string) => {
+  if (!value) return undefined;
+  return CITIES.find(c => c.value === value)?.country;
+};
+
+export const getCountryLabel = (value?: string) => {
+  return COUNTRIES.find(c => c.value === value)?.label || value || '';
 };

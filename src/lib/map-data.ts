@@ -16,6 +16,14 @@ export const CITY_CENTERS: Record<string, LatLng> = {
   bergamo: { lat: 45.6983, lng: 9.6773 },
   brescia: { lat: 45.5416, lng: 10.2118 },
   padua: { lat: 45.4064, lng: 11.8768 },
+  berlin: { lat: 52.52, lng: 13.405 },
+  munich: { lat: 48.1371, lng: 11.5754 },
+  hamburg: { lat: 53.5511, lng: 9.9937 },
+  frankfurt: { lat: 50.1109, lng: 8.6821 },
+  cologne: { lat: 50.9375, lng: 6.9603 },
+  london: { lat: 51.5074, lng: -0.1278 },
+  manchester: { lat: 53.4808, lng: -2.2426 },
+  birmingham: { lat: 52.4862, lng: -1.8904 },
   other: { lat: 42.5, lng: 12.5 },
 };
 
@@ -38,8 +46,88 @@ const TURIN_POIS: POI[] = [
   { key: 'bus', label: 'ایستگاه اتوبوس', lat: 45.0676, lng: 7.6702, icon: 'bus', busLines: ['۴', '۱۱', '۱۵'] },
 ];
 
+const berlinPois: POI[] = [
+  { key: 'aldi', label: 'فروشگاه Aldi', lat: 52.5215, lng: 13.39, icon: 'grocery' },
+  { key: 'rewe', label: 'فروشگاه Rewe', lat: 52.517, lng: 13.41, icon: 'grocery' },
+  { key: 'edeka', label: 'فروشگاه Edeka', lat: 52.526, lng: 13.415, icon: 'grocery' },
+  { key: 'tu-berlin', label: 'دانشگاه TU Berlin', lat: 52.512, lng: 13.326, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو', lat: 52.52, lng: 13.405, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 52.523, lng: 13.398, icon: 'bus' },
+];
+
+const munichPois: POI[] = [
+  { key: 'aldi', label: 'فروشگاه Aldi', lat: 48.138, lng: 11.57, icon: 'grocery' },
+  { key: 'rewe', label: 'فروشگاه Rewe', lat: 48.135, lng: 11.58, icon: 'grocery' },
+  { key: 'edeka', label: 'فروشگاه Edeka', lat: 48.14, lng: 11.56, icon: 'grocery' },
+  { key: 'lmu', label: 'دانشگاه LMU', lat: 48.15, lng: 11.58, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو', lat: 48.137, lng: 11.575, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 48.134, lng: 11.572, icon: 'bus' },
+];
+
+const hamburgPois: POI[] = [
+  { key: 'aldi', label: 'فروشگاه Aldi', lat: 53.551, lng: 10.0, icon: 'grocery' },
+  { key: 'rewe', label: 'فروشگاه Rewe', lat: 53.548, lng: 9.99, icon: 'grocery' },
+  { key: 'edeka', label: 'فروشگاه Edeka', lat: 53.554, lng: 9.985, icon: 'grocery' },
+  { key: 'uni-hh', label: 'دانشگاه هامبورگ', lat: 53.56, lng: 9.985, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو', lat: 53.552, lng: 9.995, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 53.553, lng: 9.989, icon: 'bus' },
+];
+
+const frankfurtPois: POI[] = [
+  { key: 'aldi', label: 'فروشگاه Aldi', lat: 50.111, lng: 8.68, icon: 'grocery' },
+  { key: 'rewe', label: 'فروشگاه Rewe', lat: 50.114, lng: 8.685, icon: 'grocery' },
+  { key: 'edeka', label: 'فروشگاه Edeka', lat: 50.108, lng: 8.676, icon: 'grocery' },
+  { key: 'goethe', label: 'دانشگاه Goethe', lat: 50.127, lng: 8.651, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو', lat: 50.11, lng: 8.682, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 50.109, lng: 8.689, icon: 'bus' },
+];
+
+const colognePois: POI[] = [
+  { key: 'aldi', label: 'فروشگاه Aldi', lat: 50.937, lng: 6.96, icon: 'grocery' },
+  { key: 'rewe', label: 'فروشگاه Rewe', lat: 50.934, lng: 6.965, icon: 'grocery' },
+  { key: 'edeka', label: 'فروشگاه Edeka', lat: 50.94, lng: 6.955, icon: 'grocery' },
+  { key: 'uni-koeln', label: 'دانشگاه کلن', lat: 50.924, lng: 6.928, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو', lat: 50.936, lng: 6.96, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 50.939, lng: 6.962, icon: 'bus' },
+];
+
+const londonPois: POI[] = [
+  { key: 'tesco', label: 'فروشگاه Tesco', lat: 51.507, lng: -0.12, icon: 'grocery' },
+  { key: 'sains', label: "فروشگاه Sainsbury's", lat: 51.51, lng: -0.13, icon: 'grocery' },
+  { key: 'asda', label: 'فروشگاه ASDA', lat: 51.505, lng: -0.11, icon: 'grocery' },
+  { key: 'ucl', label: 'دانشگاه UCL', lat: 51.524, lng: -0.134, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو (Tube)', lat: 51.507, lng: -0.128, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 51.508, lng: -0.13, icon: 'bus' },
+];
+
+const manchesterPois: POI[] = [
+  { key: 'tesco', label: 'فروشگاه Tesco', lat: 53.48, lng: -2.24, icon: 'grocery' },
+  { key: 'sains', label: "فروشگاه Sainsbury's", lat: 53.482, lng: -2.245, icon: 'grocery' },
+  { key: 'asda', label: 'فروشگاه ASDA', lat: 53.478, lng: -2.238, icon: 'grocery' },
+  { key: 'man-uni', label: 'دانشگاه منچستر', lat: 53.466, lng: -2.233, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو (Tram)', lat: 53.48, lng: -2.24, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 53.481, lng: -2.246, icon: 'bus' },
+];
+
+const birminghamPois: POI[] = [
+  { key: 'tesco', label: 'فروشگاه Tesco', lat: 52.486, lng: -1.89, icon: 'grocery' },
+  { key: 'sains', label: "فروشگاه Sainsbury's", lat: 52.488, lng: -1.892, icon: 'grocery' },
+  { key: 'asda', label: 'فروشگاه ASDA', lat: 52.484, lng: -1.888, icon: 'grocery' },
+  { key: 'bham-uni', label: 'دانشگاه بیرمنگام', lat: 52.45, lng: -1.93, icon: 'university' },
+  { key: 'metro', label: 'ایستگاه مترو (Tram)', lat: 52.485, lng: -1.89, icon: 'metro' },
+  { key: 'bus', label: 'ایستگاه اتوبوس', lat: 52.487, lng: -1.893, icon: 'bus' },
+];
+
 const POIS_BY_CITY: Record<string, POI[]> = {
   turin: TURIN_POIS,
+  berlin: berlinPois,
+  munich: munichPois,
+  hamburg: hamburgPois,
+  frankfurt: frankfurtPois,
+  cologne: colognePois,
+  london: londonPois,
+  manchester: manchesterPois,
+  birmingham: birminghamPois,
 };
 
 function haversineKm(a: LatLng, b: LatLng): number {

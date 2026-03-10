@@ -8,7 +8,7 @@ import { computeHousingNearby } from '@/lib/map-data';
 import { sendTelegramMessage, sendTelegramPhoto } from '@/lib/telegram';
 import { getAppUrl } from '@/lib/app-url';
 import Setting from '@/models/Setting';
-import { getCityLabel, getCategoryById } from '@/lib/constants';
+import { getCityLabel, getCategoryById, getCountryByCity } from '@/lib/constants';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const city = searchParams.get('city');
+    const country = searchParams.get('country');
     const category = searchParams.get('category');
     const subcategory = searchParams.get('subcategory');
     const q = searchParams.get('q');
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
 
     const query: any = { status };
 
+    if (country) query.country = country;
     if (city) query.city = city;
     if (category) query.category = category;
     if (subcategory) query.subcategory = subcategory;
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       title, description, price, priceType, currency,
-      category, subcategory, city, images,
+      category, subcategory, city, country, images,
       phone, email, showPhone, showEmail,
       housing,
     } = body;
@@ -131,6 +133,8 @@ export async function POST(request: NextRequest) {
       ? computeHousingNearby(city, housingPayload.location)
       : [];
 
+    const resolvedCountry = country || getCountryByCity(city) || 'italy';
+
     const ad = await Ad.create({
       title,
       description,
@@ -139,6 +143,7 @@ export async function POST(request: NextRequest) {
       currency: currency || 'EUR',
       category,
       subcategory,
+      country: resolvedCountry,
       city,
       images: images || [],
       phone,

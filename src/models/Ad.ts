@@ -8,6 +8,7 @@ export interface IAd extends Document {
   currency: 'EUR' | 'توافقی';
   category: string;
   subcategory: string;
+  country?: string;
   city: string;
   images: string[];
   status: 'pending' | 'approved' | 'rejected' | 'expired' | 'sold';
@@ -81,6 +82,10 @@ const AdSchema = new Schema<IAd>(
     subcategory: {
       type: String,
       required: [true, 'زیر دسته‌بندی الزامی است'],
+    },
+    country: {
+      type: String,
+      default: 'italy',
     },
     city: {
       type: String,
@@ -177,7 +182,7 @@ const AdSchema = new Schema<IAd>(
 );
 
 // Indexes for performance
-AdSchema.index({ city: 1, category: 1, status: 1 });
+AdSchema.index({ country: 1, city: 1, category: 1, status: 1 });
 AdSchema.index({ userId: 1 });
 AdSchema.index({ createdAt: -1 });
 AdSchema.index({ title: 'text', description: 'text' });

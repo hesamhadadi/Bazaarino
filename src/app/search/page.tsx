@@ -1,7 +1,7 @@
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdCard from '@/components/ads/AdCard';
-import { CATEGORIES, CITIES } from '@/lib/constants';
+import { CATEGORIES, CITIES, COUNTRIES, getCitiesByCountry, getCountryByCity, getCountryLabel } from '@/lib/constants';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import Banner from '@/models/Banner';
@@ -13,6 +13,7 @@ import CityIcon from '@/components/ui/CityIcon';
 
 interface SearchParams {
   q?: string;
+  country?: string;
   city?: string;
   category?: string;
   subcategory?: string;
@@ -43,6 +44,7 @@ async function searchAds(params: SearchParams) {
 
     const query: any = { status: 'approved' };
 
+    if (params.country) query.country = params.country;
     if (params.city) query.city = params.city;
     if (params.category) query.category = params.category;
     if (params.subcategory) query.subcategory = params.subcategory;
@@ -138,6 +140,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const selectedCategory = CATEGORIES.find(c => c.id === searchParams.category);
   const selectedSubcategories = selectedCategory?.subcategories || [];
   const selectedCity = CITIES.find((c) => c.value === searchParams.city);
+  const selectedCountry = searchParams.country || selectedCity?.country || getCountryByCity(searchParams.city);
+  const citiesForCountry = getCitiesByCountry(selectedCountry);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -148,7 +152,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           <div
             className="rounded-2xl overflow-hidden h-40 md:h-52 relative mb-4 border border-gray-200"
             style={{
-              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0.05)), url(${housingCityImage?.imageUrl || `https://source.unsplash.com/1600x500/?${selectedCity.value},italy,city`})`,
+              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0.05)), url(${housingCityImage?.imageUrl || `https://source.unsplash.com/1600x500/?${selectedCity.value},${selectedCountry || 'europe'},city`})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
@@ -156,7 +160,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
             <div className="absolute inset-0 flex items-end p-4">
               <div className="text-white">
                 <p className="text-xs opacity-90">شهر انتخابی</p>
-                <h2 className="text-xl md:text-2xl font-bold">{selectedCity.label}</h2>
+              <h2 className="text-xl md:text-2xl font-bold">{selectedCity.label} - {getCountryLabel(selectedCountry)}</h2>
                 {housingCityImage?.title && <p className="text-xs mt-1 opacity-90">{housingCityImage.title}</p>}
               </div>
             </div>
@@ -190,6 +194,16 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               placeholder="جستجو در آگهی‌ها..."
               className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 bg-white"
             />
+            <select
+              name="country"
+              defaultValue={searchParams.country || ''}
+              className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white"
+            >
+              <option value="">همه کشورها</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
             <button type="submit" className="bg-brand-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium">
               جستجو
             </button>
@@ -205,7 +219,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
             >
               همه شهرها
             </Link>
-            {CITIES.map(city => (
+            {citiesForCountry.map(city => (
               <Link
                 key={city.value}
                 href={`/search?${withParams(searchParams, { city: city.value, page: undefined })}`}
@@ -252,6 +266,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           </div>
           <form method="GET" className="grid grid-cols-2 md:grid-cols-6 gap-2">
             <input type="hidden" name="q" value={searchParams.q || ''} />
+            <input type="hidden" name="country" value={searchParams.country || ''} />
             <input type="hidden" name="city" value={searchParams.city || ''} />
             <input type="hidden" name="category" value={searchParams.category || ''} />
 

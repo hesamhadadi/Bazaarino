@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { CATEGORIES, CITIES } from '@/lib/constants';
+import { CATEGORIES, CITIES, COUNTRIES, getCitiesByCountry, getCountryByCity } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
 import dynamic from 'next/dynamic';
 import { Upload, X, ChevronLeft } from 'lucide-react';
@@ -22,6 +22,7 @@ const adSchema = z.object({
   description: z.string().min(20, 'توضیحات باید حداقل ۲۰ کاراکتر باشد').max(2000),
   category: z.string().min(1, 'دسته‌بندی را انتخاب کنید'),
   subcategory: z.string().min(1, 'زیر دسته را انتخاب کنید'),
+  country: z.string().min(1, 'کشور را انتخاب کنید'),
   city: z.string().min(1, 'شهر را انتخاب کنید'),
   priceType: z.enum(['fixed', 'negotiable', 'free', 'exchange']),
   price: z.string().optional(),
@@ -49,11 +50,13 @@ export default function NewAdPage() {
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<AdForm>({
     resolver: zodResolver(adSchema),
-    defaultValues: { priceType: 'fixed', showPhone: true, address: '', locationLat: '', locationLng: '' },
+    defaultValues: { priceType: 'fixed', showPhone: true, address: '', locationLat: '', locationLng: '', country: 'italy' },
   });
 
   const priceType = watch('priceType');
   const category = watch('category');
+  const country = watch('country');
+  const filteredCities = getCitiesByCountry(country || getCountryByCity(watch('city')) || 'italy');
 
   if (status === 'unauthenticated') {
     router.push('/auth/login');
@@ -207,13 +210,27 @@ export default function NewAdPage() {
               </div>
 
               <div>
+                <label className="block text-sm text-gray-600 mb-1.5">کشور *</label>
+                <select
+                  {...register('country')}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                >
+                  <option value="">انتخاب کشور</option>
+                  {COUNTRIES.map(country => (
+                    <option key={country.value} value={country.value}>{country.label}</option>
+                  ))}
+                </select>
+                {errors.country && <p className="text-red-500 text-xs mt-1">{errors.country.message}</p>}
+              </div>
+
+              <div>
                 <label className="block text-sm text-gray-600 mb-1.5">شهر *</label>
                 <select
                   {...register('city')}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 >
                   <option value="">انتخاب شهر</option>
-                  {CITIES.map(city => (
+                  {filteredCities.map(city => (
                     <option key={city.value} value={city.value}>{city.label}</option>
                   ))}
                 </select>
