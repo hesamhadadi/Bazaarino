@@ -58,6 +58,12 @@ export default function NewAdPage() {
   const country = watch('country');
   const filteredCities = getCitiesByCountry(country || getCountryByCity(watch('city')) || 'italy');
 
+  const countryStyles: Record<string, { label: string; stripes: string[] }> = {
+    italy: { label: 'ایتالیا', stripes: ['bg-green-500', 'bg-white', 'bg-red-500'] },
+    germany: { label: 'آلمان', stripes: ['bg-black', 'bg-red-600', 'bg-yellow-400'] },
+    uk: { label: 'انگلستان', stripes: ['bg-blue-700', 'bg-white', 'bg-red-600'] },
+  };
+
   if (status === 'unauthenticated') {
     router.push('/auth/login');
     return null;
@@ -160,7 +166,7 @@ export default function NewAdPage() {
               >
                 <option value="">انتخاب دسته‌بندی</option>
                 {CATEGORIES.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.icon} {cat.label}</option>
+                  <option key={cat.id} value={cat.id}>{cat.label}</option>
                 ))}
               </select>
               {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
@@ -210,16 +216,36 @@ export default function NewAdPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1.5">کشور *</label>
-                <select
-                  {...register('country')}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
-                >
-                  <option value="">انتخاب کشور</option>
-                  {COUNTRIES.map(country => (
-                    <option key={country.value} value={country.value}>{country.label}</option>
-                  ))}
-                </select>
+                <label className="block text-sm text-gray-600 mb-2">کشور *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {COUNTRIES.map((c) => {
+                    const meta = countryStyles[c.value];
+                    const active = country === c.value;
+                    return (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => {
+                          setValue('country', c.value);
+                          setValue('city', '');
+                        }}
+                        className={`rounded-2xl border p-3 text-sm font-medium transition-all ${
+                          active ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 bg-white text-gray-600 hover:border-brand-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="inline-flex overflow-hidden rounded-md border border-gray-200">
+                            <span className={`w-2.5 h-4 ${meta?.stripes?.[0] || 'bg-gray-300'}`}></span>
+                            <span className={`w-2.5 h-4 ${meta?.stripes?.[1] || 'bg-gray-200'}`}></span>
+                            <span className={`w-2.5 h-4 ${meta?.stripes?.[2] || 'bg-gray-300'}`}></span>
+                          </span>
+                          <span>{meta?.label || c.label}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <input type="hidden" {...register('country')} />
                 {errors.country && <p className="text-red-500 text-xs mt-1">{errors.country.message}</p>}
               </div>
 

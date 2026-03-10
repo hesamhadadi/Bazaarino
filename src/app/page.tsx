@@ -69,6 +69,11 @@ async function getActiveBanners() {
 
 export default async function HomePage() {
   const [latestAds, featuredAds, banners] = await Promise.all([getLatestAds(), getFeaturedAds(), getActiveBanners()]);
+  const countryCards = [
+    { id: 'italy', label: 'ایتالیا', stripes: ['bg-green-500', 'bg-white', 'bg-red-500'] },
+    { id: 'germany', label: 'آلمان', stripes: ['bg-black', 'bg-red-600', 'bg-yellow-400'] },
+    { id: 'uk', label: 'انگلستان', stripes: ['bg-blue-700', 'bg-white', 'bg-red-600'] },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -143,6 +148,51 @@ export default async function HomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pb-24 md:pb-10">
+        <section className="py-6">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-3xl border border-gray-100 p-5">
+              <h2 className="text-lg font-bold text-gray-800 mb-2">شروع سریع در اروپا</h2>
+              <p className="text-sm text-gray-500 mb-4">کشور مورد نظر را انتخاب کن و آگهی‌ها را دقیق‌تر ببین.</p>
+              <div className="grid grid-cols-3 gap-2">
+                {countryCards.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/search?country=${c.id}`}
+                    className="rounded-2xl border border-gray-200 bg-white p-3 text-center text-sm font-medium text-gray-700 hover:border-brand-300 hover:bg-brand-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="inline-flex overflow-hidden rounded-md border border-gray-200">
+                        <span className={`w-2.5 h-4 ${c.stripes[0]}`}></span>
+                        <span className={`w-2.5 h-4 ${c.stripes[1]}`}></span>
+                        <span className={`w-2.5 h-4 ${c.stripes[2]}`}></span>
+                      </span>
+                      {c.label}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gray-100 p-5">
+              <h2 className="text-lg font-bold text-gray-800 mb-3">چرا بازارینو؟</h2>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-gray-50 rounded-2xl p-3">
+                  <p className="text-xs text-gray-400">ثبت سریع</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">کمتر از ۲ دقیقه</p>
+                </div>
+                <div className="bg-gray-50 rounded-2xl p-3">
+                  <p className="text-xs text-gray-400">پوشش شهری</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">ایتالیا، آلمان، انگلیس</p>
+                </div>
+                <div className="bg-gray-50 rounded-2xl p-3">
+                  <p className="text-xs text-gray-400">اعتماد</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">پنل مدیریت و گزارش‌ها</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {banners.length > 0 && (
           <section className="py-5">
             <div className="grid md:grid-cols-3 gap-3">
