@@ -5,8 +5,10 @@ import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { computeHousingNearby } from '@/lib/map-data';
-import { sendTelegramMessage } from '@/lib/telegram';
+import { sendTelegramMessage, sendTelegramPhoto } from '@/lib/telegram';
 import { getAppUrl } from '@/lib/app-url';
+import Setting from '@/models/Setting';
+import { getCityLabel, getCategoryById } from '@/lib/constants';
 
 export async function GET(request: NextRequest) {
   try {
@@ -149,17 +151,27 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      const appUrl = getAppUrl();
-      const text = `🆕 آگهی جدید\n\nعنوان: ${title}\nشهر: ${city}\nدسته: ${category}\n\nبرای بررسی اقدام کنید.`;
-      await sendTelegramMessage(text, {
-        inlineKeyboard: [
-          [
-            { text: 'تأیید', callback_data: `approve:${ad._id}` },
-            { text: 'رد', callback_data: `reject:${ad._id}` },
-          ],
-          [{ text: 'مشاهده آگهی', url: `${appUrl}/ads/${ad._id}` }],
+      const settings = (await Setting.findOne({ key: 'global' }).lean()) as any;
+      const appUrl = settings?.siteUrl || getAppUrl();
+      const cityLabel = getCityLabel(city) || city;
+      const categoryLabel = getCategoryById(category)?.label || category;
+      const priceLabel = priceType === 'free' ? 'رایگان' : priceType === 'negotiable' ? 'توافقی' : price ? `€${price}` : 'توافقی';
+      const descSnippet = description ? `${String(description).slice(0, 140)}${String(description).length > 140 ? '…' : ''}` : '';
+      const caption = `🆕 <b>آگهی جدید</b>\n\n<b>عنوان:</b> ${title}\n<b>شهر:</b> ${cityLabel}\n<b>دسته:</b> ${categoryLabel}\n<b>قیمت:</b> ${priceLabel}\n${descSnippet ? `\n<b>توضیحات:</b> ${descSnippet}\n` : '\n'}برای بررسی اقدام کنید.`;
+      const keyboard = [
+        [
+          { text: 'تأیید', callback_data: `approve:${ad._id}` },
+          { text: 'رد', callback_data: `reject:${ad._id}` },
         ],
-      });
+        [{ text: 'مشاهده آگهی', url: `${appUrl}/ads/${ad._id}` }],
+      ];
+
+      const imageUrl = images?.[0];
+      if (imageUrl) {
+        await sendTelegramPhoto(imageUrl, caption, { inlineKeyboard: keyboard });
+      } else {
+        await sendTelegramMessage(caption, { inlineKeyboard: keyboard });
+      }
     } catch {}
 
     return NextResponse.json({ message: 'آگهی با موفقیت ثبت شد و در انتظار تأیید است', ad }, { status: 201 });

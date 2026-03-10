@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
     if (!token || !chatId) return NextResponse.json({ ok: true });
 
     const messageChatId = String(callback.message?.chat?.id || '');
-    if (chatId && messageChatId && chatId !== messageChatId) {
+    const senderId = String(callback.from?.id || '');
+    if (chatId && messageChatId && senderId && chatId !== messageChatId && chatId !== senderId) {
       return NextResponse.json({ ok: true });
     }
 

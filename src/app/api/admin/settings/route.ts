@@ -23,6 +23,7 @@ export async function GET() {
         telegramToken: settings?.telegramToken || '',
         telegramChatId: settings?.telegramChatId || '',
         telegramSecret: settings?.telegramSecret || '',
+        siteUrl: settings?.siteUrl || '',
       },
     });
   } catch {
@@ -36,7 +37,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ message: 'دسترسی ندارید' }, { status: 403 });
     }
     const body = await request.json();
-    const { telegramToken, telegramChatId } = body;
+    const { telegramToken, telegramChatId, siteUrl } = body;
 
     await connectDB();
     const existing = (await Setting.findOne({ key: 'global' })) as any;
@@ -44,7 +45,7 @@ export async function PATCH(request: NextRequest) {
 
     const settings = await Setting.findOneAndUpdate(
       { key: 'global' },
-      { telegramToken, telegramChatId, telegramSecret },
+      { telegramToken, telegramChatId, telegramSecret, siteUrl },
       { new: true, upsert: true }
     );
     return NextResponse.json({ settings });

@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
-  const [settings, setSettings] = useState<{ telegramToken: string; telegramChatId: string; telegramSecret: string } | null>(null);
+  const [settings, setSettings] = useState<{ telegramToken: string; telegramChatId: string; telegramSecret: string; siteUrl: string } | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [webhookSaving, setWebhookSaving] = useState(false);
   const [housingCityImages, setHousingCityImages] = useState<any[]>([]);
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
   const fetchSettings = async () => {
     const res = await fetch('/api/admin/settings');
     const data = await res.json();
-    setSettings(data.settings || { telegramToken: '', telegramChatId: '', telegramSecret: '' });
+    setSettings(data.settings || { telegramToken: '', telegramChatId: '', telegramSecret: '', siteUrl: '' });
   };
 
   const fetchHousingCityImages = async () => {
@@ -244,6 +244,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           telegramToken: settings.telegramToken,
           telegramChatId: settings.telegramChatId,
+          siteUrl: settings.siteUrl,
         }),
       });
       if (res.ok) {
@@ -928,15 +929,21 @@ export default function AdminDashboard() {
               <div className="grid md:grid-cols-2 gap-3">
                 <input
                   value={settings?.telegramToken || ''}
-                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '' }), telegramToken: e.target.value }))}
+                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '', siteUrl: '' }), telegramToken: e.target.value }))}
                   placeholder="توکن ربات تلگرام"
                   className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
                 />
                 <input
                   value={settings?.telegramChatId || ''}
-                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '' }), telegramChatId: e.target.value }))}
+                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '', siteUrl: '' }), telegramChatId: e.target.value }))}
                   placeholder="Telegram User ID / Chat ID ادمین"
                   className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                />
+                <input
+                  value={settings?.siteUrl || ''}
+                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '', siteUrl: '' }), siteUrl: e.target.value }))}
+                  placeholder="آدرس سایت (مثلاً https://bazaarinowork.vercel.app)"
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm md:col-span-2"
                 />
               </div>
               <div className="mt-3 flex items-center gap-3">
