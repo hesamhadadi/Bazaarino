@@ -2,17 +2,22 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
+import Rating from '@/models/Rating';
 import '@/models/User';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdImageGallery from '@/components/ads/AdImageGallery';
 import FavoriteButton from '@/components/ads/FavoriteButton';
 import CategoryIcon from '@/components/ui/CategoryIcon';
+import { StarRating } from '@/components/ui/StarRating';
+import RateUser from '@/components/ads/RateUser';
+import ReportForm from '@/components/ads/ReportForm';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel } from '@/lib/constants';
 import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus } from 'lucide-react';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
 import nextDynamic from 'next/dynamic';
+import mongoose from 'mongoose';
 
 const HousingLocationPreview = nextDynamic(() => import('@/components/maps/HousingLocationPreview'), { ssr: false });
 
@@ -37,6 +42,17 @@ async function getAd(id: string) {
     console.error('Ad detail getAd error:', error);
     return null;
   }
+}
+
+async function getUserRating(userId?: string) {
+  if (!userId) return { avg: 0, count: 0 };
+  await connectDB();
+  const summary = await Rating.aggregate([
+    { $match: { targetUserId: new mongoose.Types.ObjectId(userId) } },
+    { $group: { _id: '$targetUserId', avg: { $avg: '$score' }, count: { $sum: 1 } } },
+  ]);
+  const data = summary[0] || { avg: 0, count: 0 };
+  return { avg: Number(data.avg || 0), count: Number(data.count || 0) };
 }
 
 function formatPrice(price?: number, priceType?: string): string {
@@ -65,6 +81,7 @@ function timeAgo(dateStr: string): string {
 export default async function AdDetailPage({ params }: { params: { id: string } }) {
   const ad = await getAd(params.id);
   if (!ad) notFound();
+  const ratingSummary = await getUserRating(ad.userId?._id?.toString());
   const now = new Date();
   const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now);
 
@@ -238,6 +255,16 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   <p className="text-xs text-gray-400">عضو بازارینو</p>
                 </div>
               </div>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="text-xs text-gray-500">امتیاز صاحب آگهی</div>
+                <StarRating value={ratingSummary.avg} count={ratingSummary.count} />
+              </div>
+              {ad.userId?._id && (
+                <div className="mb-4">
+                  <p className="text-xs text-gray-500 mb-2">امتیاز شما:</p>
+                  <RateUser targetUserId={ad.userId._id.toString()} />
+                </div>
+              )}
               <div className="space-y-2">
                 {ad.showPhone && ad.phone && (
                   <>
@@ -267,6 +294,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 <li>• معاملات را در مکان عمومی انجام دهید</li>
               </ul>
             </div>
+            <ReportForm adId={ad._id.toString()} />
           </div>
         </div>
       </div>

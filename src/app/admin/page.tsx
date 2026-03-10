@@ -7,9 +7,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { CheckCircle, XCircle, Eye, Users, FileText, Clock, Star, BarChart3, UserCheck, UserX, ImagePlus, Trash2, Filter, RotateCcw, ShieldCheck } from 'lucide-react';
-import { CITIES, CATEGORIES } from '@/lib/constants';
+import { CITIES, CATEGORIES, getCityLabel } from '@/lib/constants';
 
-type AdminTab = 'pending' | 'all' | 'users' | 'banners';
+type AdminTab = 'pending' | 'all' | 'users' | 'banners' | 'reports' | 'settings';
 type AdFilters = {
   q: string;
   city: string;
@@ -38,6 +38,10 @@ export default function AdminDashboard() {
   const [allAds, setAllAds] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [settings, setSettings] = useState<{ telegramToken: string; telegramChatId: string; telegramSecret: string } | null>(null);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [webhookSaving, setWebhookSaving] = useState(false);
   const [housingCityImages, setHousingCityImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AdminTab>('pending');
@@ -122,6 +126,18 @@ export default function AdminDashboard() {
     setBanners(data.banners || []);
   };
 
+  const fetchReports = async () => {
+    const res = await fetch('/api/admin/reports');
+    const data = await res.json();
+    setReports(data.reports || []);
+  };
+
+  const fetchSettings = async () => {
+    const res = await fetch('/api/admin/settings');
+    const data = await res.json();
+    setSettings(data.settings || { telegramToken: '', telegramChatId: '', telegramSecret: '' });
+  };
+
   const fetchHousingCityImages = async () => {
     const res = await fetch('/api/admin/housing-city-images');
     const data = await res.json();
@@ -136,6 +152,8 @@ export default function AdminDashboard() {
       await fetchBanners();
       await fetchHousingCityImages();
     }
+    if (tab === 'reports') await fetchReports();
+    if (tab === 'settings') await fetchSettings();
   };
 
   const applyAdFilters = async () => {
@@ -199,6 +217,62 @@ export default function AdminDashboard() {
       toast.success(!isActive ? 'کاربر فعال شد' : 'کاربر غیرفعال شد');
       fetchUsers();
       fetchStats();
+    }
+  };
+
+  const resolveReport = async (reportId: string, status: 'open' | 'resolved') => {
+    const res = await fetch('/api/admin/reports', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reportId, status }),
+    });
+    if (res.ok) {
+      toast.success(status === 'resolved' ? 'گزارش بسته شد' : 'گزارش باز شد');
+      fetchReports();
+    } else {
+      toast.error('خطا در بروزرسانی گزارش');
+    }
+  };
+
+  const saveSettings = async () => {
+    if (!settings) return;
+    setSettingsSaving(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramToken: settings.telegramToken,
+          telegramChatId: settings.telegramChatId,
+        }),
+      });
+      if (res.ok) {
+        toast.success('تنظیمات ذخیره شد');
+        fetchSettings();
+      } else {
+        toast.error('ذخیره تنظیمات انجام نشد');
+      }
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const setWebhook = async () => {
+    setWebhookSaving(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'setWebhook' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        toast.success('وبهوک تلگرام ثبت شد');
+      } else {
+        toast.error(data.message || 'ثبت وبهوک ناموفق بود');
+      }
+    } finally {
+      setWebhookSaving(false);
     }
   };
 
@@ -470,6 +544,8 @@ export default function AdminDashboard() {
             { id: 'all', label: 'همه آگهی‌ها' },
             { id: 'users', label: 'کاربران' },
             { id: 'banners', label: 'بنر تبلیغاتی' },
+            { id: 'reports', label: 'گزارش‌ها' },
+            { id: 'settings', label: 'تنظیمات' },
           ].map((tab: any) => (
             <button
               key={tab.id}
@@ -792,6 +868,87 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="space-y-3">
+            {reports.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 text-sm text-gray-500">گزارشی ثبت نشده است.</div>
+            ) : (
+              reports.map((r: any) => (
+                <div key={r._id} className="bg-white rounded-2xl border border-gray-100 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-semibold text-gray-800">گزارش آگهی: {r.adId?.title || '---'}</div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${r.status === 'resolved' ? 'bg-emerald-50 text-emerald-600' : 'bg-yellow-50 text-yellow-600'}`}>
+                      {r.status === 'resolved' ? 'بسته شده' : 'باز'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-2">شهر: {getCityLabel(r.adId?.city || '')}</p>
+                  <p className="text-sm text-gray-700 mb-3 whitespace-pre-line">{r.message}</p>
+                  {r.images?.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {r.images.map((img: string) => (
+                        <a key={img} href={img} target="_blank" rel="noreferrer" className="w-20 h-20 rounded-xl overflow-hidden border border-gray-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img} alt="report" className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <span>گزارش‌دهنده: {r.reporterId?.name || 'کاربر ناشناس'}</span>
+                    <span>{new Date(r.createdAt).toLocaleDateString('fa-IR')}</span>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => resolveReport(r._id, r.status === 'resolved' ? 'open' : 'resolved')}
+                      className="px-3 py-2 rounded-xl text-xs font-medium bg-gray-100 text-gray-700"
+                    >
+                      {r.status === 'resolved' ? 'باز کردن گزارش' : 'بستن گزارش'}
+                    </button>
+                    {r.adId?._id && (
+                      <Link href={`/ads/${r.adId._id}`} className="px-3 py-2 rounded-xl text-xs font-medium bg-brand-500 text-white">
+                        مشاهده آگهی
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <h3 className="font-semibold text-gray-800 mb-3">تنظیمات تلگرام</h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                <input
+                  value={settings?.telegramToken || ''}
+                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '' }), telegramToken: e.target.value }))}
+                  placeholder="توکن ربات تلگرام"
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                />
+                <input
+                  value={settings?.telegramChatId || ''}
+                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '' }), telegramChatId: e.target.value }))}
+                  placeholder="Telegram User ID / Chat ID ادمین"
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="mt-3 flex items-center gap-3">
+                <button onClick={saveSettings} disabled={settingsSaving} className="bg-brand-500 text-white px-4 py-2 rounded-xl text-sm">
+                  ذخیره تنظیمات
+                </button>
+                <button onClick={setWebhook} disabled={webhookSaving} className="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm">
+                  ثبت وبهوک تلگرام
+                </button>
+                {settings?.telegramSecret && (
+                  <span className="text-xs text-gray-400">Secret: {settings.telegramSecret}</span>
+                )}
               </div>
             </div>
           </div>

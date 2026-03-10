@@ -9,6 +9,8 @@ export interface IUser extends Document {
   role: 'user' | 'admin' | 'editor';
   isActive: boolean;
   city?: string;
+  ratingAvg?: number;
+  ratingCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,6 +52,14 @@ const UserSchema = new Schema<IUser>(
     },
     city: {
       type: String,
+    },
+    ratingAvg: {
+      type: Number,
+      default: 0,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
     },
   },
   {

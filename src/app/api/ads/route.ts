@@ -5,6 +5,8 @@ import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { computeHousingNearby } from '@/lib/map-data';
+import { sendTelegramMessage } from '@/lib/telegram';
+import { getAppUrl } from '@/lib/app-url';
 
 export async function GET(request: NextRequest) {
   try {
@@ -145,6 +147,20 @@ export async function POST(request: NextRequest) {
       userId,
       status: 'pending',
     });
+
+    try {
+      const appUrl = getAppUrl();
+      const text = `🆕 آگهی جدید\n\nعنوان: ${title}\nشهر: ${city}\nدسته: ${category}\n\nبرای بررسی اقدام کنید.`;
+      await sendTelegramMessage(text, {
+        inlineKeyboard: [
+          [
+            { text: 'تأیید', callback_data: `approve:${ad._id}` },
+            { text: 'رد', callback_data: `reject:${ad._id}` },
+          ],
+          [{ text: 'مشاهده آگهی', url: `${appUrl}/ads/${ad._id}` }],
+        ],
+      });
+    } catch {}
 
     return NextResponse.json({ message: 'آگهی با موفقیت ثبت شد و در انتظار تأیید است', ad }, { status: 201 });
   } catch (error: any) {
