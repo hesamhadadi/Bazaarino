@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
@@ -12,6 +12,15 @@ interface AdImageGalleryProps {
 export default function AdImageGallery({ images, title }: AdImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [open]);
 
   if (!images.length) return null;
 
@@ -48,11 +57,14 @@ export default function AdImageGallery({ images, title }: AdImageGalleryProps) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-[80] bg-black/90 p-3 md:p-8">
+        <div
+          className="fixed inset-0 z-[80] bg-black/90 p-3 md:p-8"
+          onClick={() => setOpen(false)}
+        >
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="absolute top-4 right-4 text-white/90 hover:text-white bg-black/40 rounded-full p-2"
+            className="absolute top-4 right-4 text-white/90 hover:text-white bg-black/40 rounded-full p-3"
           >
             <X size={18} />
           </button>
@@ -76,7 +88,7 @@ export default function AdImageGallery({ images, title }: AdImageGalleryProps) {
             </>
           )}
 
-          <div className="relative w-full h-full max-w-6xl mx-auto">
+          <div className="relative w-full h-full max-w-6xl mx-auto" onClick={(e) => e.stopPropagation()}>
             <Image src={images[activeIndex]} alt={title} fill className="object-contain" />
           </div>
         </div>

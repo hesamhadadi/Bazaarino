@@ -20,6 +20,7 @@ export default function EditProfilePage() {
     phone: '',
     city: '',
     avatar: '',
+    telegram: '',
   });
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export default function EditProfilePage() {
           phone: user.phone || '',
           city: user.city || '',
           avatar: user.avatar || '',
+          telegram: user.telegram || '',
         });
       })
       .catch(() => undefined);
@@ -120,6 +122,12 @@ export default function EditProfilePage() {
               value={form.phone}
               onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
               placeholder="شماره تماس"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+            />
+            <input
+              value={form.telegram}
+              onChange={(e) => setForm((prev) => ({ ...prev, telegram: e.target.value }))}
+              placeholder="آیدی تلگرام (بدون @)"
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
             />
             <select

@@ -14,7 +14,7 @@ import RateUser from '@/components/ads/RateUser';
 import ReportForm from '@/components/ads/ReportForm';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel } from '@/lib/constants';
-import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus } from 'lucide-react';
+import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle } from 'lucide-react';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
 import nextDynamic from 'next/dynamic';
 import mongoose from 'mongoose';
@@ -27,7 +27,7 @@ async function getAd(id: string) {
   try {
     await connectDB();
     const ad = await Ad.findById(id)
-      .populate('userId', 'name avatar phone email city createdAt role')
+      .populate('userId', 'name avatar phone email city createdAt role telegram')
       .lean();
 
     if (!ad) {
@@ -266,24 +266,44 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 </div>
               )}
               <div className="space-y-2">
-                {ad.showPhone && ad.phone && (
-                  <>
-                    <a href={`tel:${ad.phone}`}
-                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-2xl font-semibold transition-colors text-sm shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {ad.showPhone && ad.phone && (
+                    <a
+                      href={`tel:${ad.phone}`}
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-2xl font-semibold text-sm shadow-sm"
+                    >
                       <Phone size={16} /> تماس تلفنی
                     </a>
-                    <a href={`https://wa.me/${ad.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#25D366] to-[#1FAE58] text-white py-3 rounded-2xl font-semibold transition-colors text-sm shadow-sm">
-                      <span className="text-lg">💬</span> واتساپ
+                  )}
+                  {ad.showPhone && ad.phone && (
+                    <a
+                      href={`https://wa.me/${ad.phone.replace(/[^0-9]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#25D366] to-[#1FAE58] text-white py-3 rounded-2xl font-semibold text-sm shadow-sm"
+                    >
+                      <MessageCircle size={16} /> واتساپ
                     </a>
-                  </>
-                )}
-                {ad.showEmail && ad.email && (
-                  <a href={`mailto:${ad.email}`}
-                    className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-sky-500 to-blue-600 text-white py-3 rounded-2xl font-semibold transition-colors text-sm shadow-sm">
-                    <Mail size={16} /> ارسال ایمیل
-                  </a>
-                )}
+                  )}
+                  {ad.userId?.telegram && (
+                    <a
+                      href={`https://t.me/${String(ad.userId.telegram).replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-sky-500 to-blue-600 text-white py-3 rounded-2xl font-semibold text-sm shadow-sm"
+                    >
+                      <Send size={16} /> تلگرام
+                    </a>
+                  )}
+                  {ad.showEmail && ad.email && (
+                    <a
+                      href={`mailto:${ad.email}`}
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-slate-500 to-slate-700 text-white py-3 rounded-2xl font-semibold text-sm shadow-sm"
+                    >
+                      <Mail size={16} /> ایمیل
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
             <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">

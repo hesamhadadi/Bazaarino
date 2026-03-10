@@ -11,6 +11,7 @@ export interface IUser extends Document {
   city?: string;
   ratingAvg?: number;
   ratingCount?: number;
+  telegram?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,6 +61,10 @@ const UserSchema = new Schema<IUser>(
     ratingCount: {
       type: Number,
       default: 0,
+    },
+    telegram: {
+      type: String,
+      trim: true,
     },
   },
   {
