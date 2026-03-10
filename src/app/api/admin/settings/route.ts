@@ -17,7 +17,7 @@ export async function GET() {
       return NextResponse.json({ message: 'دسترسی ندارید' }, { status: 403 });
     }
     await connectDB();
-    const settings = await Setting.findOne({ key: 'global' }).lean();
+    const settings = (await Setting.findOne({ key: 'global' }).lean()) as any;
     return NextResponse.json({
       settings: {
         telegramToken: settings?.telegramToken || '',
@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest) {
     const { telegramToken, telegramChatId } = body;
 
     await connectDB();
-    const existing = await Setting.findOne({ key: 'global' });
+    const existing = (await Setting.findOne({ key: 'global' })) as any;
     const telegramSecret = existing?.telegramSecret || crypto.randomBytes(16).toString('hex');
 
     const settings = await Setting.findOneAndUpdate(
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     await connectDB();
-    const settings = await Setting.findOne({ key: 'global' }).lean();
+    const settings = (await Setting.findOne({ key: 'global' }).lean()) as any;
     if (!settings?.telegramToken) {
       return NextResponse.json({ message: 'توکن تلگرام تنظیم نشده است' }, { status: 400 });
     }

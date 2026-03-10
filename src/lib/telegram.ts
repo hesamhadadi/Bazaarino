@@ -9,7 +9,7 @@ type TelegramConfig = {
 
 export async function getTelegramConfig(): Promise<TelegramConfig> {
   await connectDB();
-  const settings = await Setting.findOne({ key: 'global' }).lean();
+  const settings = (await Setting.findOne({ key: 'global' }).lean()) as any;
   return {
     token: settings?.telegramToken,
     chatId: settings?.telegramChatId,

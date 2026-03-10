@@ -7,7 +7,7 @@ import { answerCallback } from '@/lib/telegram';
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    const settings = await Setting.findOne({ key: 'global' }).lean();
+    const settings = (await Setting.findOne({ key: 'global' }).lean()) as any;
     const secret = settings?.telegramSecret;
     const headerSecret = request.headers.get('x-telegram-bot-api-secret-token');
     if (secret && headerSecret && headerSecret !== secret) {
