@@ -56,7 +56,7 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-4">
         <p className="text-sm text-gray-500 mb-3">{error}</p>
-        <button onClick={load} className="text-sm text-brand-600">تلاش دوباره</button>
+        <button onClick={() => load()} className="text-sm text-brand-600">تلاش دوباره</button>
       </div>
     );
   }
@@ -65,7 +65,7 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-4">
         <p className="text-sm text-gray-500 mb-2">فعلاً آگهی‌ای ثبت نشده است.</p>
-        <button onClick={load} className="text-sm text-brand-600">تلاش دوباره</button>
+        <button onClick={() => load()} className="text-sm text-brand-600">تلاش دوباره</button>
       </div>
     );
   }
