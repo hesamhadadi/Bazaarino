@@ -27,8 +27,9 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(String(password), 12);
-    await User.findByIdAndUpdate(record.userId, { password: hashedPassword });
-    await PasswordResetToken.updateOne({ _id: record._id }, { usedAt: new Date() });
+    const recordUserId = (record as any).userId;
+    await User.findByIdAndUpdate(recordUserId, { password: hashedPassword });
+    await PasswordResetToken.updateOne({ _id: (record as any)._id }, { usedAt: new Date() });
 
     return NextResponse.json({ message: 'رمز عبور تغییر کرد' });
   } catch {
