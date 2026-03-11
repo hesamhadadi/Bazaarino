@@ -14,7 +14,7 @@ export async function GET() {
     const userId = await resolveSessionUserId(session.user);
     if (!userId) return NextResponse.json({ message: 'کاربر معتبر یافت نشد' }, { status: 401 });
 
-    const user = await User.findById(userId).select('name email phone phoneVerified city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus').lean();
+    const user = await User.findById(userId).select('name email phone city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus').lean();
     return NextResponse.json({ user: JSON.parse(JSON.stringify(user)) });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
@@ -33,15 +33,10 @@ export async function PATCH(request: NextRequest) {
     const userId = await resolveSessionUserId(session.user);
     if (!userId) return NextResponse.json({ message: 'کاربر معتبر یافت نشد' }, { status: 401 });
 
-    const currentUser = await User.findById(userId).select('phone phoneVerified').lean();
     const updates: any = {};
     if (name !== undefined) updates.name = String(name).trim();
     if (phone !== undefined) {
-      const nextPhone = String(phone).trim();
-      updates.phone = nextPhone;
-      if ((currentUser?.phone || '') !== nextPhone) {
-        updates.phoneVerified = false;
-      }
+      updates.phone = String(phone).trim();
     }
     if (city !== undefined) updates.city = city;
     if (avatar !== undefined) updates.avatar = avatar || '';
@@ -64,7 +59,7 @@ export async function PATCH(request: NextRequest) {
     updates.identityStatus = hasAny ? 'pending' : 'none';
 
     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
-      .select('name email phone phoneVerified city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus')
+      .select('name email phone city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus')
       .lean();
 
     return NextResponse.json({ user: JSON.parse(JSON.stringify(user)) });

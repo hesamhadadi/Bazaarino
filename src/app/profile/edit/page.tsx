@@ -18,7 +18,6 @@ export default function EditProfilePage() {
   const [form, setForm] = useState({
     name: '',
     phone: '',
-    phoneVerified: false,
     city: '',
     avatar: '',
     telegram: '',
@@ -42,7 +41,6 @@ export default function EditProfilePage() {
         setForm({
           name: user.name || '',
           phone: user.phone || '',
-          phoneVerified: Boolean(user.phoneVerified),
           city: user.city || '',
           avatar: user.avatar || '',
           telegram: user.telegram || '',
@@ -201,12 +199,6 @@ export default function EditProfilePage() {
               placeholder="شماره تماس"
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
             />
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <span className={`px-2 py-1 rounded-lg ${form.phoneVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                {form.phoneVerified ? 'شماره تأیید شده' : 'شماره تأیید نشده'}
-              </span>
-              <span>برای ثبت آگهی، شماره باید تأیید شود.</span>
-            </div>
             <input
               value={form.telegram}
               onChange={(e) => setForm((prev) => ({ ...prev, telegram: e.target.value }))}

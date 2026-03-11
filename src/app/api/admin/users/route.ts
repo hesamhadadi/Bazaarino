@@ -35,7 +35,6 @@ export async function GET() {
       name: u.name,
       email: u.email,
       phone: u.phone || '',
-      phoneVerified: Boolean(u.phoneVerified),
       role: u.role,
       isActive: u.isActive,
       createdAt: u.createdAt,
@@ -64,11 +63,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userId, isActive, role, identityStatus, fiscalCodeStatus, passportStatus, selfieStatus, phoneVerified } = body;
+    const { userId, isActive, role, identityStatus, fiscalCodeStatus, passportStatus, selfieStatus } = body;
     if (!userId) {
       return NextResponse.json({ message: 'شناسه کاربر الزامی است' }, { status: 400 });
     }
-    if (isActive === undefined && role === undefined && identityStatus === undefined && fiscalCodeStatus === undefined && passportStatus === undefined && selfieStatus === undefined && phoneVerified === undefined) {
+    if (isActive === undefined && role === undefined && identityStatus === undefined && fiscalCodeStatus === undefined && passportStatus === undefined && selfieStatus === undefined) {
       return NextResponse.json({ message: 'پارامتر نامعتبر' }, { status: 400 });
     }
     if (role !== undefined && !['user', 'admin', 'editor'].includes(role)) {
@@ -92,7 +91,6 @@ export async function PATCH(request: NextRequest) {
     const updates: any = {};
     if (typeof isActive === 'boolean') updates.isActive = isActive;
     if (role !== undefined) updates.role = role;
-    if (typeof phoneVerified === 'boolean') updates.phoneVerified = phoneVerified;
     if (identityStatus !== undefined) updates.identityStatus = identityStatus;
     if (fiscalCodeStatus !== undefined) updates.fiscalCodeStatus = fiscalCodeStatus;
     if (passportStatus !== undefined) updates.passportStatus = passportStatus;

@@ -324,19 +324,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const updateUserPhoneVerified = async (userId: string, phoneVerified: boolean) => {
-    const res = await fetch('/api/admin/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, phoneVerified }),
-    });
-    if (res.ok) {
-      toast.success(phoneVerified ? 'شماره تأیید شد' : 'تأیید شماره لغو شد');
-      fetchUsers();
-    } else {
-      toast.error('تغییر وضعیت شماره ناموفق بود');
-    }
-  };
 
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -862,7 +849,6 @@ export default function AdminDashboard() {
                     <span>ثبت‌نام: {new Date(u.createdAt).toLocaleDateString('fa-IR')}</span>
                     <span>{u.role === 'admin' ? 'ادمین' : u.role === 'editor' ? 'نویسنده' : 'کاربر'}</span>
                     <span>احراز: {u.identityStatus || 'none'}</span>
-                    <span>تأیید شماره: {u.phoneVerified ? 'بله' : 'خیر'}</span>
                   </div>
                   <div className="mt-2">
                     <Link href={`/u/${u._id}`} target="_blank" className="text-xs text-brand-600">مشاهده صفحه کاربر</Link>
@@ -936,12 +922,6 @@ export default function AdminDashboard() {
                     className={`px-3 py-2 rounded-xl text-xs font-medium ${u.identityStatus === 'verified' ? 'bg-gray-100 text-gray-600' : 'bg-emerald-50 text-emerald-600'}`}
                   >
                     {u.identityStatus === 'verified' ? 'لغو احراز' : 'احراز کن'}
-                  </button>
-                  <button
-                    onClick={() => updateUserPhoneVerified(u._id, !u.phoneVerified)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium ${u.phoneVerified ? 'bg-gray-100 text-gray-600' : 'bg-sky-50 text-sky-600'}`}
-                  >
-                    {u.phoneVerified ? 'لغو تأیید شماره' : 'تأیید شماره'}
                   </button>
                   <button
                     onClick={() => toggleUserActive(u._id, u.isActive)}

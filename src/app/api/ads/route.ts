@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
-import User from '@/models/User';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { computeHousingNearby } from '@/lib/map-data';
 import { sendTelegramMessage, sendTelegramPhoto } from '@/lib/telegram';
@@ -115,11 +114,6 @@ export async function POST(request: NextRequest) {
     const userId = await resolveSessionUserId(session.user);
     if (!userId) {
       return NextResponse.json({ message: 'کاربر معتبر یافت نشد، لطفاً دوباره وارد شوید' }, { status: 401 });
-    }
-
-    const user = await User.findById(userId).select('phone phoneVerified').lean();
-    if (!user?.phone || !user.phoneVerified) {
-      return NextResponse.json({ message: 'برای ثبت آگهی، ابتدا شماره تماس خود را ثبت و تأیید کنید' }, { status: 403 });
     }
 
     const housingPayload = category === 'real-estate' ? {

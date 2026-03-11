@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
-import { ShieldCheck, UserCheck, UserX, Star, PhoneCall, KeyRound } from 'lucide-react';
+import { ShieldCheck, UserCheck, UserX, Star, KeyRound } from 'lucide-react';
 
 export default function AdminUserPage() {
   const { data: session, status } = useSession();
@@ -121,13 +121,6 @@ export default function AdminUserPage() {
             >
               {user.isActive ? <UserX size={13} /> : <UserCheck size={13} />}
               {user.isActive ? 'غیرفعال' : 'فعال'}
-            </button>
-            <button
-              onClick={() => updateUser({ phoneVerified: !user.phoneVerified }, user.phoneVerified ? 'تأیید شماره لغو شد' : 'شماره تأیید شد')}
-              className={`px-3 py-2 rounded-xl text-xs font-medium ${user.phoneVerified ? 'bg-gray-100 text-gray-600' : 'bg-sky-50 text-sky-600'}`}
-            >
-              <PhoneCall size={13} />
-              {user.phoneVerified ? 'لغو تأیید شماره' : 'تأیید شماره'}
             </button>
             <button
               onClick={() => updateUser({ identityStatus: user.identityStatus === 'verified' ? 'pending' : 'verified' })}
