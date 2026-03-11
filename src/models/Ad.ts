@@ -21,6 +21,7 @@ export interface IAd extends Document {
   isFeatured: boolean;
   featuredUntil?: Date;
   rejectionReason?: string;
+  fraudReportCount?: number;
   housing?: {
     deposit?: number;
     residenceEligible?: boolean;
@@ -130,6 +131,10 @@ const AdSchema = new Schema<IAd>(
       type: Date,
     },
     rejectionReason: String,
+    fraudReportCount: {
+      type: Number,
+      default: 0,
+    },
     housing: {
       deposit: {
         type: Number,

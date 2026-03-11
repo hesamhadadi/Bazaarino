@@ -29,6 +29,10 @@ export async function GET() {
       isActive: u.isActive,
       createdAt: u.createdAt,
       adsCount: adCountMap.get(String(u._id)) || 0,
+      identityStatus: u.identityStatus || 'none',
+      identityDocs: u.identityDocs || [],
+      banner: u.banner || '',
+      bio: u.bio || '',
     }));
 
     return NextResponse.json({ users: result });
@@ -44,21 +48,25 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userId, isActive, role } = body;
+    const { userId, isActive, role, identityStatus } = body;
     if (!userId) {
       return NextResponse.json({ message: 'شناسه کاربر الزامی است' }, { status: 400 });
     }
-    if (isActive === undefined && role === undefined) {
+    if (isActive === undefined && role === undefined && identityStatus === undefined) {
       return NextResponse.json({ message: 'پارامتر نامعتبر' }, { status: 400 });
     }
     if (role !== undefined && !['user', 'admin', 'editor'].includes(role)) {
       return NextResponse.json({ message: 'نقش نامعتبر است' }, { status: 400 });
+    }
+    if (identityStatus !== undefined && !['none', 'pending', 'verified', 'rejected'].includes(identityStatus)) {
+      return NextResponse.json({ message: 'وضعیت احراز هویت نامعتبر است' }, { status: 400 });
     }
 
     await connectDB();
     const updates: any = {};
     if (typeof isActive === 'boolean') updates.isActive = isActive;
     if (role !== undefined) updates.role = role;
+    if (identityStatus !== undefined) updates.identityStatus = identityStatus;
 
     const user = await User.findByIdAndUpdate(userId, updates, { new: true });
     return NextResponse.json({ user });

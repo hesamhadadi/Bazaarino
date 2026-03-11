@@ -21,6 +21,9 @@ export default function EditProfilePage() {
     city: '',
     avatar: '',
     telegram: '',
+    bio: '',
+    banner: '',
+    identityDocs: [] as string[],
   });
 
   useEffect(() => {
@@ -39,6 +42,9 @@ export default function EditProfilePage() {
           city: user.city || '',
           avatar: user.avatar || '',
           telegram: user.telegram || '',
+          bio: user.bio || '',
+          banner: user.banner || '',
+          identityDocs: user.identityDocs || [],
         });
       })
       .catch(() => undefined);
@@ -58,6 +64,46 @@ export default function EditProfilePage() {
         toast.success('عکس پروفایل آپلود شد');
       } else {
         toast.error('آپلود تصویر ناموفق بود');
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const uploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('images', file);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.urls?.[0]) {
+        setForm((prev) => ({ ...prev, banner: data.urls[0] }));
+        toast.success('بنر آپلود شد');
+      } else {
+        toast.error('آپلود بنر ناموفق بود');
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const uploadIdentityDocs = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploading(true);
+    const formData = new FormData();
+    files.forEach((f) => formData.append('images', f));
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.urls?.length) {
+        setForm((prev) => ({ ...prev, identityDocs: [...prev.identityDocs, ...data.urls] }));
+        toast.success('مدارک اضافه شد');
+      } else {
+        toast.error('آپلود مدارک ناموفق بود');
       }
     } finally {
       setUploading(false);
@@ -111,6 +157,31 @@ export default function EditProfilePage() {
             </div>
           </div>
 
+          <div className="mb-5">
+            <label className="block text-sm text-gray-600 mb-2">بنر صفحه شخصی</label>
+            <div className="rounded-2xl border border-gray-100 overflow-hidden bg-gray-50 h-28 flex items-center justify-center">
+              {form.banner ? (
+                <Image src={form.banner} alt="banner" width={600} height={200} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs text-gray-400">بنر اضافه نشده</span>
+              )}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 cursor-pointer text-sm">
+                <ImagePlus size={14} />
+                {uploading ? 'در حال آپلود...' : 'آپلود بنر'}
+                <input type="file" accept="image/*" className="hidden" onChange={uploadBanner} disabled={uploading} />
+              </label>
+              <button
+                onClick={() => setForm((prev) => ({ ...prev, banner: '' }))}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 text-red-600 text-sm"
+              >
+                <Trash2 size={14} />
+                حذف بنر
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-3">
             <input
               value={form.name}
@@ -130,6 +201,12 @@ export default function EditProfilePage() {
               placeholder="آیدی تلگرام (بدون @)"
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
             />
+            <textarea
+              value={form.bio}
+              onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
+              placeholder="توضیحات صفحه شخصی شما"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm h-24 resize-none"
+            />
             <select
               value={form.city}
               onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))}
@@ -138,6 +215,29 @@ export default function EditProfilePage() {
               <option value="">انتخاب شهر</option>
               {CITIES.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}
             </select>
+          </div>
+
+          <div className="mt-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">احراز هویت</h3>
+            <p className="text-xs text-gray-500 mb-2">مدارک هویتی خود را آپلود کنید تا احراز شوید.</p>
+            <div className="flex flex-wrap gap-2">
+              {form.identityDocs.map((url) => (
+                <div key={url} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-100">
+                  <Image src={url} alt="id" fill className="object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, identityDocs: prev.identityDocs.filter((x) => x !== url) }))}
+                    className="absolute top-1 left-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                </div>
+              ))}
+              <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-xs text-gray-400 cursor-pointer">
+                + اضافه
+                <input type="file" multiple accept="image/*" className="hidden" onChange={uploadIdentityDocs} disabled={uploading} />
+              </label>
+            </div>
           </div>
 
           <button onClick={save} disabled={submitting} className="w-full mt-4 bg-brand-500 text-white py-2.5 rounded-xl text-sm font-semibold">

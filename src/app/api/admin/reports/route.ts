@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Report from '@/models/Report';
+import Ad from '@/models/Ad';
 
 async function ensureAdmin() {
   const session = await getServerSession(authOptions);
@@ -38,6 +39,10 @@ export async function PATCH(request: NextRequest) {
     }
     await connectDB();
     const report = await Report.findByIdAndUpdate(reportId, { status }, { new: true });
+    if (report?.adId) {
+      const count = await Report.countDocuments({ adId: report.adId, status: 'resolved' });
+      await Ad.findByIdAndUpdate(report.adId, { fraudReportCount: count });
+    }
     return NextResponse.json({ report });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });

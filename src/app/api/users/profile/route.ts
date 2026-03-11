@@ -14,7 +14,7 @@ export async function GET() {
     const userId = await resolveSessionUserId(session.user);
     if (!userId) return NextResponse.json({ message: 'کاربر معتبر یافت نشد' }, { status: 401 });
 
-    const user = await User.findById(userId).select('name email phone city avatar telegram').lean();
+    const user = await User.findById(userId).select('name email phone city avatar telegram bio banner identityDocs identityStatus').lean();
     return NextResponse.json({ user: JSON.parse(JSON.stringify(user)) });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest) {
     if (!session) return NextResponse.json({ message: 'لطفاً وارد شوید' }, { status: 401 });
 
     const body = await request.json();
-    const { name, phone, city, avatar, telegram } = body;
+    const { name, phone, city, avatar, telegram, bio, banner, identityDocs } = body;
 
     await connectDB();
     const userId = await resolveSessionUserId(session.user);
@@ -39,9 +39,15 @@ export async function PATCH(request: NextRequest) {
     if (city !== undefined) updates.city = city;
     if (avatar !== undefined) updates.avatar = avatar || '';
     if (telegram !== undefined) updates.telegram = String(telegram).trim();
+    if (bio !== undefined) updates.bio = String(bio).trim();
+    if (banner !== undefined) updates.banner = banner || '';
+    if (identityDocs !== undefined && Array.isArray(identityDocs)) {
+      updates.identityDocs = identityDocs;
+      updates.identityStatus = identityDocs.length > 0 ? 'pending' : 'none';
+    }
 
     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
-      .select('name email phone city avatar telegram')
+      .select('name email phone city avatar telegram bio banner identityDocs identityStatus')
       .lean();
 
     return NextResponse.json({ user: JSON.parse(JSON.stringify(user)) });

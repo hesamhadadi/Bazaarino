@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get('q');
     const city = searchParams.get('city');
     const category = searchParams.get('category');
+    const userId = searchParams.get('userId');
     const isFeatured = searchParams.get('isFeatured');
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
 
     if (city) query.city = city;
     if (category) query.category = category;
+    if (userId) query.userId = userId;
     if (q) {
       query.$and = [...(query.$and || []), {
         $or: [

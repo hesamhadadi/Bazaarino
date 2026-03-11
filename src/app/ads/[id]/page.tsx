@@ -27,7 +27,7 @@ async function getAd(id: string) {
   try {
     await connectDB();
     const ad = await Ad.findById(id)
-      .populate('userId', 'name avatar phone email city createdAt role telegram')
+      .populate('userId', 'name avatar phone email city createdAt role telegram identityStatus')
       .lean();
 
     if (!ad) {
@@ -152,6 +152,11 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                     🏛️ رزیدنسا دارد
                   </span>
                 )}
+                {ad.fraudReportCount > 0 && (
+                  <span className="flex items-center gap-1 bg-red-50 text-red-600 text-xs px-3 py-1.5 rounded-full font-semibold">
+                    گزارش کلاه‌برداری: {toFaDigits(ad.fraudReportCount)}
+                  </span>
+                )}
               </div>
               <h2 className="font-semibold text-gray-800 mb-2">توضیحات</h2>
               <p className="text-gray-600 text-sm leading-loose whitespace-pre-wrap">{ad.description}</p>
@@ -250,8 +255,13 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 </div>
                 <div>
                   <p className="font-medium text-gray-800 inline-flex items-center gap-1">
-                    {ad.userId?.name}
+                    <Link href={`/u/${ad.userId?._id}`} className="hover:text-brand-600">
+                      {ad.userId?.name}
+                    </Link>
                     {ad.userId?.role === 'admin' && <BadgeCheck size={14} className="text-sky-500 fill-sky-500/20" />}
+                    {ad.userId?.identityStatus === 'verified' && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">احراز شده</span>
+                    )}
                   </p>
                   <p className="text-xs text-gray-400">عضو بازارینو</p>
                 </div>

@@ -12,6 +12,10 @@ export interface IUser extends Document {
   ratingAvg?: number;
   ratingCount?: number;
   telegram?: string;
+  bio?: string;
+  banner?: string;
+  identityDocs?: string[];
+  identityStatus?: 'none' | 'pending' | 'verified' | 'rejected';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,6 +69,22 @@ const UserSchema = new Schema<IUser>(
     telegram: {
       type: String,
       trim: true,
+    },
+    bio: {
+      type: String,
+      maxlength: 500,
+    },
+    banner: {
+      type: String,
+    },
+    identityDocs: {
+      type: [String],
+      default: [],
+    },
+    identityStatus: {
+      type: String,
+      enum: ['none', 'pending', 'verified', 'rejected'],
+      default: 'none',
     },
   },
   {

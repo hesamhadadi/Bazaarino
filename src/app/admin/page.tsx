@@ -18,6 +18,7 @@ type AdFilters = {
   dateTo: string;
   isFeatured: 'all' | 'true' | 'false';
   status: 'all' | 'pending' | 'approved' | 'rejected' | 'expired' | 'sold';
+  userId: string;
 };
 
 const DEFAULT_AD_FILTERS: AdFilters = {
@@ -28,6 +29,7 @@ const DEFAULT_AD_FILTERS: AdFilters = {
   dateTo: '',
   isFeatured: 'all',
   status: 'all',
+  userId: '',
 };
 
 export default function AdminDashboard() {
@@ -37,6 +39,7 @@ export default function AdminDashboard() {
   const [pendingAds, setPendingAds] = useState<any[]>([]);
   const [allAds, setAllAds] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [userFilters, setUserFilters] = useState({ q: '', role: 'all', status: 'all', identity: 'all' });
   const [banners, setBanners] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [settings, setSettings] = useState<{ telegramToken: string; telegramChatId: string; telegramSecret: string; siteUrl: string } | null>(null);
@@ -92,6 +95,7 @@ export default function AdminDashboard() {
     if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
     if (filters.dateTo) params.set('dateTo', filters.dateTo);
     if (filters.isFeatured !== 'all') params.set('isFeatured', filters.isFeatured);
+    if (filters.userId) params.set('userId', filters.userId);
     return params.toString();
   };
 
@@ -217,6 +221,20 @@ export default function AdminDashboard() {
       toast.success(!isActive ? 'کاربر فعال شد' : 'کاربر غیرفعال شد');
       fetchUsers();
       fetchStats();
+    }
+  };
+
+  const updateUserIdentityStatus = async (userId: string, status: 'none' | 'pending' | 'verified' | 'rejected') => {
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, identityStatus: status }),
+    });
+    if (res.ok) {
+      toast.success('وضعیت احراز بروزرسانی شد');
+      fetchUsers();
+    } else {
+      toast.error('خطا در بروزرسانی احراز');
     }
   };
 
@@ -567,11 +585,17 @@ export default function AdminDashboard() {
               <Filter size={16} />
               فیلتر آگهی‌ها
             </div>
-            <div className="grid md:grid-cols-3 gap-3">
+            <div className="grid md:grid-cols-4 gap-3">
               <input
                 value={adFilters.q}
                 onChange={(e) => setAdFilters((prev) => ({ ...prev, q: e.target.value }))}
                 placeholder="جستجو عنوان/توضیحات"
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              />
+              <input
+                value={adFilters.userId}
+                onChange={(e) => setAdFilters((prev) => ({ ...prev, userId: e.target.value }))}
+                placeholder="شناسه کاربر"
                 className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
               />
               <select
@@ -659,7 +683,16 @@ export default function AdminDashboard() {
                         </div>
                         <p className="text-sm text-gray-500 line-clamp-2 mt-1">{ad.description}</p>
                         <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-400">
-                          <span>👤 {ad.userId?.name}</span>
+                          <button
+                            onClick={() => {
+                              const nextFilters = { ...adFilters, userId: ad.userId?._id || '' };
+                              setAdFilters(nextFilters);
+                              fetchPendingAds(nextFilters);
+                            }}
+                            className="text-xs text-brand-600"
+                          >
+                            👤 {ad.userId?.name}
+                          </button>
                           <span>📧 {ad.userId?.email}</span>
                           <span>🏙️ {ad.city}</span>
                           <span>🗓️ {new Date(ad.createdAt).toLocaleDateString('fa-IR')}</span>
@@ -686,7 +719,20 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <Link href={`/ads/${ad._id}`} target="_blank" className="font-medium text-gray-800 hover:text-brand-600 text-sm line-clamp-1">{ad.title}</Link>
-                  <p className="text-xs text-gray-400">{ad.userId?.name} • {ad.city}</p>
+                  <div className="text-xs text-gray-400 flex items-center gap-2">
+                    <Link href={`/u/${ad.userId?._id}`} target="_blank" className="text-brand-600">{ad.userId?.name}</Link>
+                    <button
+                      onClick={() => {
+                        const nextFilters = { ...adFilters, userId: ad.userId?._id || '' };
+                        setAdFilters(nextFilters);
+                        fetchAllAds(nextFilters);
+                      }}
+                      className="text-gray-500"
+                    >
+                      (آگهی‌های این کاربر)
+                    </button>
+                    <span>• {ad.city}</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[ad.status] || ''}`}>{STATUS_LABELS[ad.status]}</span>
@@ -727,7 +773,57 @@ export default function AdminDashboard() {
 
         {activeTab === 'users' && (
           <div className="space-y-3">
-            {users.map((u: any) => (
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="grid md:grid-cols-4 gap-3">
+                <input
+                  value={userFilters.q}
+                  onChange={(e) => setUserFilters((prev) => ({ ...prev, q: e.target.value }))}
+                  placeholder="جستجو نام یا ایمیل"
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                />
+                <select
+                  value={userFilters.role}
+                  onChange={(e) => setUserFilters((prev) => ({ ...prev, role: e.target.value }))}
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                >
+                  <option value="all">همه نقش‌ها</option>
+                  <option value="user">کاربر</option>
+                  <option value="editor">نویسنده</option>
+                  <option value="admin">ادمین</option>
+                </select>
+                <select
+                  value={userFilters.status}
+                  onChange={(e) => setUserFilters((prev) => ({ ...prev, status: e.target.value }))}
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                >
+                  <option value="all">همه وضعیت‌ها</option>
+                  <option value="active">فعال</option>
+                  <option value="inactive">غیرفعال</option>
+                </select>
+                <select
+                  value={userFilters.identity}
+                  onChange={(e) => setUserFilters((prev) => ({ ...prev, identity: e.target.value }))}
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                >
+                  <option value="all">احراز هویت: همه</option>
+                  <option value="none">بدون درخواست</option>
+                  <option value="pending">در انتظار</option>
+                  <option value="verified">احراز شده</option>
+                  <option value="rejected">رد شده</option>
+                </select>
+              </div>
+            </div>
+            {users.filter((u: any) => {
+              const q = userFilters.q.trim().toLowerCase();
+              if (q && !(`${u.name || ''} ${u.email || ''}`.toLowerCase().includes(q))) return false;
+              if (userFilters.role !== 'all' && u.role !== userFilters.role) return false;
+              if (userFilters.status !== 'all') {
+                if (userFilters.status === 'active' && !u.isActive) return false;
+                if (userFilters.status === 'inactive' && u.isActive) return false;
+              }
+              if (userFilters.identity !== 'all' && (u.identityStatus || 'none') !== userFilters.identity) return false;
+              return true;
+            }).map((u: any) => (
               <div key={u._id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between gap-3">
                 <div>
                   <p className="font-medium text-gray-800 text-sm">{u.name || '-'}</p>
@@ -736,7 +832,21 @@ export default function AdminDashboard() {
                     <span>آگهی‌ها: {u.adsCount}</span>
                     <span>ثبت‌نام: {new Date(u.createdAt).toLocaleDateString('fa-IR')}</span>
                     <span>{u.role === 'admin' ? 'ادمین' : u.role === 'editor' ? 'نویسنده' : 'کاربر'}</span>
+                    <span>احراز: {u.identityStatus || 'none'}</span>
                   </div>
+                  <div className="mt-2">
+                    <Link href={`/u/${u._id}`} target="_blank" className="text-xs text-brand-600">مشاهده صفحه کاربر</Link>
+                  </div>
+                  {u.identityDocs?.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {u.identityDocs.map((url: string) => (
+                        <a key={url} href={url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="doc" className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -752,6 +862,12 @@ export default function AdminDashboard() {
                       <option value="admin">ادمین</option>
                     </select>
                   </div>
+                  <button
+                    onClick={() => updateUserIdentityStatus(u._id, u.identityStatus === 'verified' ? 'pending' : 'verified')}
+                    className={`px-3 py-2 rounded-xl text-xs font-medium ${u.identityStatus === 'verified' ? 'bg-gray-100 text-gray-600' : 'bg-emerald-50 text-emerald-600'}`}
+                  >
+                    {u.identityStatus === 'verified' ? 'لغو احراز' : 'احراز کن'}
+                  </button>
                   <button
                     onClick={() => toggleUserActive(u._id, u.isActive)}
                     className={`px-3 py-2 rounded-xl text-xs font-medium ${u.isActive ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}
