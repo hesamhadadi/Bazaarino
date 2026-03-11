@@ -14,7 +14,12 @@ export interface IUser extends Document {
   telegram?: string;
   bio?: string;
   banner?: string;
-  identityDocs?: string[];
+  fiscalCode?: string;
+  passportImage?: string;
+  selfieImage?: string;
+  fiscalCodeStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  passportStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  selfieStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   identityStatus?: 'none' | 'pending' | 'verified' | 'rejected';
   createdAt: Date;
   updatedAt: Date;
@@ -77,9 +82,30 @@ const UserSchema = new Schema<IUser>(
     banner: {
       type: String,
     },
-    identityDocs: {
-      type: [String],
-      default: [],
+    fiscalCode: {
+      type: String,
+      trim: true,
+    },
+    passportImage: {
+      type: String,
+    },
+    selfieImage: {
+      type: String,
+    },
+    fiscalCodeStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none',
+    },
+    passportStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none',
+    },
+    selfieStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none',
     },
     identityStatus: {
       type: String,

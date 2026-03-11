@@ -23,7 +23,9 @@ export default function EditProfilePage() {
     telegram: '',
     bio: '',
     banner: '',
-    identityDocs: [] as string[],
+    fiscalCode: '',
+    passportImage: '',
+    selfieImage: '',
   });
 
   useEffect(() => {
@@ -44,7 +46,9 @@ export default function EditProfilePage() {
           telegram: user.telegram || '',
           bio: user.bio || '',
           banner: user.banner || '',
-          identityDocs: user.identityDocs || [],
+          fiscalCode: user.fiscalCode || '',
+          passportImage: user.passportImage || '',
+          selfieImage: user.selfieImage || '',
         });
       })
       .catch(() => undefined);
@@ -90,20 +94,20 @@ export default function EditProfilePage() {
     }
   };
 
-  const uploadIdentityDocs = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+  const uploadIdentityImage = async (e: React.ChangeEvent<HTMLInputElement>, key: 'passportImage' | 'selfieImage') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     setUploading(true);
     const formData = new FormData();
-    files.forEach((f) => formData.append('images', f));
+    formData.append('images', file);
     try {
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
-      if (res.ok && data.urls?.length) {
-        setForm((prev) => ({ ...prev, identityDocs: [...prev.identityDocs, ...data.urls] }));
-        toast.success('مدارک اضافه شد');
+      if (res.ok && data.urls?.[0]) {
+        setForm((prev) => ({ ...prev, [key]: data.urls[0] }));
+        toast.success('مدرک آپلود شد');
       } else {
-        toast.error('آپلود مدارک ناموفق بود');
+        toast.error('آپلود مدرک ناموفق بود');
       }
     } finally {
       setUploading(false);
@@ -219,24 +223,70 @@ export default function EditProfilePage() {
 
           <div className="mt-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">احراز هویت</h3>
-            <p className="text-xs text-gray-500 mb-2">مدارک هویتی خود را آپلود کنید تا احراز شوید.</p>
-            <div className="flex flex-wrap gap-2">
-              {form.identityDocs.map((url) => (
-                <div key={url} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-100">
-                  <Image src={url} alt="id" fill className="object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, identityDocs: prev.identityDocs.filter((x) => x !== url) }))}
-                    className="absolute top-1 left-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center"
-                  >
-                    <Trash2 size={10} />
-                  </button>
+            <p className="text-xs text-gray-500 mb-3">هر مورد را جداگانه تکمیل کن تا برای بررسی ارسال شود.</p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">کدچه فیسکاله</label>
+                <input
+                  value={form.fiscalCode}
+                  onChange={(e) => setForm((prev) => ({ ...prev, fiscalCode: e.target.value }))}
+                  placeholder="Codice Fiscale"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-gray-100 p-2">
+                  <p className="text-xs text-gray-600 mb-2">عکس پاسپورت</p>
+                  <div className="w-full h-24 rounded-lg bg-gray-50 overflow-hidden flex items-center justify-center">
+                    {form.passportImage ? (
+                      <Image src={form.passportImage} alt="passport" width={240} height={120} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs text-gray-400">آپلود نشده</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <label className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-gray-200 cursor-pointer text-xs">
+                      <ImagePlus size={12} />
+                      آپلود
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadIdentityImage(e, 'passportImage')} disabled={uploading} />
+                    </label>
+                    <button
+                      onClick={() => setForm((prev) => ({ ...prev, passportImage: '' }))}
+                      className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs"
+                    >
+                      <Trash2 size={12} />
+                      حذف
+                    </button>
+                  </div>
                 </div>
-              ))}
-              <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-xs text-gray-400 cursor-pointer">
-                + اضافه
-                <input type="file" multiple accept="image/*" className="hidden" onChange={uploadIdentityDocs} disabled={uploading} />
-              </label>
+
+                <div className="rounded-xl border border-gray-100 p-2">
+                  <p className="text-xs text-gray-600 mb-2">عکس کاربر (سلفی)</p>
+                  <div className="w-full h-24 rounded-lg bg-gray-50 overflow-hidden flex items-center justify-center">
+                    {form.selfieImage ? (
+                      <Image src={form.selfieImage} alt="selfie" width={240} height={120} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs text-gray-400">آپلود نشده</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <label className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-gray-200 cursor-pointer text-xs">
+                      <ImagePlus size={12} />
+                      آپلود
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadIdentityImage(e, 'selfieImage')} disabled={uploading} />
+                    </label>
+                    <button
+                      onClick={() => setForm((prev) => ({ ...prev, selfieImage: '' }))}
+                      className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs"
+                    >
+                      <Trash2 size={12} />
+                      حذف
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

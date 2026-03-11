@@ -238,6 +238,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateUserIdentityDocStatus = async (userId: string, field: 'fiscalCodeStatus' | 'passportStatus' | 'selfieStatus', status: 'none' | 'pending' | 'approved' | 'rejected') => {
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, [field]: status }),
+    });
+    if (res.ok) {
+      toast.success('وضعیت مدرک بروزرسانی شد');
+      fetchUsers();
+    } else {
+      toast.error('خطا در بروزرسانی مدرک');
+    }
+  };
+
   const resolveReport = async (reportId: string, status: 'open' | 'resolved') => {
     const res = await fetch('/api/admin/reports', {
       method: 'PATCH',
@@ -837,16 +851,53 @@ export default function AdminDashboard() {
                   <div className="mt-2">
                     <Link href={`/u/${u._id}`} target="_blank" className="text-xs text-brand-600">مشاهده صفحه کاربر</Link>
                   </div>
-                  {u.identityDocs?.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {u.identityDocs.map((url: string) => (
-                        <a key={url} href={url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt="doc" className="w-full h-full object-cover" />
-                        </a>
-                      ))}
+                  <div className="mt-3 grid md:grid-cols-3 gap-2 text-xs">
+                    <div className="rounded-xl border border-gray-100 p-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span>کد فیسکاله</span>
+                        <span className="text-gray-400">{u.fiscalCodeStatus || 'none'}</span>
+                      </div>
+                      <p className="text-gray-600 break-all">{u.fiscalCode || 'ثبت نشده'}</p>
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'fiscalCodeStatus', 'approved')} className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">تأیید</button>
+                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'fiscalCodeStatus', 'rejected')} className="px-2 py-1 rounded-lg bg-red-50 text-red-600">رد</button>
+                      </div>
                     </div>
-                  )}
+                    <div className="rounded-xl border border-gray-100 p-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span>پاسپورت</span>
+                        <span className="text-gray-400">{u.passportStatus || 'none'}</span>
+                      </div>
+                      {u.passportImage ? (
+                        <a href={u.passportImage} target="_blank" rel="noreferrer" className="block w-16 h-16 rounded-lg overflow-hidden border border-gray-100">
+                          <img src={u.passportImage} alt="passport" className="w-full h-full object-cover" />
+                        </a>
+                      ) : (
+                        <p className="text-gray-500">ثبت نشده</p>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'passportStatus', 'approved')} className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">تأیید</button>
+                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'passportStatus', 'rejected')} className="px-2 py-1 rounded-lg bg-red-50 text-red-600">رد</button>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-gray-100 p-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span>سلفی</span>
+                        <span className="text-gray-400">{u.selfieStatus || 'none'}</span>
+                      </div>
+                      {u.selfieImage ? (
+                        <a href={u.selfieImage} target="_blank" rel="noreferrer" className="block w-16 h-16 rounded-lg overflow-hidden border border-gray-100">
+                          <img src={u.selfieImage} alt="selfie" className="w-full h-full object-cover" />
+                        </a>
+                      ) : (
+                        <p className="text-gray-500">ثبت نشده</p>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'selfieStatus', 'approved')} className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">تأیید</button>
+                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'selfieStatus', 'rejected')} className="px-2 py-1 rounded-lg bg-red-50 text-red-600">رد</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
