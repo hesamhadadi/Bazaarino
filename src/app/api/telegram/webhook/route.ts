@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Setting from '@/models/Setting';
 import Ad from '@/models/Ad';
-import { answerCallback } from '@/lib/telegram';
+import { answerCallback, editMessageReplyMarkup } from '@/lib/telegram';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,19 +26,34 @@ export async function POST(request: NextRequest) {
 
     const messageChatId = String(callback.message?.chat?.id || '');
     const senderId = String(callback.from?.id || '');
-    if (chatId && messageChatId && senderId && chatId !== messageChatId && chatId !== senderId) {
-      return NextResponse.json({ ok: true });
+    const messageUsername = callback.message?.chat?.username ? `@${callback.message.chat.username}` : '';
+    const senderUsername = callback.from?.username ? `@${callback.from.username}` : '';
+    const isNumericChat = /^\-?\d+$/.test(String(chatId || ''));
+    if (chatId && messageChatId && senderId) {
+      const matchNumeric = isNumericChat && (chatId === messageChatId || chatId === senderId);
+      const matchUsername = !isNumericChat && (chatId === messageUsername || chatId === senderUsername);
+      if (!matchNumeric && !matchUsername) {
+        return NextResponse.json({ ok: true });
+      }
     }
 
     const [action, adId] = String(callback.data).split(':');
     if (!adId) return NextResponse.json({ ok: true });
 
+    const messageId = callback.message?.message_id;
+
     if (action === 'approve') {
-      await Ad.findByIdAndUpdate(adId, { status: 'approved' });
-      await answerCallback(token, callback.id, 'آگهی تأیید شد');
+      const updated = await Ad.findByIdAndUpdate(adId, { status: 'approved' });
+      await answerCallback(token, callback.id, updated ? '✅ آگهی تأیید شد' : 'آگهی یافت نشد');
+      if (updated && messageChatId && messageId) {
+        await editMessageReplyMarkup(token, messageChatId, messageId, { inline_keyboard: [] });
+      }
     } else if (action === 'reject') {
-      await Ad.findByIdAndUpdate(adId, { status: 'rejected' });
-      await answerCallback(token, callback.id, 'آگهی رد شد');
+      const updated = await Ad.findByIdAndUpdate(adId, { status: 'rejected' });
+      await answerCallback(token, callback.id, updated ? '❌ آگهی رد شد' : 'آگهی یافت نشد');
+      if (updated && messageChatId && messageId) {
+        await editMessageReplyMarkup(token, messageChatId, messageId, { inline_keyboard: [] });
+      }
     }
 
     return NextResponse.json({ ok: true });

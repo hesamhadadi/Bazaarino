@@ -63,3 +63,15 @@ export async function answerCallback(token: string, callbackQueryId: string, tex
     body: JSON.stringify({ callback_query_id: callbackQueryId, text, show_alert: false }),
   });
 }
+
+export async function editMessageReplyMarkup(token: string, chatId: string, messageId: number, replyMarkup?: any) {
+  await fetch(`https://api.telegram.org/bot${token}/editMessageReplyMarkup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: replyMarkup,
+    }),
+  });
+}

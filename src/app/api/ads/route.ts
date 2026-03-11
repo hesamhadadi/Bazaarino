@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
+import User from '@/models/User';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { computeHousingNearby } from '@/lib/map-data';
 import { sendTelegramMessage, sendTelegramPhoto } from '@/lib/telegram';
@@ -116,6 +117,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'کاربر معتبر یافت نشد، لطفاً دوباره وارد شوید' }, { status: 401 });
     }
 
+    const user = await User.findById(userId).select('phone phoneVerified').lean();
+    if (!user?.phone || !user.phoneVerified) {
+      return NextResponse.json({ message: 'برای ثبت آگهی، ابتدا شماره تماس خود را ثبت و تأیید کنید' }, { status: 403 });
+    }
+
     const housingPayload = category === 'real-estate' ? {
       deposit: housing?.deposit ? Number(housing.deposit) : undefined,
       residenceEligible: housing?.residenceEligible === true,
@@ -157,18 +163,19 @@ export async function POST(request: NextRequest) {
 
     try {
       const settings = (await Setting.findOne({ key: 'global' }).lean()) as any;
-      const appUrl = settings?.siteUrl || getAppUrl();
+      const appUrl = (settings?.siteUrl || getAppUrl()).replace(/\/$/, '');
       const cityLabel = getCityLabel(city) || city;
       const categoryLabel = getCategoryById(category)?.label || category;
       const priceLabel = priceType === 'free' ? 'رایگان' : priceType === 'negotiable' ? 'توافقی' : price ? `€${price}` : 'توافقی';
       const descSnippet = description ? `${String(description).slice(0, 140)}${String(description).length > 140 ? '…' : ''}` : '';
-      const caption = `🆕 <b>آگهی جدید</b>\n\n<b>عنوان:</b> ${title}\n<b>شهر:</b> ${cityLabel}\n<b>دسته:</b> ${categoryLabel}\n<b>قیمت:</b> ${priceLabel}\n${descSnippet ? `\n<b>توضیحات:</b> ${descSnippet}\n` : '\n'}برای بررسی اقدام کنید.`;
+      const ownerName = session?.user?.name ? String(session.user.name) : 'کاربر';
+      const caption = `🆕 <b>آگهی جدید</b>\n\n🏷️ <b>عنوان:</b> ${title}\n📍 <b>شهر:</b> ${cityLabel}\n📦 <b>دسته:</b> ${categoryLabel}\n💶 <b>قیمت:</b> ${priceLabel}\n👤 <b>ثبت‌کننده:</b> ${ownerName}\n${descSnippet ? `\n📝 <b>توضیحات:</b> ${descSnippet}\n` : '\n'}برای بررسی اقدام کنید.`;
       const keyboard = [
         [
-          { text: 'تأیید', callback_data: `approve:${ad._id}` },
-          { text: 'رد', callback_data: `reject:${ad._id}` },
+          { text: '✅ تأیید', callback_data: `approve:${ad._id}` },
+          { text: '❌ رد', callback_data: `reject:${ad._id}` },
         ],
-        [{ text: 'مشاهده آگهی', url: `${appUrl}/ads/${ad._id}` }],
+        [{ text: '🔗 مشاهده آگهی', url: `${appUrl}/ads/${ad._id}` }],
       ];
 
       const imageUrl = images?.[0];

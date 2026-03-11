@@ -324,6 +324,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateUserPhoneVerified = async (userId: string, phoneVerified: boolean) => {
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, phoneVerified }),
+    });
+    if (res.ok) {
+      toast.success(phoneVerified ? 'شماره تأیید شد' : 'تأیید شماره لغو شد');
+      fetchUsers();
+    } else {
+      toast.error('تغییر وضعیت شماره ناموفق بود');
+    }
+  };
+
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -842,14 +856,18 @@ export default function AdminDashboard() {
                 <div>
                   <p className="font-medium text-gray-800 text-sm">{u.name || '-'}</p>
                   <p className="text-xs text-gray-500">{u.email}</p>
+                  {u.phone && <p className="text-xs text-gray-500 mt-1">شماره: {u.phone}</p>}
                   <div className="text-xs text-gray-400 mt-1 flex gap-3">
                     <span>آگهی‌ها: {u.adsCount}</span>
                     <span>ثبت‌نام: {new Date(u.createdAt).toLocaleDateString('fa-IR')}</span>
                     <span>{u.role === 'admin' ? 'ادمین' : u.role === 'editor' ? 'نویسنده' : 'کاربر'}</span>
                     <span>احراز: {u.identityStatus || 'none'}</span>
+                    <span>تأیید شماره: {u.phoneVerified ? 'بله' : 'خیر'}</span>
                   </div>
                   <div className="mt-2">
                     <Link href={`/u/${u._id}`} target="_blank" className="text-xs text-brand-600">مشاهده صفحه کاربر</Link>
+                    <span className="text-xs text-gray-300 mx-2">|</span>
+                    <Link href={`/admin/users/${u._id}`} className="text-xs text-indigo-600">مدیریت کاربر</Link>
                   </div>
                   <div className="mt-3 grid md:grid-cols-3 gap-2 text-xs">
                     <div className="rounded-xl border border-gray-100 p-2">
@@ -918,6 +936,12 @@ export default function AdminDashboard() {
                     className={`px-3 py-2 rounded-xl text-xs font-medium ${u.identityStatus === 'verified' ? 'bg-gray-100 text-gray-600' : 'bg-emerald-50 text-emerald-600'}`}
                   >
                     {u.identityStatus === 'verified' ? 'لغو احراز' : 'احراز کن'}
+                  </button>
+                  <button
+                    onClick={() => updateUserPhoneVerified(u._id, !u.phoneVerified)}
+                    className={`px-3 py-2 rounded-xl text-xs font-medium ${u.phoneVerified ? 'bg-gray-100 text-gray-600' : 'bg-sky-50 text-sky-600'}`}
+                  >
+                    {u.phoneVerified ? 'لغو تأیید شماره' : 'تأیید شماره'}
                   </button>
                   <button
                     onClick={() => toggleUserActive(u._id, u.isActive)}
