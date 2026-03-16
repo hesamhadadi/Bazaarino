@@ -142,7 +142,7 @@ export default function ProfilePage() {
 
         {/* Branding note */}
         <div className="text-center mt-6">
-          <p className="text-xs text-gray-400">بازارینو — نیازمندی‌های ایرانیان اروپا 🇮🇹🇩🇪🇬🇧</p>
+          <p className="text-xs text-gray-400">بازارینو — نیازمندی‌های ایرانیان اروپا <span aria-label="ایتالیا، آلمان، و انگلستان">🇮🇹🇩🇪🇬🇧</span></p>
         </div>
       </div>
 
