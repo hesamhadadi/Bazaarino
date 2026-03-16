@@ -483,7 +483,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-      <div className="bg-gray-900 text-white px-6 py-4">
+      <div className="bg-gradient-to-l from-gray-900 via-gray-800 to-gray-900 text-white px-6 py-5 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex gap-0.5">
@@ -516,12 +516,14 @@ export default function AdminDashboard() {
                 { label: 'کاربران غیرفعال', value: stats.inactiveUsers, icon: UserX, color: 'bg-gray-100 text-gray-600' },
                 { label: 'آگهی ۷ روز اخیر', value: stats.adsLast7Days, icon: BarChart3, color: 'bg-purple-50 text-purple-600' },
               ].map((stat) => (
-                <div key={stat.label} className="bg-white rounded-2xl p-4 border border-gray-100">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 ${stat.color}`}>
-                    <stat.icon size={18} />
+                <div key={stat.label} className="bg-white rounded-2xl p-4 border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.color}`}>
+                      <stat.icon size={18} />
+                    </div>
+                    <span className="text-2xl font-bold text-gray-800">{stat.value}</span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+                  <p className="text-xs text-gray-500">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -539,8 +541,8 @@ export default function AdminDashboard() {
                           <span className="text-gray-600">{cityLabel}</span>
                           <span className="text-gray-400">{c.count}</span>
                         </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-brand-500 rounded-full" style={{ width: `${pct}%` }}></div>
+                        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-l from-brand-400 to-brand-600 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}></div>
                         </div>
                       </div>
                     );
@@ -560,8 +562,8 @@ export default function AdminDashboard() {
                           <span className="text-gray-600">{cat?.label || c._id}</span>
                           <span className="text-gray-400">{c.count}</span>
                         </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-purple-500 rounded-full" style={{ width: `${pct}%` }}></div>
+                        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-l from-purple-400 to-purple-600 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}></div>
                         </div>
                       </div>
                     );
@@ -569,25 +571,83 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+
+            {stats.totalAds > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+                <h3 className="font-semibold text-gray-800 mb-4">نمودار وضعیت آگهی‌ها</h3>
+                <div className="flex items-center gap-8 justify-center">
+                  <svg viewBox="0 0 120 120" className="w-32 h-32">
+                    {(() => {
+                      const total = stats.totalAds || 1;
+                      const slices = [
+                        { value: stats.approvedAds, color: '#22c55e', label: 'تأیید شده' },
+                        { value: stats.pendingAds, color: '#eab308', label: 'در انتظار' },
+                        { value: stats.rejectedAds, color: '#ef4444', label: 'رد شده' },
+                        { value: Math.max(0, total - stats.approvedAds - stats.pendingAds - stats.rejectedAds), color: '#94a3b8', label: 'سایر' },
+                      ].filter(s => s.value > 0);
+                      let cumulative = 0;
+                      const radius = 45;
+                      const circumference = 2 * Math.PI * radius;
+                      return slices.map((slice, i) => {
+                        const pct = slice.value / total;
+                        const offset = cumulative * circumference;
+                        cumulative += pct;
+                        return (
+                          <circle
+                            key={i}
+                            cx="60"
+                            cy="60"
+                            r={radius}
+                            fill="none"
+                            stroke={slice.color}
+                            strokeWidth="18"
+                            strokeDasharray={`${pct * circumference} ${circumference}`}
+                            strokeDashoffset={-offset}
+                            className="transition-all duration-700"
+                            style={{ transform: 'rotate(-90deg)', transformOrigin: '60px 60px' }}
+                          />
+                        );
+                      });
+                    })()}
+                    <text x="60" y="56" textAnchor="middle" className="text-lg font-bold fill-gray-800" style={{ fontSize: '18px' }}>{stats.totalAds}</text>
+                    <text x="60" y="72" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>کل آگهی</text>
+                  </svg>
+                  <div className="flex flex-col gap-2">
+                    {[
+                      { label: 'تأیید شده', value: stats.approvedAds, color: 'bg-green-500' },
+                      { label: 'در انتظار', value: stats.pendingAds, color: 'bg-yellow-500' },
+                      { label: 'رد شده', value: stats.rejectedAds, color: 'bg-red-500' },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center gap-2 text-sm">
+                        <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
+                        <span className="text-gray-600">{item.label}</span>
+                        <span className="font-semibold text-gray-800 mr-auto">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
 
         <div className="flex gap-2 mb-5 border-b border-gray-200 overflow-x-auto">
           {[
-            { id: 'pending', label: 'در انتظار', count: pendingAds.length },
-            { id: 'all', label: 'همه آگهی‌ها' },
-            { id: 'users', label: 'کاربران' },
-            { id: 'banners', label: 'بنر تبلیغاتی' },
-            { id: 'reports', label: 'گزارش‌ها' },
-            { id: 'settings', label: 'تنظیمات' },
+            { id: 'pending', label: 'در انتظار', count: pendingAds.length, icon: Clock },
+            { id: 'all', label: 'همه آگهی‌ها', icon: FileText },
+            { id: 'users', label: 'کاربران', icon: Users },
+            { id: 'banners', label: 'بنر تبلیغاتی', icon: ImagePlus },
+            { id: 'reports', label: 'گزارش‌ها', icon: Eye },
+            { id: 'settings', label: 'تنظیمات', icon: ShieldCheck },
           ].map((tab: any) => (
             <button
               key={tab.id}
               onClick={() => changeTab(tab.id)}
-              className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                 activeTab === tab.id ? 'border-brand-500 text-brand-600' : 'border-transparent text-gray-500'
               }`}
             >
+              <tab.icon size={14} />
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && <span className="mr-2 bg-yellow-400 text-yellow-900 text-xs px-1.5 py-0.5 rounded-full">{tab.count}</span>}
             </button>
