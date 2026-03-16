@@ -325,6 +325,22 @@ export default async function HomePage() {
 
         {/* Cities Quick Filter */}
         <section className="mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <Link href="/search" className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 text-white rounded-full text-xs font-medium">
+              <MapPin size={12} /> همه شهرها
+            </Link>
+            {CITIES.slice(0, 8).map(city => (
+              <Link
+                key={city.value}
+                href={`/search?city=${city.value}`}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-xs whitespace-nowrap hover:border-brand-300 hover:text-brand-600 transition-colors"
+              >
+                <CityIcon city={city.value} size={12} />
+                {city.label}
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {/* How It Works */}
         <section className="py-6">
@@ -342,7 +358,6 @@ export default async function HomePage() {
               <h3 className="text-sm font-bold text-gray-800 mb-1">ثبت‌نام کنید</h3>
               <p className="text-xs text-gray-400 leading-relaxed">یک حساب کاربری رایگان بسازید و وارد پنل خود شوید</p>
             </div>
-            {/* Arrow connector (visible on md+) */}
             {/* Step 2 */}
             <div className="relative bg-white rounded-2xl border border-gray-100 p-5 text-center hover:shadow-lg hover:shadow-blue-100/40 transition-shadow">
               <div className="absolute -top-3 right-1/2 translate-x-1/2 w-7 h-7 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shadow-md shadow-blue-200">۲</div>
@@ -361,22 +376,6 @@ export default async function HomePage() {
               <h3 className="text-sm font-bold text-gray-800 mb-1">بفروشید!</h3>
               <p className="text-xs text-gray-400 leading-relaxed">با خریداران ارتباط بگیرید و معامله کنید</p>
             </div>
-          </div>
-        </section>
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <Link href="/search" className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 text-white rounded-full text-xs font-medium">
-              <MapPin size={12} /> همه شهرها
-            </Link>
-            {CITIES.slice(0, 8).map(city => (
-              <Link
-                key={city.value}
-                href={`/search?city=${city.value}`}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-xs whitespace-nowrap hover:border-brand-300 hover:text-brand-600 transition-colors"
-              >
-                <CityIcon city={city.value} size={12} />
-                {city.label}
-              </Link>
-            ))}
           </div>
         </section>
 

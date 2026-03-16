@@ -204,8 +204,38 @@ select {
   50% { transform: translateY(-4px); }
 }
 
+/* Scroll-triggered reveal animation */
+.fade-up-delay-3 { animation-delay: 320ms; }
+
+/* Section divider gradient */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e5e7eb 20%, #e5e7eb 80%, transparent);
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Donut chart animation */
+@keyframes donutGrow {
+  from { stroke-dasharray: 0 283; }
+}
+
+/* Glass morphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .fade-up, .fade-up-delay-1, .fade-up-delay-2, .soft-float {
+  .fade-up, .fade-up-delay-1, .fade-up-delay-2, .fade-up-delay-3, .soft-float {
     animation: none;
     opacity: 1;
     transform: none;
