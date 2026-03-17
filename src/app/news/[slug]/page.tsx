@@ -5,6 +5,7 @@ import Article from '@/models/Article';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import { toFaDigits } from '@/lib/locale';
+import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 const estimateReadMinutes = (text: string) => Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
@@ -60,16 +61,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
   const article = await getArticle(params.slug);
   if (!article) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="max-w-3xl mx-auto px-4 py-10">
-          <h1 className="text-2xl font-bold text-gray-800">خبر یافت نشد</h1>
-          <Link href="/news" className="text-brand-600 text-sm">بازگشت به اخبار</Link>
-        </div>
-        <BottomNav />
-      </div>
-    );
+    notFound();
   }
   const readMinutes = estimateReadMinutes(article.content || '');
   const relatedArticles = await getRelatedArticles(article.slug, Array.isArray(article.tags) ? article.tags : []);
