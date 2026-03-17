@@ -8,6 +8,8 @@ import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
 import '@/models/User';
 
+const MAX_MESSAGES_PER_CONVERSATION = 300;
+
 async function getCurrentUserId() {
   const session = await getServerSession(authOptions);
   if (!session) return null;
@@ -49,7 +51,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
 
     const messages = await Message.find({ conversationId: conversation._id })
       .sort({ createdAt: 1 })
-      .limit(300)
+      .limit(MAX_MESSAGES_PER_CONVERSATION)
       .populate('senderId', 'name avatar')
       .lean();
 

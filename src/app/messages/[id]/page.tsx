@@ -48,26 +48,26 @@ export default function ConversationPage({ params }: { params: { id: string } })
     }
   };
 
-  const fetchConversation = async () => {
-    const res = await fetch(`/api/conversations/${params.id}`, { cache: 'no-store' });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || 'خطا در دریافت گفتگو');
-    setConversation(data.conversation);
-  };
-
-  const fetchMessages = async () => {
-    const res = await fetch(`/api/conversations/${params.id}/messages`, { cache: 'no-store' });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || 'خطا در دریافت پیام‌ها');
-    setMessages(data.messages || []);
-  };
-
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/auth/login');
   }, [status, router]);
 
   useEffect(() => {
     if (!session) return;
+
+    const fetchConversation = async () => {
+      const res = await fetch(`/api/conversations/${params.id}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'خطا در دریافت گفتگو');
+      setConversation(data.conversation);
+    };
+
+    const fetchMessages = async () => {
+      const res = await fetch(`/api/conversations/${params.id}/messages`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'خطا در دریافت پیام‌ها');
+      setMessages(data.messages || []);
+    };
 
     const load = async () => {
       try {
@@ -155,7 +155,7 @@ export default function ConversationPage({ params }: { params: { id: string } })
               const mine = senderId === currentUserId;
 
               return (
-                <div key={message._id} className={`flex ${mine ? 'justify-start' : 'justify-end'}`}>
+                <div key={message._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${mine ? 'bg-brand-500 text-white rounded-br-md' : 'bg-gray-100 text-gray-800 rounded-bl-md'}`}>
                     <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                     <p className={`text-[11px] mt-1 ${mine ? 'text-white/80' : 'text-gray-400'}`}>{formatTime(message.createdAt)}</p>
