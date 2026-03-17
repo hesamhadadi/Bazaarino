@@ -7,7 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FileText, Plus, Settings, LogOut, User, Heart, ChevronLeft, Shield, Calendar } from 'lucide-react';
+import { FileText, Plus, Settings, LogOut, User, Heart, ChevronLeft, Shield, Calendar, MessageCircle } from 'lucide-react';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -67,7 +67,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
           <Link
             href="/ads/new"
             className="bg-gradient-to-b from-brand-500 to-brand-600 text-white rounded-2xl p-4 flex flex-col items-center gap-2 text-center shadow-sm hover:shadow-md transition-shadow"
@@ -95,6 +95,15 @@ export default function ProfilePage() {
             </div>
             <span className="font-medium text-sm">علاقه‌مندی‌ها</span>
           </Link>
+          <Link
+            href="/messages"
+            className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2 text-center text-gray-700 hover:border-brand-200 transition-colors"
+          >
+            <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+              <MessageCircle size={20} className="text-brand-500" />
+            </div>
+            <span className="font-medium text-sm">گفتگوها</span>
+          </Link>
         </div>
 
         {/* Menu */}
@@ -118,6 +127,13 @@ export default function ProfilePage() {
               <Heart size={16} className="text-rose-400" />
             </div>
             <span className="text-gray-700 flex-1">علاقه‌مندی‌ها</span>
+            <ChevronLeft size={16} className="text-gray-300" />
+          </Link>
+          <Link href="/messages" className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 border-b border-gray-100/50 transition-colors">
+            <div className="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center">
+              <MessageCircle size={16} className="text-brand-500" />
+            </div>
+            <span className="text-gray-700 flex-1">گفتگوها</span>
             <ChevronLeft size={16} className="text-gray-300" />
           </Link>
           {session.user.role === 'admin' && (

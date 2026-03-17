@@ -12,6 +12,7 @@ import CategoryIcon from '@/components/ui/CategoryIcon';
 import { StarRating } from '@/components/ui/StarRating';
 import RateUser from '@/components/ads/RateUser';
 import ReportForm from '@/components/ads/ReportForm';
+import StartChatButton from '@/components/ads/StartChatButton';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel, getCountryLabel, getCountryByCity } from '@/lib/constants';
 import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle } from 'lucide-react';
@@ -277,6 +278,9 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 </div>
               )}
               <div className="space-y-2">
+                {ad.userId?._id && (
+                  <StartChatButton adId={ad._id.toString()} sellerId={ad.userId._id.toString()} />
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {ad.showPhone && ad.phone && (
                     <a

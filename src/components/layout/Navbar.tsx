@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import Image from 'next/image';
-import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper } from 'lucide-react';
+import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper, MessageCircle } from 'lucide-react';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -26,6 +26,11 @@ export default function Navbar() {
             <Link href="/news" className="text-gray-600 hover:text-gray-800 text-sm font-medium px-2 py-2">
               اخبار
             </Link>
+            {session && (
+              <Link href="/messages" className="text-gray-600 hover:text-gray-800 text-sm font-medium px-2 py-2">
+                گفتگوها
+              </Link>
+            )}
             {session ? (
               <>
                 <Link
@@ -65,6 +70,14 @@ export default function Navbar() {
                       >
                         <FileText size={14} />
                         آگهی‌های من
+                      </Link>
+                      <Link
+                        href="/messages"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <MessageCircle size={14} />
+                        گفتگوها
                       </Link>
                       <Link
                         href="/favorites"
@@ -147,6 +160,9 @@ export default function Navbar() {
                 </Link>
                 <Link href="/favorites" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                   <Heart size={16} /> علاقه‌مندی‌ها
+                </Link>
+                <Link href="/messages" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
+                  <MessageCircle size={16} /> گفتگوها
                 </Link>
                 <Link href="/news" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                   <Newspaper size={16} /> اخبار و مقالات
