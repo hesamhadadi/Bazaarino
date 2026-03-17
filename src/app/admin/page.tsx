@@ -474,6 +474,10 @@ export default function AdminDashboard() {
 
   const topCities = useMemo(() => stats?.topCities || [], [stats]);
   const topCategories = useMemo(() => stats?.topCategories || [], [stats]);
+  const activeAdFilterCount = useMemo(
+    () => Object.entries(adFilters).filter(([key, value]) => key !== 'status' ? Boolean(value) : activeTab === 'all' && value !== 'all').length,
+    [adFilters, activeTab]
+  );
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -482,8 +486,8 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
-      <div className="bg-gradient-to-l from-gray-900 via-gray-800 to-gray-900 text-white px-6 py-5 border-b border-gray-700/50">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-gray-100 to-gray-200" dir="rtl">
+      <div className="bg-gradient-to-l from-slate-950 via-slate-900 to-gray-900 text-white px-6 py-5 border-b border-gray-700/50 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex gap-0.5">
@@ -516,7 +520,7 @@ export default function AdminDashboard() {
                 { label: 'کاربران غیرفعال', value: stats.inactiveUsers, icon: UserX, color: 'bg-gray-100 text-gray-600' },
                 { label: 'آگهی ۷ روز اخیر', value: stats.adsLast7Days, icon: BarChart3, color: 'bg-purple-50 text-purple-600' },
               ].map((stat) => (
-                <div key={stat.label} className="bg-white rounded-2xl p-4 border border-gray-100 hover:shadow-md transition-shadow">
+                <div key={stat.label} className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 border border-white shadow-sm hover:shadow-lg transition-all">
                   <div className="flex items-center justify-between mb-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.color}`}>
                       <stat.icon size={18} />
@@ -529,7 +533,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-3 mb-6">
-              <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-4">
                 <h3 className="font-semibold text-gray-800 mb-3">شهرهای پرآگهی</h3>
                 <div className="space-y-2">
                   {topCities.map((c: any) => {
@@ -550,7 +554,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-4">
                 <h3 className="font-semibold text-gray-800 mb-3">دسته‌های پرآگهی</h3>
                 <div className="space-y-2">
                   {topCategories.map((c: any) => {
@@ -573,7 +577,7 @@ export default function AdminDashboard() {
             </div>
 
             {stats.totalAds > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+               <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-4 mb-6">
                 <h3 className="font-semibold text-gray-800 mb-4">نمودار وضعیت آگهی‌ها</h3>
                 <div className="flex items-center gap-8 justify-center">
                   <svg viewBox="0 0 120 120" className="w-32 h-32">
@@ -631,7 +635,7 @@ export default function AdminDashboard() {
           </>
         )}
 
-        <div className="flex gap-2 mb-5 border-b border-gray-200 overflow-x-auto">
+        <div className="flex gap-2 mb-5 border-b border-gray-300/70 overflow-x-auto">
           {[
             { id: 'pending', label: 'در انتظار', count: pendingAds.length, icon: Clock },
             { id: 'all', label: 'همه آگهی‌ها', icon: FileText },
@@ -643,9 +647,9 @@ export default function AdminDashboard() {
             <button
               key={tab.id}
               onClick={() => changeTab(tab.id)}
-              className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === tab.id ? 'border-brand-500 text-brand-600' : 'border-transparent text-gray-500'
-              }`}
+               className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+                 activeTab === tab.id ? 'border-brand-500 text-brand-700 bg-white/70 rounded-t-xl' : 'border-transparent text-gray-500'
+               }`}
             >
               <tab.icon size={14} />
               {tab.label}
@@ -655,10 +659,13 @@ export default function AdminDashboard() {
         </div>
 
         {(activeTab === 'pending' || activeTab === 'all') && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-4 mb-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
               <Filter size={16} />
               فیلتر آگهی‌ها
+              {activeAdFilterCount > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-brand-100 text-brand-700">فعال: {activeAdFilterCount}</span>
+              )}
             </div>
             <div className="grid md:grid-cols-4 gap-3">
               <input
