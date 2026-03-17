@@ -11,7 +11,19 @@ export async function GET(request: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(request.url);
     const limit = Number(searchParams.get('limit') || 12);
-    const items = await Article.find({ status: 'published' })
+    const q = searchParams.get('q')?.trim();
+    const tag = searchParams.get('tag')?.trim();
+    const query: any = { status: 'published' };
+    if (q) {
+      query.$or = [
+        { title: { $regex: q, $options: 'i' } },
+        { excerpt: { $regex: q, $options: 'i' } },
+        { content: { $regex: q, $options: 'i' } },
+      ];
+    }
+    if (tag) query.tags = tag;
+
+    const items = await Article.find(query)
       .populate('authorId', 'name avatar role')
       .sort({ isHot: -1, createdAt: -1 })
       .limit(limit)

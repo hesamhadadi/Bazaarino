@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 
+const estimateReadMinutes = (text: string) => Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
+
 export default function NewArticlePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -71,11 +73,12 @@ export default function NewArticlePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-gray-50 to-gray-100">
       <Navbar />
       <div className="max-w-3xl mx-auto px-4 py-6 pb-24 md:pb-10">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">انتشار مقاله</h1>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">انتشار مقاله</h1>
+        <p className="text-sm text-gray-500 mb-4">زمان مطالعه تخمینی: {estimateReadMinutes(form.content)} دقیقه</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3 shadow-sm">
           <input
             value={form.title}
             onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
@@ -100,12 +103,25 @@ export default function NewArticlePage() {
             placeholder="لینک تصویر کاور (اختیاری)"
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
           />
+          {form.coverImage && (
+            <div className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={form.coverImage} alt="cover-preview" className="w-full h-40 object-cover rounded-lg" />
+            </div>
+          )}
           <input
             value={form.tags}
             onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))}
             placeholder="برچسب‌ها (با کاما جدا کنید)"
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
           />
+          {form.tags.trim() && (
+            <div className="flex flex-wrap gap-1.5">
+              {form.tags.split(',').map((tag) => tag.trim()).filter(Boolean).map((tag) => (
+                <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-100">#{tag}</span>
+              ))}
+            </div>
+          )}
           <div className="flex items-center justify-between gap-3">
             <label className="inline-flex items-center gap-2 text-sm text-gray-600">
               <input type="checkbox" checked={form.isHot} onChange={(e) => setForm((p) => ({ ...p, isHot: e.target.checked }))} />
