@@ -29,6 +29,11 @@ export async function GET(request: NextRequest) {
     const hasImage = searchParams.get('hasImage');
     const sort = searchParams.get('sort') || 'newest';
     const residence = searchParams.get('residence');
+    const listingMode = searchParams.get('listingMode');
+    const billsInfo = searchParams.get('billsInfo');
+    const hasAgencyFee = searchParams.get('hasAgencyFee');
+    const allInclusive = searchParams.get('allInclusive');
+    const availabilityFrom = searchParams.get('availabilityFrom');
     const status = searchParams.get('status') || 'approved';
 
     const query: any = { status };
@@ -46,6 +51,18 @@ export async function GET(request: NextRequest) {
     if (hasImage === 'true') query.images = { $exists: true, $ne: [] };
     if (residence === 'yes') query['housing.residenceEligible'] = true;
     if (residence === 'no') query['housing.residenceEligible'] = { $ne: true };
+    if (listingMode === 'offer' || listingMode === 'request') query.listingMode = listingMode;
+    if (billsInfo === 'included' || billsInfo === 'not-included' || billsInfo === 'partial') query['housing.billsInfo'] = billsInfo;
+    if (hasAgencyFee === 'yes') query['housing.agencyFee'] = { $gt: 0 };
+    if (hasAgencyFee === 'no') {
+      query.$and = [...(query.$and || []), { $or: [{ 'housing.agencyFee': { $exists: false } }, { 'housing.agencyFee': { $lte: 0 } }] }];
+    }
+    if (allInclusive === 'yes') query['housing.isAllInclusivePrice'] = true;
+    if (allInclusive === 'no') query['housing.isAllInclusivePrice'] = { $ne: true };
+    if (availabilityFrom) {
+      const fromDate = new Date(availabilityFrom);
+      if (!isNaN(fromDate.getTime())) query['housing.availabilityStartDate'] = { $gte: fromDate };
+    }
 
     if (minPrice || maxPrice) {
       query.price = {};
@@ -103,6 +120,7 @@ export async function POST(request: NextRequest) {
       title, description, price, priceType, currency,
       category, subcategory, city, country, images,
       phone, email, showPhone, showEmail,
+      listingMode,
       housing,
     } = body;
 
@@ -123,6 +141,12 @@ export async function POST(request: NextRequest) {
       roommatesCount: housing?.roommatesCount !== undefined && housing?.roommatesCount !== null
         ? Number(housing.roommatesCount)
         : undefined,
+      availabilityStartDate: housing?.availabilityStartDate ? new Date(housing.availabilityStartDate) : undefined,
+      billsInfo: ['included', 'not-included', 'partial'].includes(housing?.billsInfo) ? housing.billsInfo : undefined,
+      agencyFee: housing?.agencyFee !== undefined && housing?.agencyFee !== null && housing?.agencyFee !== ''
+        ? Number(housing.agencyFee)
+        : undefined,
+      isAllInclusivePrice: housing?.isAllInclusivePrice === true,
       address: housing?.address || undefined,
       location: housing?.location?.lat !== undefined && housing?.location?.lng !== undefined
         ? { lat: Number(housing.location.lat), lng: Number(housing.location.lng) }
@@ -150,6 +174,7 @@ export async function POST(request: NextRequest) {
       email,
       showPhone: showPhone !== false,
       showEmail: showEmail === true,
+      listingMode: listingMode === 'request' ? 'request' : 'offer',
       housing: housingPayload ? { ...housingPayload, nearby } : undefined,
       userId,
       status: 'pending',

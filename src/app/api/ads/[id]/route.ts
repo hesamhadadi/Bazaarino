@@ -62,16 +62,37 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     // Owner can update content
     if (isOwner) {
-      const allowedFields = ['title', 'description', 'price', 'priceType', 'city', 'phone', 'email', 'showPhone', 'showEmail', 'images', 'housing'];
+      const allowedFields = ['title', 'description', 'price', 'priceType', 'city', 'phone', 'email', 'showPhone', 'showEmail', 'images', 'housing', 'listingMode'];
       allowedFields.forEach(field => {
         if (body[field] !== undefined) (ad as any)[field] = body[field];
       });
       if (body.housing && ad.category === 'real-estate') {
+        const availabilityStartDate = body.housing?.availabilityStartDate ? new Date(body.housing.availabilityStartDate) : null;
         const location = body.housing?.location?.lat !== undefined && body.housing?.location?.lng !== undefined
           ? { lat: Number(body.housing.location.lat), lng: Number(body.housing.location.lng) }
           : null;
         const city = body.city || ad.city;
+        if (!(ad as any).housing) (ad as any).housing = {};
+        (ad as any).housing.deposit = body.housing?.deposit !== undefined && body.housing?.deposit !== null && body.housing?.deposit !== ''
+          ? Number(body.housing.deposit)
+          : undefined;
+        (ad as any).housing.residenceEligible = body.housing?.residenceEligible === true;
+        (ad as any).housing.preferredGender = body.housing?.preferredGender || 'any';
+        (ad as any).housing.roommatesCount = body.housing?.roommatesCount !== undefined && body.housing?.roommatesCount !== null && body.housing?.roommatesCount !== ''
+          ? Number(body.housing.roommatesCount)
+          : undefined;
+        (ad as any).housing.availabilityStartDate = availabilityStartDate && !isNaN(availabilityStartDate.getTime()) ? availabilityStartDate : undefined;
+        (ad as any).housing.billsInfo = ['included', 'not-included', 'partial'].includes(body.housing?.billsInfo) ? body.housing.billsInfo : undefined;
+        (ad as any).housing.agencyFee = body.housing?.agencyFee !== undefined && body.housing?.agencyFee !== null && body.housing?.agencyFee !== ''
+          ? Number(body.housing.agencyFee)
+          : undefined;
+        (ad as any).housing.isAllInclusivePrice = body.housing?.isAllInclusivePrice === true;
+        (ad as any).housing.address = body.housing?.address || undefined;
+        (ad as any).housing.location = location || undefined;
         (ad as any).housing.nearby = computeHousingNearby(city, location);
+      }
+      if (body.listingMode !== undefined) {
+        (ad as any).listingMode = body.listingMode === 'request' ? 'request' : 'offer';
       }
       // Reset to pending when owner edits
       if (!isAdmin) ad.status = 'pending';

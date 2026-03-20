@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { CATEGORIES, CITIES } from '@/lib/constants';
+import { BILLS_INFO_OPTIONS, CATEGORIES, CITIES, LISTING_MODES } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
 import dynamic from 'next/dynamic';
 import { Upload, X, ChevronLeft } from 'lucide-react';
@@ -27,10 +27,15 @@ const adSchema = z.object({
   price: z.string().optional(),
   phone: z.string().optional(),
   showPhone: z.boolean().optional(),
+  listingMode: z.enum(['offer', 'request']),
   deposit: z.string().optional(),
   residenceEligible: z.boolean().optional(),
   preferredGender: z.enum(['male', 'female', 'any']).optional(),
   roommatesCount: z.string().optional(),
+  availabilityStartDate: z.string().optional(),
+  billsInfo: z.union([z.enum(['included', 'not-included', 'partial']), z.literal('')]).optional(),
+  agencyFee: z.string().optional(),
+  isAllInclusivePrice: z.boolean().optional(),
   address: z.string().optional(),
   locationLat: z.string().optional(),
   locationLng: z.string().optional(),
@@ -51,10 +56,12 @@ export default function EditAdPage() {
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<AdForm>({
     resolver: zodResolver(adSchema),
+    defaultValues: { listingMode: 'offer', preferredGender: 'any', billsInfo: '' },
   });
 
   const priceType = watch('priceType');
   const category = watch('category');
+  const listingMode = watch('listingMode');
   const currentCategory = CATEGORIES.find(c => c.id === category);
 
   useEffect(() => {
@@ -79,12 +86,17 @@ export default function EditAdPage() {
         city: ad.city,
         priceType: ad.priceType,
         price: ad.price?.toString(),
+        listingMode: ad.listingMode || 'offer',
         phone: ad.phone,
         showPhone: ad.showPhone,
         deposit: ad.housing?.deposit?.toString(),
         residenceEligible: ad.housing?.residenceEligible,
         preferredGender: ad.housing?.preferredGender || 'any',
         roommatesCount: ad.housing?.roommatesCount?.toString(),
+        availabilityStartDate: ad.housing?.availabilityStartDate ? String(ad.housing.availabilityStartDate).slice(0, 10) : '',
+        billsInfo: ad.housing?.billsInfo || '',
+        agencyFee: ad.housing?.agencyFee?.toString(),
+        isAllInclusivePrice: ad.housing?.isAllInclusivePrice === true,
         address: ad.housing?.address || '',
         locationLat: ad.housing?.location?.lat ? String(ad.housing.location.lat) : '',
         locationLng: ad.housing?.location?.lng ? String(ad.housing.location.lng) : '',
@@ -134,6 +146,10 @@ export default function EditAdPage() {
             residenceEligible: data.residenceEligible === true,
             preferredGender: data.preferredGender || 'any',
             roommatesCount: data.roommatesCount ? Number(data.roommatesCount) : undefined,
+            availabilityStartDate: data.availabilityStartDate || undefined,
+            billsInfo: data.billsInfo || undefined,
+            agencyFee: data.agencyFee ? Number(data.agencyFee) : undefined,
+            isAllInclusivePrice: data.isAllInclusivePrice === true,
             address: data.address || undefined,
             location: data.locationLat && data.locationLng
               ? { lat: Number(data.locationLat), lng: Number(data.locationLng) }
@@ -173,6 +189,20 @@ export default function EditAdPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="bg-white rounded-2xl p-4 border border-gray-100">
+            <h2 className="font-semibold text-gray-800 mb-3">نوع آگهی</h2>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {LISTING_MODES.map((mode) => (
+                <label
+                  key={mode.value}
+                  className={`flex items-center gap-2 p-3 border rounded-xl cursor-pointer transition-colors ${
+                    listingMode === mode.value ? 'border-brand-400 bg-brand-50' : 'border-gray-200'
+                  }`}
+                >
+                  <input type="radio" value={mode.value} {...register('listingMode')} className="accent-brand-500" />
+                  <span className="text-sm">{mode.label}</span>
+                </label>
+              ))}
+            </div>
             <h2 className="font-semibold text-gray-800 mb-3">دسته‌بندی</h2>
             <select {...register('category')} onChange={(e) => { setValue('category', e.target.value); setValue('subcategory', ''); }}
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-3">
@@ -225,6 +255,31 @@ export default function EditAdPage() {
                     <label className="block text-xs text-gray-600 mb-1">تعداد هم‌خانه</label>
                     <input {...register('roommatesCount')} type="number" min="0" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">تاریخ شروع سکونت</label>
+                    <input {...register('availabilityStartDate')} type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">وضعیت قبض‌ها</label>
+                    <select {...register('billsInfo')} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                      <option value="">انتخاب نشده</option>
+                      {BILLS_INFO_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">مبلغ agency (€)</label>
+                    <input {...register('agencyFee')} type="number" min="0" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer self-end pb-1">
+                    <input type="checkbox" {...register('isAllInclusivePrice')} className="accent-brand-500" />
+                    مبلغ ماهانه all-inclusive است
+                  </label>
                 </div>
                 <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input type="checkbox" {...register('residenceEligible')} className="accent-brand-500" />

@@ -145,6 +145,19 @@ export const CATEGORIES = [
     ],
   },
   {
+    id: 'requests',
+    label: 'متقاضی و درخواست',
+    icon: '📝',
+    color: 'bg-indigo-100 text-indigo-700',
+    subcategories: [
+      { value: 'card-request', label: 'کارت (مثل منسا / مک‌فیت)' },
+      { value: 'medicine-request', label: 'دارو و اقلام پزشکی' },
+      { value: 'financial-request', label: 'مالی و پرداخت' },
+      { value: 'euro-revolut', label: 'خرید/فروش یورو (Revolut)' },
+      { value: 'special-request', label: 'درخواست خاص' },
+    ],
+  },
+  {
     id: 'other',
     label: 'متفرقه',
     icon: '📦',
@@ -157,6 +170,17 @@ export const CATEGORIES = [
       { value: 'misc', label: 'سایر' },
     ],
   },
+];
+
+export const LISTING_MODES = [
+  { value: 'offer', label: 'آگهی عرضه (فروش/اجاره)' },
+  { value: 'request', label: 'آگهی متقاضی (درخواست)' },
+];
+
+export const BILLS_INFO_OPTIONS = [
+  { value: 'included', label: 'قبض‌ها شامل اجاره است' },
+  { value: 'not-included', label: 'قبض‌ها جداگانه است' },
+  { value: 'partial', label: 'بخشی از قبض‌ها شامل است' },
 ];
 
 export const getCategoryById = (id: string) => {

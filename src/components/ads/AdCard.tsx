@@ -21,7 +21,12 @@ interface AdCardProps {
     featuredUntil?: string;
     housing?: {
       residenceEligible?: boolean;
+      availabilityStartDate?: string;
+      billsInfo?: 'included' | 'not-included' | 'partial';
+      agencyFee?: number;
+      isAllInclusivePrice?: boolean;
     };
+    listingMode?: 'offer' | 'request';
     userId?: {
       name?: string;
       avatar?: string;
@@ -80,6 +85,11 @@ export default function AdCard({ ad }: AdCardProps) {
               رزیدنسا
             </div>
           )}
+          {ad.listingMode === 'request' && (
+            <div className="absolute top-2 right-2 bg-indigo-600/95 text-white text-[10px] px-2 py-1 rounded-full">
+              متقاضی
+            </div>
+          )}
           <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
             <Eye size={10} /> {toFaDigits(ad.views)}
           </div>
@@ -87,6 +97,16 @@ export default function AdCard({ ad }: AdCardProps) {
         <div className="p-3 flex-1 flex flex-col">
           <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2 leading-relaxed">{ad.title}</h3>
           <div className="text-orange-600 font-bold text-sm mb-2">{formatPrice(ad.price, ad.priceType)}</div>
+          {ad.category === 'real-estate' && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {ad.housing?.isAllInclusivePrice && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">all-inclusive</span>
+              )}
+              {ad.housing?.agencyFee !== undefined && ad.housing?.agencyFee !== null && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">agency €{formatFaNumber(ad.housing.agencyFee)}</span>
+              )}
+            </div>
+          )}
           <div className="flex flex-col gap-1 mb-2">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
