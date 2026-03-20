@@ -17,6 +17,7 @@ export interface IAd extends Document {
   email?: string;
   showPhone: boolean;
   showEmail: boolean;
+  listingMode?: 'offer' | 'request';
   views: number;
   isFeatured: boolean;
   featuredUntil?: Date;
@@ -27,6 +28,10 @@ export interface IAd extends Document {
     residenceEligible?: boolean;
     preferredGender?: 'male' | 'female' | 'any';
     roommatesCount?: number;
+    availabilityStartDate?: Date;
+    billsInfo?: 'included' | 'not-included' | 'partial';
+    agencyFee?: number;
+    isAllInclusivePrice?: boolean;
     address?: string;
     location?: {
       lat: number;
@@ -119,6 +124,11 @@ const AdSchema = new Schema<IAd>(
       type: Boolean,
       default: false,
     },
+    listingMode: {
+      type: String,
+      enum: ['offer', 'request'],
+      default: 'offer',
+    },
     views: {
       type: Number,
       default: 0,
@@ -153,6 +163,21 @@ const AdSchema = new Schema<IAd>(
         type: Number,
         min: [0, 'تعداد هم‌خانه نمی‌تواند منفی باشد'],
         max: [30, 'تعداد هم‌خانه نامعتبر است'],
+      },
+      availabilityStartDate: {
+        type: Date,
+      },
+      billsInfo: {
+        type: String,
+        enum: ['included', 'not-included', 'partial'],
+      },
+      agencyFee: {
+        type: Number,
+        min: [0, 'مبلغ agency نمی‌تواند منفی باشد'],
+      },
+      isAllInclusivePrice: {
+        type: Boolean,
+        default: false,
       },
       address: {
         type: String,

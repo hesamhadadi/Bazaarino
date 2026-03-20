@@ -23,6 +23,11 @@ interface SearchParams {
   featured?: string;
   hasImage?: string;
   residence?: string;
+  listingMode?: string;
+  billsInfo?: string;
+  hasAgencyFee?: string;
+  allInclusive?: string;
+  availabilityFrom?: string;
   sort?: string;
   page?: string;
 }
@@ -56,6 +61,16 @@ async function searchAds(params: SearchParams) {
     if (params.hasImage === 'true') query.images = { $exists: true, $ne: [] };
     if (params.residence === 'yes') query['housing.residenceEligible'] = true;
     if (params.residence === 'no') query['housing.residenceEligible'] = { $ne: true };
+    if (params.listingMode === 'offer' || params.listingMode === 'request') query.listingMode = params.listingMode;
+    if (params.billsInfo === 'included' || params.billsInfo === 'not-included' || params.billsInfo === 'partial') query['housing.billsInfo'] = params.billsInfo;
+    if (params.hasAgencyFee === 'yes') query['housing.agencyFee'] = { $gt: 0 };
+    if (params.hasAgencyFee === 'no') query.$and = [...(query.$and || []), { $or: [{ 'housing.agencyFee': { $exists: false } }, { 'housing.agencyFee': { $lte: 0 } }] }];
+    if (params.allInclusive === 'yes') query['housing.isAllInclusivePrice'] = true;
+    if (params.allInclusive === 'no') query['housing.isAllInclusivePrice'] = { $ne: true };
+    if (params.availabilityFrom) {
+      const fromDate = new Date(params.availabilityFrom);
+      if (!isNaN(fromDate.getTime())) query['housing.availabilityStartDate'] = { $gte: fromDate };
+    }
     if (params.priceType && params.priceType !== 'all') query.priceType = params.priceType;
 
     if (params.minPrice || params.maxPrice) {
@@ -269,6 +284,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
             <input type="hidden" name="country" value={searchParams.country || ''} />
             <input type="hidden" name="city" value={searchParams.city || ''} />
             <input type="hidden" name="category" value={searchParams.category || ''} />
+            <select name="listingMode" defaultValue={searchParams.listingMode || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <option value="">نوع آگهی: همه</option>
+              <option value="offer">آگهی عرضه</option>
+              <option value="request">فقط متقاضی</option>
+            </select>
 
             <select name="subcategory" defaultValue={searchParams.subcategory || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
               <option value="">همه زیردسته‌ها</option>
@@ -301,6 +321,23 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               <option value="yes">فقط دارای رزیدنسا</option>
               <option value="no">فقط بدون رزیدنسا</option>
             </select>
+            <select name="billsInfo" defaultValue={searchParams.billsInfo || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <option value="">قبض‌ها: همه</option>
+              <option value="included">قبض شامل</option>
+              <option value="not-included">قبض جدا</option>
+              <option value="partial">قبض بخشی</option>
+            </select>
+            <select name="hasAgencyFee" defaultValue={searchParams.hasAgencyFee || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <option value="">agency: همه</option>
+              <option value="yes">دارای agency</option>
+              <option value="no">بدون agency</option>
+            </select>
+            <select name="allInclusive" defaultValue={searchParams.allInclusive || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <option value="">all-inclusive: همه</option>
+              <option value="yes">فقط شامل همه</option>
+              <option value="no">فقط غیرشامل</option>
+            </select>
+            <input type="date" name="availabilityFrom" defaultValue={searchParams.availabilityFrom || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
 
             <div className="flex items-center gap-3 col-span-2 md:col-span-6 text-xs text-gray-600 mt-1">
               <label className="flex items-center gap-1">

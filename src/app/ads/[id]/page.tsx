@@ -79,6 +79,20 @@ function timeAgo(dateStr: string): string {
   return `${toFaDigits(Math.floor(diff / 2592000))} ماه پیش`;
 }
 
+function billsInfoLabel(value?: string): string {
+  if (value === 'included') return 'قبض‌ها شامل اجاره است';
+  if (value === 'not-included') return 'قبض‌ها جداگانه است';
+  if (value === 'partial') return 'بخشی از قبض‌ها شامل است';
+  return 'ثبت نشده';
+}
+
+function formatDateFa(date?: string | Date): string {
+  if (!date) return 'ثبت نشده';
+  const value = new Date(date);
+  if (isNaN(value.getTime())) return 'ثبت نشده';
+  return value.toLocaleDateString('fa-IR');
+}
+
 export default async function AdDetailPage({ params }: { params: { id: string } }) {
   const ad = await getAd(params.id);
   if (!ad) notFound();
@@ -142,6 +156,11 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                     <Tag size={12} /> {subcategory.label}
                   </span>
                 )}
+                {ad.listingMode === 'request' && (
+                  <span className="flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs px-3 py-1.5 rounded-full font-semibold">
+                    📝 متقاضی
+                  </span>
+                )}
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
                   <Eye size={12} /> {toFaDigits(ad.views)} بازدید
                 </span>
@@ -170,6 +189,20 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                       {ad.housing?.deposit ? `€${formatFaNumber(Number(ad.housing.deposit))}` : 'ثبت نشده'}
                     </p>
                   </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">تاریخ شروع</p>
+                    <p className="text-sm font-semibold text-gray-700">{formatDateFa(ad.housing?.availabilityStartDate)}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">وضعیت قبض‌ها</p>
+                    <p className="text-sm font-semibold text-gray-700">{billsInfoLabel(ad.housing?.billsInfo)}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">مبلغ agency</p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {ad.housing?.agencyFee !== undefined && ad.housing?.agencyFee !== null ? `€${formatFaNumber(Number(ad.housing.agencyFee))}` : 'ثبت نشده'}
+                    </p>
+                  </div>
                   <div className={`rounded-xl p-3 ${ad.housing?.residenceEligible ? 'bg-emerald-50 border border-emerald-100' : 'bg-gray-50'}`}>
                     <p className="text-xs text-gray-400 mb-1">رزیدنسا</p>
                     <p className={`text-sm font-semibold flex items-center gap-1 ${ad.housing?.residenceEligible ? 'text-emerald-700' : 'text-gray-700'}`}>
@@ -192,6 +225,12 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                     <p className="text-sm font-semibold text-gray-700 flex items-center gap-1">
                       <Users size={14} className="text-gray-500" />
                       {ad.housing?.roommatesCount !== undefined && ad.housing?.roommatesCount !== null ? toFaDigits(ad.housing.roommatesCount) : 'ثبت نشده'}
+                    </p>
+                  </div>
+                  <div className={`rounded-xl p-3 ${ad.housing?.isAllInclusivePrice ? 'bg-emerald-50 border border-emerald-100' : 'bg-gray-50'}`}>
+                    <p className="text-xs text-gray-400 mb-1">all-inclusive</p>
+                    <p className={`text-sm font-semibold ${ad.housing?.isAllInclusivePrice ? 'text-emerald-700' : 'text-gray-700'}`}>
+                      {ad.housing?.isAllInclusivePrice ? 'بله' : 'خیر'}
                     </p>
                   </div>
                 </div>
