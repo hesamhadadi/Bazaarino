@@ -1,17 +1,22 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import type { LatLng } from '@/lib/map-data';
-import { DEFAULT_BRAND_PRIMARY } from '@/lib/brand-color';
+import { BRAND_COLOR_EVENT, readBrandPrimaryFromDocument } from '@/lib/brand-color';
 
 interface Props {
   point: LatLng;
 }
 
 export default function HousingLocationPreview({ point }: Props) {
-  const markerColor = typeof window !== 'undefined'
-    ? getComputedStyle(document.documentElement).getPropertyValue('--brand-primary').trim() || DEFAULT_BRAND_PRIMARY
-    : DEFAULT_BRAND_PRIMARY;
+  const [markerColor, setMarkerColor] = useState(readBrandPrimaryFromDocument);
+
+  useEffect(() => {
+    const syncColor = () => setMarkerColor(readBrandPrimaryFromDocument());
+    window.addEventListener(BRAND_COLOR_EVENT, syncColor);
+    return () => window.removeEventListener(BRAND_COLOR_EVENT, syncColor);
+  }, []);
 
   return (
     <div className="rounded-xl overflow-hidden border border-gray-200">

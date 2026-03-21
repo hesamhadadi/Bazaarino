@@ -1,4 +1,5 @@
 export const DEFAULT_BRAND_PRIMARY = '#f97316';
+export const BRAND_COLOR_EVENT = 'bazaarino:brand-color-change';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -110,4 +111,29 @@ export function buildBrandPalette(primary: string) {
     primary: base,
     dark: brand700,
   };
+}
+
+export function readBrandPrimaryFromDocument() {
+  if (typeof document === 'undefined') return DEFAULT_BRAND_PRIMARY;
+  return normalizeBrandPrimary(getComputedStyle(document.documentElement).getPropertyValue('--brand-primary'));
+}
+
+export function applyBrandPaletteToDocument(primary: string) {
+  if (typeof document === 'undefined') return normalizeBrandPrimary(primary);
+  const palette = buildBrandPalette(primary);
+  const root = document.documentElement;
+  root.style.setProperty('--brand-primary', palette.primary);
+  root.style.setProperty('--brand-dark', palette.dark);
+  root.style.setProperty('--brand-50-rgb', palette[50]);
+  root.style.setProperty('--brand-100-rgb', palette[100]);
+  root.style.setProperty('--brand-200-rgb', palette[200]);
+  root.style.setProperty('--brand-300-rgb', palette[300]);
+  root.style.setProperty('--brand-400-rgb', palette[400]);
+  root.style.setProperty('--brand-500-rgb', palette[500]);
+  root.style.setProperty('--brand-600-rgb', palette[600]);
+  root.style.setProperty('--brand-700-rgb', palette[700]);
+  root.style.setProperty('--brand-800-rgb', palette[800]);
+  root.style.setProperty('--brand-900-rgb', palette[900]);
+  window.dispatchEvent(new CustomEvent(BRAND_COLOR_EVENT, { detail: { brandPrimary: palette.primary } }));
+  return palette.primary;
 }

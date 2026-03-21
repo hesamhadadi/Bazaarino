@@ -8,7 +8,7 @@ import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { CheckCircle, XCircle, Eye, Users, FileText, Clock, Star, BarChart3, UserCheck, UserX, ImagePlus, Trash2, Filter, RotateCcw, ShieldCheck } from 'lucide-react';
 import { CITIES, CATEGORIES, getCityLabel } from '@/lib/constants';
-import { buildBrandPalette, normalizeBrandPrimary } from '@/lib/brand-color';
+import { applyBrandPaletteToDocument, normalizeBrandPrimary } from '@/lib/brand-color';
 
 type AdminTab = 'pending' | 'all' | 'users' | 'banners' | 'reports' | 'settings';
 type AppSettings = { telegramToken: string; telegramChatId: string; telegramSecret: string; siteUrl: string; brandPrimary: string };
@@ -41,23 +41,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   siteUrl: '',
   brandPrimary: '#f97316',
 };
-
-function applyBrandColor(primary: string) {
-  const palette = buildBrandPalette(primary);
-  const root = document.documentElement;
-  root.style.setProperty('--brand-primary', palette.primary);
-  root.style.setProperty('--brand-dark', palette.dark);
-  root.style.setProperty('--brand-50-rgb', palette[50]);
-  root.style.setProperty('--brand-100-rgb', palette[100]);
-  root.style.setProperty('--brand-200-rgb', palette[200]);
-  root.style.setProperty('--brand-300-rgb', palette[300]);
-  root.style.setProperty('--brand-400-rgb', palette[400]);
-  root.style.setProperty('--brand-500-rgb', palette[500]);
-  root.style.setProperty('--brand-600-rgb', palette[600]);
-  root.style.setProperty('--brand-700-rgb', palette[700]);
-  root.style.setProperty('--brand-800-rgb', palette[800]);
-  root.style.setProperty('--brand-900-rgb', palette[900]);
-}
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -309,7 +292,7 @@ export default function AdminDashboard() {
       });
       if (res.ok) {
         const safeColor = normalizeBrandPrimary(settings.brandPrimary);
-        applyBrandColor(safeColor);
+        applyBrandPaletteToDocument(safeColor);
         localStorage.setItem('bazaarino.brandPrimary', safeColor);
         toast.success('تنظیمات ذخیره شد');
         fetchSettings();

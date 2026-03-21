@@ -39,7 +39,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ message: 'دسترسی ندارید' }, { status: 403 });
     }
     const body = await request.json();
-    const { telegramToken, telegramChatId, siteUrl } = body;
+    const telegramToken = String(body?.telegramToken || '').trim();
+    const telegramChatId = String(body?.telegramChatId || '').trim();
+    const siteUrl = String(body?.siteUrl || '').trim();
     const brandPrimary = normalizeBrandPrimary(body?.brandPrimary);
 
     await connectDB();

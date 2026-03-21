@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, useMapEvents } from 'react-leaflet';
 import type { LatLng } from '@/lib/map-data';
 import { CITY_CENTERS } from '@/lib/map-data';
-import { DEFAULT_BRAND_PRIMARY } from '@/lib/brand-color';
+import { BRAND_COLOR_EVENT, readBrandPrimaryFromDocument } from '@/lib/brand-color';
 
 interface Props {
   city: string;
@@ -23,10 +23,13 @@ function ClickHandler({ onChange }: { onChange: (value: LatLng) => void }) {
 
 export default function HousingLocationPicker({ city, value, onChange }: Props) {
   const center = useMemo(() => CITY_CENTERS[city] || CITY_CENTERS.other, [city]);
-  const markerColor = useMemo(
-    () => (typeof window !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--brand-primary').trim() || DEFAULT_BRAND_PRIMARY : DEFAULT_BRAND_PRIMARY),
-    []
-  );
+  const [markerColor, setMarkerColor] = useState(readBrandPrimaryFromDocument);
+
+  useEffect(() => {
+    const syncColor = () => setMarkerColor(readBrandPrimaryFromDocument());
+    window.addEventListener(BRAND_COLOR_EVENT, syncColor);
+    return () => window.removeEventListener(BRAND_COLOR_EVENT, syncColor);
+  }, []);
 
   return (
     <div className="rounded-xl overflow-hidden border border-gray-200">
