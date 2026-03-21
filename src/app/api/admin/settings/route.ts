@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Setting from '@/models/Setting';
 import { getAppUrl } from '@/lib/app-url';
 import crypto from 'crypto';
+import { DEFAULT_BRAND_PRIMARY, normalizeBrandPrimary } from '@/lib/brand-color';
 
 async function ensureAdmin() {
   const session = await getServerSession(authOptions);
@@ -24,6 +25,7 @@ export async function GET() {
         telegramChatId: settings?.telegramChatId || '',
         telegramSecret: settings?.telegramSecret || '',
         siteUrl: settings?.siteUrl || '',
+        brandPrimary: settings?.brandPrimary || DEFAULT_BRAND_PRIMARY,
       },
     });
   } catch {
@@ -37,7 +39,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ message: 'دسترسی ندارید' }, { status: 403 });
     }
     const body = await request.json();
-    const { telegramToken, telegramChatId, siteUrl } = body;
+    const telegramToken = String(body?.telegramToken || '').trim();
+    const telegramChatId = String(body?.telegramChatId || '').trim();
+    const siteUrl = String(body?.siteUrl || '').trim();
+    const brandPrimary = normalizeBrandPrimary(body?.brandPrimary);
 
     await connectDB();
     const existing = (await Setting.findOne({ key: 'global' })) as any;
@@ -45,7 +50,7 @@ export async function PATCH(request: NextRequest) {
 
     const settings = await Setting.findOneAndUpdate(
       { key: 'global' },
-      { telegramToken, telegramChatId, telegramSecret, siteUrl },
+      { telegramToken, telegramChatId, telegramSecret, siteUrl, brandPrimary },
       { new: true, upsert: true }
     );
     return NextResponse.json({ settings });

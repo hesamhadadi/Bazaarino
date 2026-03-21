@@ -8,8 +8,10 @@ import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { CheckCircle, XCircle, Eye, Users, FileText, Clock, Star, BarChart3, UserCheck, UserX, ImagePlus, Trash2, Filter, RotateCcw, ShieldCheck } from 'lucide-react';
 import { CITIES, CATEGORIES, getCityLabel } from '@/lib/constants';
+import { applyBrandPaletteToDocument, normalizeBrandPrimary } from '@/lib/brand-color';
 
 type AdminTab = 'pending' | 'all' | 'users' | 'banners' | 'reports' | 'settings';
+type AppSettings = { telegramToken: string; telegramChatId: string; telegramSecret: string; siteUrl: string; brandPrimary: string };
 type AdFilters = {
   q: string;
   city: string;
@@ -32,6 +34,14 @@ const DEFAULT_AD_FILTERS: AdFilters = {
   userId: '',
 };
 
+const DEFAULT_SETTINGS: AppSettings = {
+  telegramToken: '',
+  telegramChatId: '',
+  telegramSecret: '',
+  siteUrl: '',
+  brandPrimary: '#f97316',
+};
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -42,7 +52,7 @@ export default function AdminDashboard() {
   const [userFilters, setUserFilters] = useState({ q: '', role: 'all', status: 'all', identity: 'all' });
   const [banners, setBanners] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
-  const [settings, setSettings] = useState<{ telegramToken: string; telegramChatId: string; telegramSecret: string; siteUrl: string } | null>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [webhookSaving, setWebhookSaving] = useState(false);
   const [housingCityImages, setHousingCityImages] = useState<any[]>([]);
@@ -139,7 +149,7 @@ export default function AdminDashboard() {
   const fetchSettings = async () => {
     const res = await fetch('/api/admin/settings');
     const data = await res.json();
-    setSettings(data.settings || { telegramToken: '', telegramChatId: '', telegramSecret: '', siteUrl: '' });
+    setSettings(data.settings || DEFAULT_SETTINGS);
   };
 
   const fetchHousingCityImages = async () => {
@@ -277,9 +287,13 @@ export default function AdminDashboard() {
           telegramToken: settings.telegramToken,
           telegramChatId: settings.telegramChatId,
           siteUrl: settings.siteUrl,
+          brandPrimary: settings.brandPrimary,
         }),
       });
       if (res.ok) {
+        const safeColor = normalizeBrandPrimary(settings.brandPrimary);
+        applyBrandPaletteToDocument(safeColor);
+        localStorage.setItem('bazaarino.brandPrimary', safeColor);
         toast.success('تنظیمات ذخیره شد');
         fetchSettings();
       } else {
@@ -1167,22 +1181,39 @@ export default function AdminDashboard() {
               <div className="grid md:grid-cols-2 gap-3">
                 <input
                   value={settings?.telegramToken || ''}
-                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '', siteUrl: '' }), telegramToken: e.target.value }))}
+                  onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), telegramToken: e.target.value }))}
                   placeholder="توکن ربات تلگرام"
                   className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
                 />
                 <input
                   value={settings?.telegramChatId || ''}
-                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '', siteUrl: '' }), telegramChatId: e.target.value }))}
+                  onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), telegramChatId: e.target.value }))}
                   placeholder="Telegram User ID / Chat ID ادمین"
                   className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
                 />
                 <input
                   value={settings?.siteUrl || ''}
-                  onChange={(e) => setSettings((prev) => ({ ...(prev || { telegramToken: '', telegramChatId: '', telegramSecret: '', siteUrl: '' }), siteUrl: e.target.value }))}
+                  onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), siteUrl: e.target.value }))}
                   placeholder="آدرس سایت (مثلاً https://bazaarinowork.vercel.app)"
                   className="border border-gray-200 rounded-xl px-3 py-2 text-sm md:col-span-2"
                 />
+                <div className="md:col-span-2">
+                  <label className="block text-xs text-gray-500 mb-1">رنگ اصلی سایت</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={settings?.brandPrimary || '#f97316'}
+                      onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), brandPrimary: e.target.value }))}
+                      className="h-10 w-14 border border-gray-200 rounded-lg bg-white p-1 cursor-pointer"
+                    />
+                    <input
+                      value={settings?.brandPrimary || '#f97316'}
+                      onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), brandPrimary: e.target.value }))}
+                      placeholder="#f97316"
+                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm flex-1 ltr text-left"
+                    />
+                  </div>
+                </div>
               </div>
               <div className="mt-3 flex items-center gap-3">
                 <button onClick={saveSettings} disabled={settingsSaving} className="bg-brand-500 text-white px-4 py-2 rounded-xl text-sm">

@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, useMapEvents } from 'react-leaflet';
 import type { LatLng } from '@/lib/map-data';
 import { CITY_CENTERS } from '@/lib/map-data';
+import { BRAND_COLOR_EVENT, readBrandPrimaryFromDocument } from '@/lib/brand-color';
 
 interface Props {
   city: string;
@@ -22,6 +23,13 @@ function ClickHandler({ onChange }: { onChange: (value: LatLng) => void }) {
 
 export default function HousingLocationPicker({ city, value, onChange }: Props) {
   const center = useMemo(() => CITY_CENTERS[city] || CITY_CENTERS.other, [city]);
+  const [markerColor, setMarkerColor] = useState(readBrandPrimaryFromDocument);
+
+  useEffect(() => {
+    const syncColor = () => setMarkerColor(readBrandPrimaryFromDocument());
+    window.addEventListener(BRAND_COLOR_EVENT, syncColor);
+    return () => window.removeEventListener(BRAND_COLOR_EVENT, syncColor);
+  }, []);
 
   return (
     <div className="rounded-xl overflow-hidden border border-gray-200">
@@ -38,7 +46,7 @@ export default function HousingLocationPicker({ city, value, onChange }: Props) 
         />
         <ClickHandler onChange={onChange} />
         {value && (
-          <CircleMarker center={[value.lat, value.lng]} radius={8} pathOptions={{ color: '#f97316', fillColor: '#f97316', fillOpacity: 0.9 }} />
+          <CircleMarker center={[value.lat, value.lng]} radius={8} pathOptions={{ color: markerColor, fillColor: markerColor, fillOpacity: 0.9 }} />
         )}
       </MapContainer>
     </div>
