@@ -16,7 +16,9 @@ export default function BrandColorProvider() {
       .then((res) => res.json())
       .then((data) => {
         const serverColor = normalizeBrandPrimary(data?.settings?.brandPrimary || DEFAULT_BRAND_PRIMARY);
-        if (hasCachedColor && cachedColor !== DEFAULT_BRAND_PRIMARY && serverColor === DEFAULT_BRAND_PRIMARY) return;
+        const shouldPreserveCachedColor =
+          data?.fallback && hasCachedColor && cachedColor !== DEFAULT_BRAND_PRIMARY && serverColor === DEFAULT_BRAND_PRIMARY;
+        if (shouldPreserveCachedColor) return;
         applyBrandPaletteToDocument(serverColor);
         localStorage.setItem(STORAGE_KEY, serverColor);
       })

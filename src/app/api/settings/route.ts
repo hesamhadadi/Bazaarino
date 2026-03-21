@@ -13,7 +13,7 @@ export async function GET() {
     );
   } catch {
     return NextResponse.json(
-      { settings: { brandPrimary: DEFAULT_BRAND_PRIMARY } },
+      { settings: { brandPrimary: DEFAULT_BRAND_PRIMARY }, fallback: true },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' } }
     );
   }
