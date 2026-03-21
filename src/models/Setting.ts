@@ -6,6 +6,7 @@ export interface ISetting extends Document {
   telegramChatId?: string;
   telegramSecret?: string;
   siteUrl?: string;
+  brandPrimary?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const SettingSchema = new Schema<ISetting>(
     telegramChatId: { type: String },
     telegramSecret: { type: String },
     siteUrl: { type: String },
+    brandPrimary: { type: String },
   },
   { timestamps: true }
 );

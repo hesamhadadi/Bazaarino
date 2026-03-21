@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { Toaster } from 'react-hot-toast';
 import AuthProvider from '@/components/providers/AuthProvider';
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
+import BrandColorProvider from '@/components/providers/BrandColorProvider';
 
 export const metadata: Metadata = {
   title: 'بازارینو | نیازمندی‌های ایرانیان ایتالیا',
@@ -47,6 +48,7 @@ export default function RootLayout({
       </head>
       <body className="font-vazir bg-gray-50 min-h-screen">
         <AuthProvider>
+          <BrandColorProvider />
           {children}
           <PWAInstallPrompt />
           <Toaster
