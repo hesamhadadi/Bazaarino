@@ -8,6 +8,7 @@ const STORAGE_KEY = 'bazaarino.brandPrimary';
 export default function BrandColorProvider() {
   useEffect(() => {
     const cached = localStorage.getItem(STORAGE_KEY);
+    const hasCachedColor = Boolean(cached);
     const cachedColor = normalizeBrandPrimary(cached || DEFAULT_BRAND_PRIMARY);
     applyBrandPaletteToDocument(cachedColor);
 
@@ -15,6 +16,7 @@ export default function BrandColorProvider() {
       .then((res) => res.json())
       .then((data) => {
         const serverColor = normalizeBrandPrimary(data?.settings?.brandPrimary || DEFAULT_BRAND_PRIMARY);
+        if (hasCachedColor && cachedColor !== DEFAULT_BRAND_PRIMARY && serverColor === DEFAULT_BRAND_PRIMARY) return;
         applyBrandPaletteToDocument(serverColor);
         localStorage.setItem(STORAGE_KEY, serverColor);
       })
