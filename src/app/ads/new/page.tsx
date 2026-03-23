@@ -32,6 +32,9 @@ const adSchema = z.object({
   deposit: z.string().optional(),
   residenceEligible: z.boolean().optional(),
   preferredGender: z.enum(['male', 'female', 'any']).optional(),
+  preferredAgeMin: z.string().optional(),
+  preferredAgeMax: z.string().optional(),
+  preferredUniversity: z.string().max(120).optional(),
   roommatesCount: z.string().optional(),
   availabilityStartDate: z.string().optional(),
   billsInfo: z.union([z.enum(['included', 'not-included', 'partial']), z.literal('')]).optional(),
@@ -121,6 +124,9 @@ export default function NewAdPage() {
             deposit: data.deposit ? Number(data.deposit) : undefined,
             residenceEligible: data.residenceEligible === true,
             preferredGender: data.preferredGender || 'any',
+            preferredAgeMin: data.preferredAgeMin ? Number(data.preferredAgeMin) : undefined,
+            preferredAgeMax: data.preferredAgeMax ? Number(data.preferredAgeMax) : undefined,
+            preferredUniversity: data.preferredUniversity?.trim() || undefined,
             roommatesCount: data.roommatesCount ? Number(data.roommatesCount) : undefined,
             availabilityStartDate: data.availabilityStartDate || undefined,
             billsInfo: data.billsInfo || undefined,
@@ -321,6 +327,38 @@ export default function NewAdPage() {
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">حداقل سن دلخواه</label>
+                      <input
+                        {...register('preferredAgeMin')}
+                        type="number"
+                        min="0"
+                        placeholder="مثلاً 20"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">حداکثر سن دلخواه</label>
+                      <input
+                        {...register('preferredAgeMax')}
+                        type="number"
+                        min="0"
+                        placeholder="مثلاً 35"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">دانشگاه دلخواه (اختیاری)</label>
+                    <input
+                      {...register('preferredUniversity')}
+                      placeholder="مثلاً Politecnico di Torino"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">

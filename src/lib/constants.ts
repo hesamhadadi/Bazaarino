@@ -150,6 +150,8 @@ export const CATEGORIES = [
     icon: '📝',
     color: 'bg-indigo-100 text-indigo-700',
     subcategories: [
+      { value: 'roommate-request', label: 'هم‌خانه / هم‌اتاقی' },
+      { value: 'cargo-passenger', label: 'ارسال بار/مسافر' },
       { value: 'card-request', label: 'کارت (مثل منسا / مک‌فیت)' },
       { value: 'medicine-request', label: 'دارو و اقلام پزشکی' },
       { value: 'financial-request', label: 'مالی و پرداخت' },

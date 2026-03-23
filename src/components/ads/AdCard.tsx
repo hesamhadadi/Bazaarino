@@ -21,6 +21,7 @@ interface AdCardProps {
     featuredUntil?: string;
     housing?: {
       residenceEligible?: boolean;
+      preferredGender?: 'male' | 'female' | 'any';
       availabilityStartDate?: string;
       billsInfo?: 'included' | 'not-included' | 'partial';
       agencyFee?: number;
@@ -99,6 +100,12 @@ export default function AdCard({ ad }: AdCardProps) {
           <div className="text-orange-600 font-bold text-sm mb-2">{formatPrice(ad.price, ad.priceType)}</div>
           {ad.category === 'real-estate' && (
             <div className="flex flex-wrap gap-1 mb-2">
+              {ad.housing?.preferredGender === 'female' && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-50 text-pink-700">فقط خانم</span>
+              )}
+              {ad.housing?.preferredGender === 'male' && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">فقط آقا</span>
+              )}
               {ad.housing?.isAllInclusivePrice && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">all-inclusive</span>
               )}
