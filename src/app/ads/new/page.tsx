@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
@@ -14,6 +14,7 @@ import { Upload, X, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { LatLng } from '@/lib/map-data';
+import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
 
 const HousingLocationPicker = dynamic(() => import('@/components/maps/HousingLocationPicker'), { ssr: false });
 
@@ -28,6 +29,7 @@ const adSchema = z.object({
   price: z.string().optional(),
   phone: z.string().optional(),
   showPhone: z.boolean().optional(),
+  isUrgent: z.boolean().optional(),
   listingMode: z.enum(['offer', 'request']),
   deposit: z.string().optional(),
   residenceEligible: z.boolean().optional(),
@@ -55,6 +57,7 @@ export default function NewAdPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [location, setLocation] = useState<LatLng | null>(null);
+  const [marketPrice, setMarketPrice] = useState<{ referencePrice: number; sampleSize: number } | null>(null);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<AdForm>({
     resolver: zodResolver(adSchema),
@@ -66,6 +69,9 @@ export default function NewAdPage() {
   const listingMode = watch('listingMode');
   const country = watch('country');
   const filteredCities = getCitiesByCountry(country || getCountryByCity(watch('city')) || 'italy');
+  const city = watch('city');
+  const subcategory = watch('subcategory');
+  const livePrice = watch('price');
 
   const countryStyles: Record<string, { label: string; stripes: string[] }> = {
     italy: { label: 'ایتالیا', stripes: ['bg-green-500', 'bg-white', 'bg-red-500'] },
@@ -77,6 +83,28 @@ export default function NewAdPage() {
     router.push('/auth/login');
     return null;
   }
+
+  useEffect(() => {
+    const loadMarketPrice = async () => {
+      if (category !== 'real-estate' || !city || !subcategory) {
+        setMarketPrice(null);
+        return;
+      }
+      try {
+        const qs = new URLSearchParams({ city, category, subcategory }).toString();
+        const res = await fetch(`/api/ads/market-price?${qs}`);
+        if (!res.ok) {
+          setMarketPrice(null);
+          return;
+        }
+        const data = await res.json();
+        setMarketPrice(data.marketPrice || null);
+      } catch {
+        setMarketPrice(null);
+      }
+    };
+    loadMarketPrice();
+  }, [category, city, subcategory]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -186,6 +214,10 @@ export default function NewAdPage() {
                 </label>
               ))}
             </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer mb-3">
+              <input type="checkbox" {...register('isUrgent')} className="accent-red-600" />
+              آگهی فوری (نمایش بج قرمز فوری)
+            </label>
             <h2 className="font-semibold text-gray-800 mb-3">دسته‌بندی</h2>
             <div>
               <label className="block text-sm text-gray-600 mb-1.5">دسته اصلی *</label>
@@ -470,6 +502,14 @@ export default function NewAdPage() {
                   />
                   <span className="absolute left-4 top-2.5 text-gray-400 text-sm">EUR €</span>
                 </div>
+                {category === 'real-estate' && (
+                  <div className="mt-3">
+                    <MarketPriceBadge
+                      price={livePrice ? Number(livePrice) : undefined}
+                      marketPrice={marketPrice || undefined}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

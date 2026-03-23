@@ -6,6 +6,7 @@ import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import Banner from '@/models/Banner';
 import HousingCityImage from '@/models/HousingCityImage';
+import { attachMarketPriceToAds } from '@/lib/market-price';
 import Link from 'next/link';
 import { SlidersHorizontal } from 'lucide-react';
 import CategoryIcon from '@/components/ui/CategoryIcon';
@@ -115,8 +116,9 @@ async function searchAds(params: SearchParams) {
       ...ad,
       isFeatured: ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now),
     }));
+    const normalizedWithMarketPrice = await attachMarketPriceToAds(normalized as any[]);
 
-    return { ads: JSON.parse(JSON.stringify(normalized)), total, page, totalPages: Math.ceil(total / limit) };
+    return { ads: JSON.parse(JSON.stringify(normalizedWithMarketPrice)), total, page, totalPages: Math.ceil(total / limit) };
   } catch {
     return { ads: [], total: 0, page: 1, totalPages: 0 };
   }

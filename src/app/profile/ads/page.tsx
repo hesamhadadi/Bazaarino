@@ -144,6 +144,9 @@ export default function MyAdsPage() {
                         {ad.isFeatured && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">ویژه</span>
                         )}
+                        {(ad.bumpCount || 0) > 0 && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">نردبان‌شده</span>
+                        )}
                       </div>
 
                       {ad.rejectionReason && (

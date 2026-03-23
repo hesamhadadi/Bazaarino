@@ -13,12 +13,14 @@ import { StarRating } from '@/components/ui/StarRating';
 import RateUser from '@/components/ads/RateUser';
 import ReportForm from '@/components/ads/ReportForm';
 import StartChatButton from '@/components/ads/StartChatButton';
+import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel, getCountryLabel, getCountryByCity } from '@/lib/constants';
 import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle } from 'lucide-react';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
 import nextDynamic from 'next/dynamic';
 import mongoose from 'mongoose';
+import { getMarketPriceSnapshot } from '@/lib/market-price';
 
 const HousingLocationPreview = nextDynamic(() => import('@/components/maps/HousingLocationPreview'), { ssr: false });
 
@@ -104,6 +106,14 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
   const category = CATEGORIES.find(c => c.id === ad.category);
   const countryLabel = getCountryLabel(ad.country || getCountryByCity(ad.city));
   const subcategory = category?.subcategories?.find((s: any) => s.value === ad.subcategory);
+  const marketPrice = ad.category === 'real-estate' && ad.priceType === 'fixed' && ad.price
+    ? await getMarketPriceSnapshot({
+        city: ad.city,
+        category: ad.category,
+        subcategory: ad.subcategory,
+        excludeAdId: String(ad._id),
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -146,6 +156,11 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                       🚨 فوری
                     </div>
                   )}
+                  {(ad.bumpCount || 0) > 0 && (
+                    <div className="inline-flex mt-2 items-center gap-1 bg-blue-600 text-white text-xs px-2.5 py-1 rounded-full">
+                      ⬆️ نردبان‌شده
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <FavoriteButton adId={ad._id} className="w-9 h-9 border border-gray-200" />
@@ -153,6 +168,11 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
               <div className="text-2xl font-bold text-orange-600 mb-4">{formatPrice(ad.price, ad.priceType)}</div>
+              {ad.category === 'real-estate' && (
+                <div className="mb-4">
+                  <MarketPriceBadge price={ad.price} marketPrice={marketPrice || undefined} />
+                </div>
+              )}
               <div className="flex flex-wrap gap-2 mb-5">
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
                   <MapPin size={12} /> {getCityLabel(ad.city)} · {countryLabel}

@@ -7,6 +7,7 @@ import { getCategoryById, getCityLabel } from '@/lib/constants';
 import FavoriteButton from '@/components/ads/FavoriteButton';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
+import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
 
 interface AdCardProps {
   ad: {
@@ -21,6 +22,11 @@ interface AdCardProps {
     featuredUntil?: string;
     isUrgent?: boolean;
     bumpedAt?: string;
+    bumpCount?: number;
+    marketPrice?: {
+      referencePrice: number;
+      sampleSize: number;
+    } | null;
     housing?: {
       residenceEligible?: boolean;
       preferredGender?: 'male' | 'female' | 'any';
@@ -98,6 +104,11 @@ export default function AdCard({ ad }: AdCardProps) {
               فوری
             </div>
           )}
+          {(ad.bumpCount || 0) > 0 && (
+            <div className="absolute top-11 right-2 bg-blue-600/95 text-white text-[10px] px-2 py-1 rounded-full">
+              نردبان‌شده
+            </div>
+          )}
           <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
             <Eye size={10} /> {toFaDigits(ad.views)}
           </div>
@@ -105,6 +116,11 @@ export default function AdCard({ ad }: AdCardProps) {
         <div className="p-3 flex-1 flex flex-col">
           <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2 leading-relaxed">{ad.title}</h3>
           <div className="text-orange-600 font-bold text-sm mb-2">{formatPrice(ad.price, ad.priceType)}</div>
+          {ad.category === 'real-estate' && (
+            <div className="mb-2">
+              <MarketPriceBadge price={ad.price} marketPrice={ad.marketPrice || undefined} compact />
+            </div>
+          )}
           {ad.category === 'real-estate' && (
             <div className="flex flex-wrap gap-1 mb-2">
               {ad.housing?.preferredGender === 'female' && (

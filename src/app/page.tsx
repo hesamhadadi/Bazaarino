@@ -15,6 +15,7 @@ import Ad from '@/models/Ad';
 import Banner from '@/models/Banner';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import CityIcon from '@/components/ui/CityIcon';
+import { attachMarketPriceToAds } from '@/lib/market-price';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,8 @@ async function getLatestAds() {
       ...ad,
       isFeatured: ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now),
     }));
-    return JSON.parse(JSON.stringify(normalized));
+    const normalizedWithMarketPrice = await attachMarketPriceToAds(normalized as any[]);
+    return JSON.parse(JSON.stringify(normalizedWithMarketPrice));
   } catch {
     return [];
   }

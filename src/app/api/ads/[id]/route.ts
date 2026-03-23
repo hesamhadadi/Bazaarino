@@ -114,6 +114,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       }
       if (body.bump === true) {
         (ad as any).bumpedAt = new Date();
+        (ad as any).bumpCount = Number((ad as any).bumpCount || 0) + 1;
       }
       // Reset to pending when owner edits
       if (!isAdmin) ad.status = 'pending';
