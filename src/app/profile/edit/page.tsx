@@ -51,13 +51,13 @@ export default function EditProfilePage() {
           bio: user.bio || '',
           banner: user.banner || '',
           fiscalCode: user.fiscalCode || '',
-            passportImage: user.passportImage || '',
-            selfieImage: user.selfieImage || '',
-            businessName: user.businessName || '',
-            businessCategory: user.businessCategory || '',
-            businessDescription: user.businessDescription || '',
-            businessSubscriptionActive: user.businessSubscriptionActive === true,
-          });
+          passportImage: user.passportImage || '',
+          selfieImage: user.selfieImage || '',
+          businessName: user.businessName || '',
+          businessCategory: user.businessCategory || '',
+          businessDescription: user.businessDescription || '',
+          businessSubscriptionActive: user.businessSubscriptionActive === true,
+        });
       })
       .catch(() => undefined);
   }, [session]);

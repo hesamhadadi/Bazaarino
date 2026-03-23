@@ -65,10 +65,10 @@ export default function MyAdsPage() {
         body: JSON.stringify({ bump: true }),
       });
       if (res.ok) {
-        toast.success('آگهی نردبان شد');
+        toast.success('آگهی به بالای لیست منتقل شد');
         fetchMyAds();
       } else {
-        toast.error('نردبان آگهی انجام نشد');
+        toast.error('امکان نردبان آگهی وجود ندارد. لطفاً دوباره تلاش کنید');
       }
     } catch {
       toast.error('خطایی رخ داد');

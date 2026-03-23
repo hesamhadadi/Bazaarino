@@ -55,9 +55,9 @@ export async function PATCH(request: NextRequest) {
       updates.selfieImage = selfieImage || '';
       updates.selfieStatus = updates.selfieImage ? 'pending' : 'none';
     }
-    if (businessName !== undefined) updates.businessName = String(businessName).trim();
-    if (businessCategory !== undefined) updates.businessCategory = String(businessCategory).trim();
-    if (businessDescription !== undefined) updates.businessDescription = String(businessDescription).trim();
+    if (businessName !== undefined) updates.businessName = businessName ? String(businessName).trim() : '';
+    if (businessCategory !== undefined) updates.businessCategory = businessCategory ? String(businessCategory).trim() : '';
+    if (businessDescription !== undefined) updates.businessDescription = businessDescription ? String(businessDescription).trim() : '';
     if (businessSubscriptionActive !== undefined) updates.businessSubscriptionActive = businessSubscriptionActive === true;
     const hasAny = Boolean(updates.fiscalCode || updates.passportImage || updates.selfieImage);
     updates.identityStatus = hasAny ? 'pending' : 'none';

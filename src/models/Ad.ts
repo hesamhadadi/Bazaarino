@@ -151,7 +151,7 @@ const AdSchema = new Schema<IAd>(
     },
     bumpedAt: {
       type: Date,
-      default: Date.now,
+      default: () => new Date(),
     },
     rejectionReason: String,
     fraudReportCount: {
