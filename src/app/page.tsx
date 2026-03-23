@@ -379,6 +379,48 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <section className="mb-8">
+          <div className="bg-white rounded-3xl border border-gray-100 p-5 md:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Search size={18} className="text-brand-500" />
+              <h2 className="text-lg font-bold text-gray-800">قابلیت‌های پیشنهادی برای نسخه بعدی</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">
+              با الهام از پلتفرم‌های موفق نیازمندی، این بخش‌ها می‌تونن تجربه کاربری بازارینو رو کامل‌تر کنن.
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center mb-2">
+                  <MapPin size={18} className="text-brand-500" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800 mb-1">انتخاب محله روی نقشه</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">فیلتر آگهی‌ها با محدوده دقیق‌تر برای جستجوی محلی.</p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center mb-2">
+                  <Shield size={18} className="text-blue-500" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800 mb-1">نشان فروشنده معتبر</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">افزودن سطح اعتماد برای کاربران فعال و خوش‌سابقه.</p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-2">
+                  <Megaphone size={18} className="text-emerald-500" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800 mb-1">نردبان و فوری هوشمند</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">ابزارهای ارتقای آگهی با پیشنهاد زمان مناسب برای بازده بیشتر.</p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center mb-2">
+                  <Users size={18} className="text-purple-500" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800 mb-1">پروفایل حرفه‌ای کسب‌وکار</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">ویترین اختصاصی، نمونه‌کار و راه‌های تماس برای فروشندگان تخصصی.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Featured Ads */}
         {featuredAds.length > 0 && (
           <section className="mb-8">
