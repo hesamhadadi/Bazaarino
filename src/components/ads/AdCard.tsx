@@ -19,6 +19,8 @@ interface AdCardProps {
     images: string[];
     isFeatured: boolean;
     featuredUntil?: string;
+    isUrgent?: boolean;
+    bumpedAt?: string;
     housing?: {
       residenceEligible?: boolean;
       preferredGender?: 'male' | 'female' | 'any';
@@ -89,6 +91,11 @@ export default function AdCard({ ad }: AdCardProps) {
           {ad.listingMode === 'request' && (
             <div className="absolute top-2 right-2 bg-indigo-600/95 text-white text-[10px] px-2 py-1 rounded-full">
               متقاضی
+            </div>
+          )}
+          {ad.isUrgent && (
+            <div className="absolute top-2 left-11 bg-red-600/95 text-white text-[10px] px-2 py-1 rounded-full">
+              فوری
             </div>
           )}
           <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">

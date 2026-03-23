@@ -21,6 +21,8 @@ export interface IAd extends Document {
   views: number;
   isFeatured: boolean;
   featuredUntil?: Date;
+  isUrgent?: boolean;
+  bumpedAt?: Date;
   rejectionReason?: string;
   fraudReportCount?: number;
   housing?: {
@@ -142,6 +144,14 @@ const AdSchema = new Schema<IAd>(
     },
     featuredUntil: {
       type: Date,
+    },
+    isUrgent: {
+      type: Boolean,
+      default: false,
+    },
+    bumpedAt: {
+      type: Date,
+      default: Date.now,
     },
     rejectionReason: String,
     fraudReportCount: {

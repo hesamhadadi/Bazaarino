@@ -21,6 +21,10 @@ export interface IUser extends Document {
   passportStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   selfieStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   identityStatus?: 'none' | 'pending' | 'verified' | 'rejected';
+  businessName?: string;
+  businessCategory?: string;
+  businessDescription?: string;
+  businessSubscriptionActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -111,6 +115,25 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ['none', 'pending', 'verified', 'rejected'],
       default: 'none',
+    },
+    businessName: {
+      type: String,
+      trim: true,
+      maxlength: [80, 'نام بیزینس نباید بیشتر از ۸۰ کاراکتر باشد'],
+    },
+    businessCategory: {
+      type: String,
+      trim: true,
+      maxlength: [60, 'دسته بیزینس نباید بیشتر از ۶۰ کاراکتر باشد'],
+    },
+    businessDescription: {
+      type: String,
+      trim: true,
+      maxlength: [400, 'توضیح بیزینس نباید بیشتر از ۴۰۰ کاراکتر باشد'],
+    },
+    businessSubscriptionActive: {
+      type: Boolean,
+      default: false,
     },
   },
   {

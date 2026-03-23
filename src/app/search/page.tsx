@@ -98,7 +98,7 @@ async function searchAds(params: SearchParams) {
     const limit = 20;
     const skip = (page - 1) * limit;
     const sortMap: Record<string, Record<string, 1 | -1>> = {
-      newest: { isFeatured: -1, createdAt: -1 },
+      newest: { isUrgent: -1, isFeatured: -1, bumpedAt: -1, createdAt: -1 },
       oldest: { createdAt: 1 },
       priceAsc: { price: 1, createdAt: -1 },
       priceDesc: { price: -1, createdAt: -1 },
@@ -386,12 +386,39 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           <p className="text-sm text-gray-500">
             {total > 0 ? `${total.toLocaleString('fa-IR')} آگهی یافت شد` : 'آگهی‌ای یافت نشد'}
           </p>
-          {selectedCategory && (
-            <span className={`text-xs px-2 py-1 rounded-full ${selectedCategory.color}`}>
-              {selectedCategory.icon} {selectedCategory.label}
-            </span>
-          )}
-        </div>
+        {selectedCategory && (
+          <span className={`text-xs px-2 py-1 rounded-full ${selectedCategory.color}`}>
+            {selectedCategory.icon} {selectedCategory.label}
+          </span>
+        )}
+      </div>
+
+        {searchParams.subcategory === 'roommate-request' && (
+          <div className="bg-white rounded-2xl border border-indigo-100 p-4 mb-4">
+            <h3 className="text-sm font-bold text-indigo-800 mb-3">فیلتر ویژه هم‌خونه / متقاضی</h3>
+            <form method="GET" className="grid grid-cols-1 md:grid-cols-4 gap-2">
+              <input type="hidden" name="q" value={searchParams.q || ''} />
+              <input type="hidden" name="country" value={searchParams.country || ''} />
+              <input type="hidden" name="city" value={searchParams.city || ''} />
+              <input type="hidden" name="category" value={searchParams.category || ''} />
+              <input type="hidden" name="subcategory" value={searchParams.subcategory || ''} />
+              <input type="hidden" name="listingMode" value={searchParams.listingMode || ''} />
+              <input type="hidden" name="sort" value={searchParams.sort || 'newest'} />
+              <select name="preferredGender" defaultValue={searchParams.preferredGender || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                <option value="">جنسیت: همه</option>
+                <option value="female">خانم</option>
+                <option value="male">آقا</option>
+                <option value="any">فرقی ندارد</option>
+              </select>
+              <input type="number" min="0" name="preferredAgeMin" defaultValue={searchParams.preferredAgeMin || ''} placeholder="حداقل سن" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
+              <input type="number" min="0" name="preferredAgeMax" defaultValue={searchParams.preferredAgeMax || ''} placeholder="حداکثر سن" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
+              <input name="preferredUniversity" defaultValue={searchParams.preferredUniversity || ''} placeholder="دانشگاه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
+              <div className="md:col-span-4 flex justify-end">
+                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs">اعمال فیلتر هم‌خونه</button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Ads Grid */}
         {ads.length > 0 ? (

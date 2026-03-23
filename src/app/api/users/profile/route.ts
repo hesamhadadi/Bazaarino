@@ -14,7 +14,7 @@ export async function GET() {
     const userId = await resolveSessionUserId(session.user);
     if (!userId) return NextResponse.json({ message: 'کاربر معتبر یافت نشد' }, { status: 401 });
 
-    const user = await User.findById(userId).select('name email phone city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus').lean();
+    const user = await User.findById(userId).select('name email phone city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus businessName businessCategory businessDescription businessSubscriptionActive').lean();
     return NextResponse.json({ user: JSON.parse(JSON.stringify(user)) });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest) {
     if (!session) return NextResponse.json({ message: 'لطفاً وارد شوید' }, { status: 401 });
 
     const body = await request.json();
-    const { name, phone, city, avatar, telegram, bio, banner, fiscalCode, passportImage, selfieImage } = body;
+    const { name, phone, city, avatar, telegram, bio, banner, fiscalCode, passportImage, selfieImage, businessName, businessCategory, businessDescription, businessSubscriptionActive } = body;
 
     await connectDB();
     const userId = await resolveSessionUserId(session.user);
@@ -55,11 +55,15 @@ export async function PATCH(request: NextRequest) {
       updates.selfieImage = selfieImage || '';
       updates.selfieStatus = updates.selfieImage ? 'pending' : 'none';
     }
+    if (businessName !== undefined) updates.businessName = String(businessName).trim();
+    if (businessCategory !== undefined) updates.businessCategory = String(businessCategory).trim();
+    if (businessDescription !== undefined) updates.businessDescription = String(businessDescription).trim();
+    if (businessSubscriptionActive !== undefined) updates.businessSubscriptionActive = businessSubscriptionActive === true;
     const hasAny = Boolean(updates.fiscalCode || updates.passportImage || updates.selfieImage);
     updates.identityStatus = hasAny ? 'pending' : 'none';
 
     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
-      .select('name email phone city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus')
+      .select('name email phone city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus businessName businessCategory businessDescription businessSubscriptionActive')
       .lean();
 
     return NextResponse.json({ user: JSON.parse(JSON.stringify(user)) });
