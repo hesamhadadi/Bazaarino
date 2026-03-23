@@ -34,6 +34,10 @@ export async function GET(request: NextRequest) {
     const hasAgencyFee = searchParams.get('hasAgencyFee');
     const allInclusive = searchParams.get('allInclusive');
     const availabilityFrom = searchParams.get('availabilityFrom');
+    const preferredGender = searchParams.get('preferredGender');
+    const preferredUniversity = searchParams.get('preferredUniversity');
+    const preferredAgeMin = searchParams.get('preferredAgeMin');
+    const preferredAgeMax = searchParams.get('preferredAgeMax');
     const status = searchParams.get('status') || 'approved';
 
     const query: any = { status };
@@ -59,6 +63,12 @@ export async function GET(request: NextRequest) {
     }
     if (allInclusive === 'yes') query['housing.isAllInclusivePrice'] = true;
     if (allInclusive === 'no') query['housing.isAllInclusivePrice'] = { $ne: true };
+    if (preferredGender === 'male' || preferredGender === 'female' || preferredGender === 'any') query['housing.preferredGender'] = preferredGender;
+    if (preferredUniversity) query['housing.preferredUniversity'] = { $regex: preferredUniversity, $options: 'i' };
+    if (preferredAgeMin || preferredAgeMax) {
+      if (preferredAgeMin) query.$and = [...(query.$and || []), { 'housing.preferredAgeMin': { $lte: Number(preferredAgeMin) } }];
+      if (preferredAgeMax) query.$and = [...(query.$and || []), { 'housing.preferredAgeMax': { $gte: Number(preferredAgeMax) } }];
+    }
     if (availabilityFrom) {
       const fromDate = new Date(availabilityFrom);
       if (!isNaN(fromDate.getTime())) query['housing.availabilityStartDate'] = { $gte: fromDate };
@@ -134,10 +144,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'کاربر معتبر یافت نشد، لطفاً دوباره وارد شوید' }, { status: 401 });
     }
 
+    const preferredAgeMinNum = housing?.preferredAgeMin !== undefined && housing?.preferredAgeMin !== null && housing?.preferredAgeMin !== ''
+      ? Number(housing.preferredAgeMin)
+      : undefined;
+    const preferredAgeMaxNum = housing?.preferredAgeMax !== undefined && housing?.preferredAgeMax !== null && housing?.preferredAgeMax !== ''
+      ? Number(housing.preferredAgeMax)
+      : undefined;
+    const normalizedAgeRange = preferredAgeMinNum !== undefined && preferredAgeMaxNum !== undefined
+      ? {
+          min: Math.min(preferredAgeMinNum, preferredAgeMaxNum),
+          max: Math.max(preferredAgeMinNum, preferredAgeMaxNum),
+        }
+      : { min: preferredAgeMinNum, max: preferredAgeMaxNum };
+
     const housingPayload = category === 'real-estate' ? {
       deposit: housing?.deposit ? Number(housing.deposit) : undefined,
       residenceEligible: housing?.residenceEligible === true,
       preferredGender: housing?.preferredGender || 'any',
+      preferredAgeMin: normalizedAgeRange.min,
+      preferredAgeMax: normalizedAgeRange.max,
+      preferredUniversity: housing?.preferredUniversity ? String(housing.preferredUniversity).trim() : undefined,
       roommatesCount: housing?.roommatesCount !== undefined && housing?.roommatesCount !== null
         ? Number(housing.roommatesCount)
         : undefined,

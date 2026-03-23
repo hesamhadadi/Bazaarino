@@ -67,6 +67,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         if (body[field] !== undefined) (ad as any)[field] = body[field];
       });
       if (body.housing && ad.category === 'real-estate') {
+        const preferredAgeMinNum = body.housing?.preferredAgeMin !== undefined && body.housing?.preferredAgeMin !== null && body.housing?.preferredAgeMin !== ''
+          ? Number(body.housing.preferredAgeMin)
+          : undefined;
+        const preferredAgeMaxNum = body.housing?.preferredAgeMax !== undefined && body.housing?.preferredAgeMax !== null && body.housing?.preferredAgeMax !== ''
+          ? Number(body.housing.preferredAgeMax)
+          : undefined;
+        const normalizedAgeRange = preferredAgeMinNum !== undefined && preferredAgeMaxNum !== undefined
+          ? {
+              min: Math.min(preferredAgeMinNum, preferredAgeMaxNum),
+              max: Math.max(preferredAgeMinNum, preferredAgeMaxNum),
+            }
+          : { min: preferredAgeMinNum, max: preferredAgeMaxNum };
         const availabilityStartDate = body.housing?.availabilityStartDate ? new Date(body.housing.availabilityStartDate) : null;
         const location = body.housing?.location?.lat !== undefined && body.housing?.location?.lng !== undefined
           ? { lat: Number(body.housing.location.lat), lng: Number(body.housing.location.lng) }
@@ -78,6 +90,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           : undefined;
         (ad as any).housing.residenceEligible = body.housing?.residenceEligible === true;
         (ad as any).housing.preferredGender = body.housing?.preferredGender || 'any';
+        (ad as any).housing.preferredAgeMin = normalizedAgeRange.min;
+        (ad as any).housing.preferredAgeMax = normalizedAgeRange.max;
+        (ad as any).housing.preferredUniversity = body.housing?.preferredUniversity ? String(body.housing.preferredUniversity).trim() : undefined;
         (ad as any).housing.roommatesCount = body.housing?.roommatesCount !== undefined && body.housing?.roommatesCount !== null && body.housing?.roommatesCount !== ''
           ? Number(body.housing.roommatesCount)
           : undefined;

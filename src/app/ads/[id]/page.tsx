@@ -221,6 +221,22 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                     <p className="text-sm font-semibold text-gray-700">{preferredGenderLabel(ad.housing?.preferredGender)}</p>
                   </div>
                   <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">بازه سنی دلخواه</p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      {ad.housing?.preferredAgeMin !== undefined && ad.housing?.preferredAgeMax !== undefined
+                        ? `${toFaDigits(ad.housing.preferredAgeMin)} تا ${toFaDigits(ad.housing.preferredAgeMax)}`
+                        : ad.housing?.preferredAgeMin !== undefined
+                          ? `${toFaDigits(ad.housing.preferredAgeMin)} به بالا`
+                          : ad.housing?.preferredAgeMax !== undefined
+                            ? `تا ${toFaDigits(ad.housing.preferredAgeMax)}`
+                            : 'ثبت نشده'}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">دانشگاه دلخواه</p>
+                    <p className="text-sm font-semibold text-gray-700">{ad.housing?.preferredUniversity || 'ثبت نشده'}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs text-gray-400 mb-1">تعداد هم‌خانه</p>
                     <p className="text-sm font-semibold text-gray-700 flex items-center gap-1">
                       <Users size={14} className="text-gray-500" />

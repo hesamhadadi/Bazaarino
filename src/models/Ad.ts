@@ -27,6 +27,9 @@ export interface IAd extends Document {
     deposit?: number;
     residenceEligible?: boolean;
     preferredGender?: 'male' | 'female' | 'any';
+    preferredAgeMin?: number;
+    preferredAgeMax?: number;
+    preferredUniversity?: string;
     roommatesCount?: number;
     availabilityStartDate?: Date;
     billsInfo?: 'included' | 'not-included' | 'partial';
@@ -159,6 +162,19 @@ const AdSchema = new Schema<IAd>(
         enum: ['male', 'female', 'any'],
         default: 'any',
       },
+      preferredAgeMin: {
+        type: Number,
+        min: [0, 'حداقل سن نمی‌تواند منفی باشد'],
+      },
+      preferredAgeMax: {
+        type: Number,
+        min: [0, 'حداکثر سن نمی‌تواند منفی باشد'],
+      },
+      preferredUniversity: {
+        type: String,
+        trim: true,
+        maxlength: [120, 'نام دانشگاه نباید بیشتر از ۱۲۰ کاراکتر باشد'],
+      },
       roommatesCount: {
         type: Number,
         min: [0, 'تعداد هم‌خانه نمی‌تواند منفی باشد'],
@@ -216,6 +232,7 @@ AdSchema.index({ country: 1, city: 1, category: 1, status: 1 });
 AdSchema.index({ userId: 1 });
 AdSchema.index({ createdAt: -1 });
 AdSchema.index({ title: 'text', description: 'text' });
+AdSchema.index({ 'housing.preferredGender': 1, 'housing.preferredUniversity': 1 });
 
 const Ad = mongoose.models.Ad || mongoose.model<IAd>('Ad', AdSchema);
 

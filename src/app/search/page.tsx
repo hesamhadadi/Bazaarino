@@ -28,6 +28,10 @@ interface SearchParams {
   hasAgencyFee?: string;
   allInclusive?: string;
   availabilityFrom?: string;
+  preferredGender?: string;
+  preferredAgeMin?: string;
+  preferredAgeMax?: string;
+  preferredUniversity?: string;
   sort?: string;
   page?: string;
 }
@@ -67,6 +71,10 @@ async function searchAds(params: SearchParams) {
     if (params.hasAgencyFee === 'no') query.$and = [...(query.$and || []), { $or: [{ 'housing.agencyFee': { $exists: false } }, { 'housing.agencyFee': { $lte: 0 } }] }];
     if (params.allInclusive === 'yes') query['housing.isAllInclusivePrice'] = true;
     if (params.allInclusive === 'no') query['housing.isAllInclusivePrice'] = { $ne: true };
+    if (params.preferredGender === 'male' || params.preferredGender === 'female' || params.preferredGender === 'any') query['housing.preferredGender'] = params.preferredGender;
+    if (params.preferredUniversity) query['housing.preferredUniversity'] = { $regex: params.preferredUniversity, $options: 'i' };
+    if (params.preferredAgeMin) query.$and = [...(query.$and || []), { 'housing.preferredAgeMin': { $lte: Number(params.preferredAgeMin) } }];
+    if (params.preferredAgeMax) query.$and = [...(query.$and || []), { 'housing.preferredAgeMax': { $gte: Number(params.preferredAgeMax) } }];
     if (params.availabilityFrom) {
       const fromDate = new Date(params.availabilityFrom);
       if (!isNaN(fromDate.getTime())) query['housing.availabilityStartDate'] = { $gte: fromDate };
@@ -321,6 +329,15 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               <option value="yes">فقط دارای رزیدنسا</option>
               <option value="no">فقط بدون رزیدنسا</option>
             </select>
+            <select name="preferredGender" defaultValue={searchParams.preferredGender || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <option value="">جنسیت هم‌خانه: همه</option>
+              <option value="female">فقط خانم</option>
+              <option value="male">فقط آقا</option>
+              <option value="any">فرقی ندارد</option>
+            </select>
+            <input type="number" min="0" name="preferredAgeMin" defaultValue={searchParams.preferredAgeMin || ''} placeholder="حداقل سن دلخواه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
+            <input type="number" min="0" name="preferredAgeMax" defaultValue={searchParams.preferredAgeMax || ''} placeholder="حداکثر سن دلخواه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
+            <input name="preferredUniversity" defaultValue={searchParams.preferredUniversity || ''} placeholder="دانشگاه دلخواه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
             <select name="billsInfo" defaultValue={searchParams.billsInfo || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
               <option value="">قبض‌ها: همه</option>
               <option value="included">قبض شامل</option>
