@@ -9,6 +9,7 @@ import { sendTelegramMessage, sendTelegramPhoto } from '@/lib/telegram';
 import { getAppUrl } from '@/lib/app-url';
 import Setting from '@/models/Setting';
 import { getCityLabel, getCategoryById, getCountryByCity } from '@/lib/constants';
+import { attachMarketPriceToAds } from '@/lib/market-price';
 
 export async function GET(request: NextRequest) {
   try {
@@ -102,8 +103,10 @@ export async function GET(request: NextRequest) {
       Ad.countDocuments(query),
     ]);
 
+    const adsWithMarketPrice = await attachMarketPriceToAds(ads as any[]);
+
     return NextResponse.json({
-      ads,
+      ads: adsWithMarketPrice,
       pagination: {
         page,
         limit,
@@ -131,6 +134,7 @@ export async function POST(request: NextRequest) {
       category, subcategory, city, country, images,
       phone, email, showPhone, showEmail,
       listingMode,
+      isUrgent,
       housing,
     } = body;
 
@@ -201,7 +205,7 @@ export async function POST(request: NextRequest) {
       showPhone: showPhone !== false,
       showEmail: showEmail === true,
       listingMode: listingMode === 'request' ? 'request' : 'offer',
-      isUrgent: false,
+      isUrgent: isUrgent === true,
       bumpedAt: new Date(),
       housing: housingPayload ? { ...housingPayload, nearby } : undefined,
       userId,
