@@ -8,7 +8,7 @@ import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
 import {
   Search, ChevronLeft, TrendingUp, MapPin,
   Zap, Shield, Globe, UserPlus, FileText,
-  ShoppingBag, Users, Building2, Megaphone,
+  ShoppingBag, Users, Building2, Megaphone, BrainCircuit, Rocket, PackageSearch,
 } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
@@ -279,6 +279,34 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <section className="py-2 mb-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-3xl border border-gray-100 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <BrainCircuit size={18} className="text-indigo-500" />
+                <h3 className="text-base font-bold text-gray-800">هوش مصنوعی بازارینو</h3>
+              </div>
+              <p className="text-sm text-gray-500 mb-3">به‌زودی با تحلیل رفتار کاربران، آگهی‌های مرتبط را پیشنهاد می‌دهیم و میانگین قیمت منطقه را در ثبت آگهی نشان می‌دهیم.</p>
+              <ul className="text-xs text-gray-600 space-y-1">
+                <li>• پیشنهادگر آگهی‌های مشابه برای افزایش زمان ماندگاری</li>
+                <li>• تخمین قیمت اتاق/ملک بر اساس داده‌های واقعی پلتفرم</li>
+              </ul>
+            </div>
+            <div className="bg-white rounded-3xl border border-gray-100 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Rocket size={18} className="text-red-500" />
+                <h3 className="text-base font-bold text-gray-800">درآمدزایی و دیده‌شدن</h3>
+              </div>
+              <p className="text-sm text-gray-500 mb-3">نردبان و فوری برای بیشتر دیده‌شدن آگهی‌ها فعال است. همچنین بیزینس‌ها می‌توانند پروفایل اختصاصی خود را بسازند.</p>
+              <ul className="text-xs text-gray-600 space-y-1">
+                <li>• نردبان: انتقال آگهی به صدر لیست</li>
+                <li>• فوری: برچسب قرمز برای جلب توجه بیشتر</li>
+                <li>• پروفایل بیزینسی برای خدمات ایرانیان اروپا</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         {banners.length > 0 && (
           <section className="py-5">
             <div className="grid md:grid-cols-3 gap-3">
@@ -339,6 +367,21 @@ export default async function HomePage() {
                 {city.label}
               </Link>
             ))}
+          </div>
+        </section>
+
+        <section className="mb-6">
+          <div className="bg-white rounded-3xl border border-gray-100 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <PackageSearch size={18} className="text-brand-500" />
+              <h2 className="text-base font-bold text-gray-800">محبوب‌ترین نیازهای «متقاضی / هم‌خونه»</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/search?category=requests&subcategory=roommate-request" className="px-3 py-1.5 rounded-full text-xs bg-indigo-50 text-indigo-700 border border-indigo-100">هم‌خونه ایرانی</Link>
+              <Link href="/search?category=requests&subcategory=roommate-request&preferredGender=female" className="px-3 py-1.5 rounded-full text-xs bg-pink-50 text-pink-700 border border-pink-100">هم‌خونه خانم</Link>
+              <Link href="/search?category=requests&subcategory=roommate-request&preferredGender=male" className="px-3 py-1.5 rounded-full text-xs bg-sky-50 text-sky-700 border border-sky-100">هم‌خونه آقا</Link>
+              <Link href="/search?category=requests&subcategory=cargo-passenger" className="px-3 py-1.5 rounded-full text-xs bg-orange-50 text-orange-700 border border-orange-100">ارسال بار / مسافر</Link>
+            </div>
           </div>
         </section>
 

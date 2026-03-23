@@ -99,6 +99,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
   const ratingSummary = await getUserRating(ad.userId?._id?.toString());
   const now = new Date();
   const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now);
+  const isUrgentActive = ad.isUrgent === true;
 
   const category = CATEGORIES.find(c => c.id === ad.category);
   const countryLabel = getCountryLabel(ad.country || getCountryByCity(ad.city));
@@ -138,6 +139,11 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   {isFeaturedActive && (
                     <div className="inline-flex mt-2 items-center gap-1 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-xs px-2.5 py-1 rounded-full">
                       ✨ آگهی ویژه
+                    </div>
+                  )}
+                  {isUrgentActive && (
+                    <div className="inline-flex mt-2 me-2 items-center gap-1 bg-red-600 text-white text-xs px-2.5 py-1 rounded-full">
+                      🚨 فوری
                     </div>
                   )}
                 </div>

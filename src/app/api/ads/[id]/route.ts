@@ -59,6 +59,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         ad.featuredUntil = undefined;
       }
     }
+    if (isAdmin && body.isUrgent !== undefined) {
+      ad.isUrgent = body.isUrgent === true;
+    }
 
     // Owner can update content
     if (isOwner) {
@@ -108,6 +111,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       }
       if (body.listingMode !== undefined) {
         (ad as any).listingMode = body.listingMode === 'request' ? 'request' : 'offer';
+      }
+      if (body.bump === true) {
+        (ad as any).bumpedAt = new Date();
       }
       // Reset to pending when owner edits
       if (!isAdmin) ad.status = 'pending';

@@ -62,6 +62,24 @@ export default async function UserPage({ params }: { params: { id: string } }) {
                 <StarRating value={Number(user.ratingAvg || 0)} count={Number(user.ratingCount || 0)} />
               </div>
               {user.bio && <p className="text-sm text-gray-600 mt-2">{user.bio}</p>}
+              {user.businessName && (
+                <div className="mt-2 text-xs">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100">
+                    🏪 بیزینس: {user.businessName}
+                  </span>
+                  {user.businessCategory && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-100 ms-1">
+                      {user.businessCategory}
+                    </span>
+                  )}
+                  {user.businessSubscriptionActive && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 ms-1">
+                      اشتراک فعال
+                    </span>
+                  )}
+                  {user.businessDescription && <p className="text-sm text-gray-600 mt-2">{user.businessDescription}</p>}
+                </div>
+              )}
             </div>
             {user.telegram && (
               <Link href={`https://t.me/${String(user.telegram).replace('@', '')}`} target="_blank" className="text-sm text-brand-600">تلگرام</Link>

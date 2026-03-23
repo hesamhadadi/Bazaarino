@@ -26,6 +26,10 @@ export default function EditProfilePage() {
     fiscalCode: '',
     passportImage: '',
     selfieImage: '',
+    businessName: '',
+    businessCategory: '',
+    businessDescription: '',
+    businessSubscriptionActive: false,
   });
 
   useEffect(() => {
@@ -47,9 +51,13 @@ export default function EditProfilePage() {
           bio: user.bio || '',
           banner: user.banner || '',
           fiscalCode: user.fiscalCode || '',
-          passportImage: user.passportImage || '',
-          selfieImage: user.selfieImage || '',
-        });
+            passportImage: user.passportImage || '',
+            selfieImage: user.selfieImage || '',
+            businessName: user.businessName || '',
+            businessCategory: user.businessCategory || '',
+            businessDescription: user.businessDescription || '',
+            businessSubscriptionActive: user.businessSubscriptionActive === true,
+          });
       })
       .catch(() => undefined);
   }, [session]);
@@ -222,6 +230,38 @@ export default function EditProfilePage() {
           </div>
 
           <div className="mt-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">پروفایل بیزینس</h3>
+            <p className="text-xs text-gray-500 mb-3">اگر بیزینس (مثل سوپرمارکت، صرافی یا وکیل مهاجرت) دارید، اطلاعات فروشگاه را ثبت کنید.</p>
+            <div className="space-y-3 mb-4">
+              <input
+                value={form.businessName}
+                onChange={(e) => setForm((prev) => ({ ...prev, businessName: e.target.value }))}
+                placeholder="نام بیزینس"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              />
+              <input
+                value={form.businessCategory}
+                onChange={(e) => setForm((prev) => ({ ...prev, businessCategory: e.target.value }))}
+                placeholder="دسته (مثلاً سوپرمارکت ایرانی)"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              />
+              <textarea
+                value={form.businessDescription}
+                onChange={(e) => setForm((prev) => ({ ...prev, businessDescription: e.target.value }))}
+                placeholder="توضیح کوتاه درباره خدمات بیزینس"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm h-20 resize-none"
+              />
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.businessSubscriptionActive}
+                  onChange={(e) => setForm((prev) => ({ ...prev, businessSubscriptionActive: e.target.checked }))}
+                  className="accent-brand-500"
+                />
+                اشتراک بیزینس من فعال است
+              </label>
+            </div>
+
             <h3 className="text-sm font-semibold text-gray-700 mb-2">احراز هویت</h3>
             <p className="text-xs text-gray-500 mb-3">هر مورد را جداگانه تکمیل کن تا برای بررسی ارسال شود.</p>
 

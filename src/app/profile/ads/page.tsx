@@ -57,6 +57,24 @@ export default function MyAdsPage() {
     }
   };
 
+  const bumpAd = async (id: string) => {
+    try {
+      const res = await fetch(`/api/ads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bump: true }),
+      });
+      if (res.ok) {
+        toast.success('آگهی نردبان شد');
+        fetchMyAds();
+      } else {
+        toast.error('نردبان آگهی انجام نشد');
+      }
+    } catch {
+      toast.error('خطایی رخ داد');
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-brand-300 border-t-brand-500 rounded-full animate-spin" />
@@ -120,6 +138,12 @@ export default function MyAdsPage() {
                         <span className="flex items-center gap-1 text-xs text-gray-400">
                           <Eye size={10} /> {ad.views}
                         </span>
+                        {ad.isUrgent && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">فوری</span>
+                        )}
+                        {ad.isFeatured && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">ویژه</span>
+                        )}
                       </div>
 
                       {ad.rejectionReason && (
@@ -136,6 +160,12 @@ export default function MyAdsPage() {
                     >
                       <Edit size={14} /> ویرایش
                     </Link>
+                    <button
+                      onClick={() => bumpAd(ad._id)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors border-r border-gray-50"
+                    >
+                      ⬆️ نردبان
+                    </button>
                     <button
                       onClick={() => deleteAd(ad._id)}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors border-r border-gray-50"

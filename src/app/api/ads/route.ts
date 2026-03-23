@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
     const sortMap: Record<string, Record<string, 1 | -1>> = {
-      newest: { isFeatured: -1, createdAt: -1 },
+      newest: { isUrgent: -1, isFeatured: -1, bumpedAt: -1, createdAt: -1 },
       oldest: { createdAt: 1 },
       priceAsc: { price: 1, createdAt: -1 },
       priceDesc: { price: -1, createdAt: -1 },
@@ -201,6 +201,8 @@ export async function POST(request: NextRequest) {
       showPhone: showPhone !== false,
       showEmail: showEmail === true,
       listingMode: listingMode === 'request' ? 'request' : 'offer',
+      isUrgent: false,
+      bumpedAt: new Date(),
       housing: housingPayload ? { ...housingPayload, nearby } : undefined,
       userId,
       status: 'pending',
