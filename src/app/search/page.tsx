@@ -73,8 +73,8 @@ async function searchAds(params: SearchParams) {
     if (params.allInclusive === 'no') query['housing.isAllInclusivePrice'] = { $ne: true };
     if (params.preferredGender === 'male' || params.preferredGender === 'female' || params.preferredGender === 'any') query['housing.preferredGender'] = params.preferredGender;
     if (params.preferredUniversity) query['housing.preferredUniversity'] = { $regex: params.preferredUniversity, $options: 'i' };
-    if (params.preferredAgeMin) query.$and = [...(query.$and || []), { 'housing.preferredAgeMin': { $gte: Number(params.preferredAgeMin) } }];
-    if (params.preferredAgeMax) query.$and = [...(query.$and || []), { 'housing.preferredAgeMax': { $lte: Number(params.preferredAgeMax) } }];
+    if (params.preferredAgeMin) query.$and = [...(query.$and || []), { 'housing.preferredAgeMin': { $lte: Number(params.preferredAgeMin) } }];
+    if (params.preferredAgeMax) query.$and = [...(query.$and || []), { 'housing.preferredAgeMax': { $gte: Number(params.preferredAgeMax) } }];
     if (params.availabilityFrom) {
       const fromDate = new Date(params.availabilityFrom);
       if (!isNaN(fromDate.getTime())) query['housing.availabilityStartDate'] = { $gte: fromDate };
@@ -335,8 +335,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               <option value="male">فقط آقا</option>
               <option value="any">فرقی ندارد</option>
             </select>
-            <input name="preferredAgeMin" defaultValue={searchParams.preferredAgeMin || ''} placeholder="حداقل سن دلخواه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
-            <input name="preferredAgeMax" defaultValue={searchParams.preferredAgeMax || ''} placeholder="حداکثر سن دلخواه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
+            <input type="number" min="0" name="preferredAgeMin" defaultValue={searchParams.preferredAgeMin || ''} placeholder="حداقل سن دلخواه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
+            <input type="number" min="0" name="preferredAgeMax" defaultValue={searchParams.preferredAgeMax || ''} placeholder="حداکثر سن دلخواه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
             <input name="preferredUniversity" defaultValue={searchParams.preferredUniversity || ''} placeholder="دانشگاه دلخواه" className="border border-gray-200 rounded-xl px-3 py-2 text-xs" />
             <select name="billsInfo" defaultValue={searchParams.billsInfo || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-xs">
               <option value="">قبض‌ها: همه</option>

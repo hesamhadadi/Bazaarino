@@ -66,8 +66,8 @@ export async function GET(request: NextRequest) {
     if (preferredGender === 'male' || preferredGender === 'female' || preferredGender === 'any') query['housing.preferredGender'] = preferredGender;
     if (preferredUniversity) query['housing.preferredUniversity'] = { $regex: preferredUniversity, $options: 'i' };
     if (preferredAgeMin || preferredAgeMax) {
-      if (preferredAgeMin) query.$and = [...(query.$and || []), { 'housing.preferredAgeMin': { $gte: Number(preferredAgeMin) } }];
-      if (preferredAgeMax) query.$and = [...(query.$and || []), { 'housing.preferredAgeMax': { $lte: Number(preferredAgeMax) } }];
+      if (preferredAgeMin) query.$and = [...(query.$and || []), { 'housing.preferredAgeMin': { $lte: Number(preferredAgeMin) } }];
+      if (preferredAgeMax) query.$and = [...(query.$and || []), { 'housing.preferredAgeMax': { $gte: Number(preferredAgeMax) } }];
     }
     if (availabilityFrom) {
       const fromDate = new Date(availabilityFrom);

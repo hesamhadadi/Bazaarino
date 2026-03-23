@@ -335,7 +335,7 @@ export default function NewAdPage() {
                       <input
                         {...register('preferredAgeMin')}
                         type="number"
-                        min="0"
+                        min="18"
                         placeholder="مثلاً 20"
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
                       />
@@ -345,7 +345,7 @@ export default function NewAdPage() {
                       <input
                         {...register('preferredAgeMax')}
                         type="number"
-                        min="0"
+                        min="18"
                         placeholder="مثلاً 35"
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
                       />

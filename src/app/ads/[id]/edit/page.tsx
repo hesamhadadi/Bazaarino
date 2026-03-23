@@ -268,11 +268,11 @@ export default function EditAdPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">حداقل سن دلخواه</label>
-                    <input {...register('preferredAgeMin')} type="number" min="0" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                    <input {...register('preferredAgeMin')} type="number" min="18" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">حداکثر سن دلخواه</label>
-                    <input {...register('preferredAgeMax')} type="number" min="0" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                    <input {...register('preferredAgeMax')} type="number" min="18" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" />
                   </div>
                 </div>
                 <div>
