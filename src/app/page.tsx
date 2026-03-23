@@ -382,7 +382,7 @@ export default async function HomePage() {
         <section className="mb-8">
           <div className="bg-white rounded-3xl border border-gray-100 p-5 md:p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Search size={18} className="text-brand-500" />
+              <Zap size={18} className="text-brand-500" />
               <h2 className="text-lg font-bold text-gray-800">قابلیت‌های پیشنهادی برای نسخه بعدی</h2>
             </div>
             <p className="text-sm text-gray-500 mb-5">
