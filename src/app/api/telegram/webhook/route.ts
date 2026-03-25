@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Setting from '@/models/Setting';
-import Ad from '@/models/Ad';
 import { answerCallback, editMessageReplyMarkup } from '@/lib/telegram';
+import { updateAdStatusAndNotifyOwner } from '@/lib/ad-moderation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,12 +26,15 @@ export async function POST(request: NextRequest) {
 
     const messageChatId = String(callback.message?.chat?.id || '');
     const senderId = String(callback.from?.id || '');
-    const messageUsername = callback.message?.chat?.username ? `@${callback.message.chat.username}` : '';
-    const senderUsername = callback.from?.username ? `@${callback.from.username}` : '';
+    const normalizeUsername = (value?: string) => (value || '').replace(/^@/, '').trim().toLowerCase();
+    const configuredChat = String(chatId || '').trim();
+    const messageUsername = normalizeUsername(callback.message?.chat?.username);
+    const senderUsername = normalizeUsername(callback.from?.username);
     const isNumericChat = /^\-?\d+$/.test(String(chatId || ''));
-    if (chatId && messageChatId && senderId) {
-      const matchNumeric = isNumericChat && (chatId === messageChatId || chatId === senderId);
-      const matchUsername = !isNumericChat && (chatId === messageUsername || chatId === senderUsername);
+    if (configuredChat && messageChatId) {
+      const matchNumeric = isNumericChat && (configuredChat === messageChatId || configuredChat === senderId);
+      const configuredUsername = normalizeUsername(configuredChat);
+      const matchUsername = !isNumericChat && (configuredUsername === messageUsername || configuredUsername === senderUsername);
       if (!matchNumeric && !matchUsername) {
         return NextResponse.json({ ok: true });
       }
@@ -43,13 +46,13 @@ export async function POST(request: NextRequest) {
     const messageId = callback.message?.message_id;
 
     if (action === 'approve') {
-      const updated = await Ad.findByIdAndUpdate(adId, { status: 'approved' });
+      const updated = await updateAdStatusAndNotifyOwner(adId, 'approved');
       await answerCallback(token, callback.id, updated ? '✅ آگهی تأیید شد' : 'آگهی یافت نشد');
       if (updated && messageChatId && messageId) {
         await editMessageReplyMarkup(token, messageChatId, messageId, { inline_keyboard: [] });
       }
     } else if (action === 'reject') {
-      const updated = await Ad.findByIdAndUpdate(adId, { status: 'rejected' });
+      const updated = await updateAdStatusAndNotifyOwner(adId, 'rejected', 'رد شده توسط مدیر از طریق ربات تلگرام');
       await answerCallback(token, callback.id, updated ? '❌ آگهی رد شد' : 'آگهی یافت نشد');
       if (updated && messageChatId && messageId) {
         await editMessageReplyMarkup(token, messageChatId, messageId, { inline_keyboard: [] });

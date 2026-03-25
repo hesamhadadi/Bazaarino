@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { computeHousingNearby } from '@/lib/map-data';
+import { updateAdStatusAndNotifyOwner } from '@/lib/ad-moderation';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -47,9 +48,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const body = await request.json();
 
     // Admin can change status / featured flags
-    if (isAdmin && body.status) {
+    if (isAdmin && (body.status === 'approved' || body.status === 'rejected')) {
+      await updateAdStatusAndNotifyOwner(params.id, body.status, body.rejectionReason);
+      if (body.status === 'approved') {
+        ad.rejectionReason = undefined;
+      } else if (body.rejectionReason) {
+        ad.rejectionReason = body.rejectionReason;
+      }
       ad.status = body.status;
-      if (body.rejectionReason) ad.rejectionReason = body.rejectionReason;
     }
     if (isAdmin && body.isFeatured !== undefined) {
       ad.isFeatured = body.isFeatured;
