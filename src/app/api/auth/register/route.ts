@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import { sendTelegramMessage } from '@/lib/telegram';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,31 @@ export async function POST(request: NextRequest) {
       city,
       avatar: '/default-avatar.svg',
     });
+
+    try {
+      const escapeHtml = (value: string) =>
+        value
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      const safeName = escapeHtml(String(name));
+      const safeEmail = escapeHtml(String(email).toLowerCase());
+      const safePhone = phone ? escapeHtml(String(phone)) : 'ثبت نشده';
+      const safeCity = city ? escapeHtml(String(city)) : 'ثبت نشده';
+
+      await sendTelegramMessage(
+        `👤 <b>کاربر جدید ثبت‌نام کرد</b>\n\n` +
+          `📝 <b>نام:</b> ${safeName}\n` +
+          `📧 <b>ایمیل:</b> ${safeEmail}\n` +
+          `📱 <b>تلفن:</b> ${safePhone}\n` +
+          `📍 <b>شهر:</b> ${safeCity}\n` +
+          `🆔 <b>شناسه:</b> ${user._id}`
+      );
+    } catch (notifyError) {
+      console.error('Register telegram notification error:', notifyError);
+    }
 
     return NextResponse.json(
       { message: 'ثبت‌نام موفقیت‌آمیز', userId: user._id },
