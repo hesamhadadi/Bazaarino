@@ -4,13 +4,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import AdCard from '@/components/ads/AdCard';
 
 type LatestAdsSectionProps = {
-  initialAds: any[];
+  initialAds: HomeAd[];
 };
 
 const PAGE_LIMIT = 12;
 
+type HomeAd = {
+  _id: string;
+  [key: string]: unknown;
+};
+
 export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) {
-  const [ads, setAds] = useState<any[]>(initialAds || []);
+  const [ads, setAds] = useState<HomeAd[]>(initialAds || []);
   const [loading, setLoading] = useState(!initialAds || initialAds.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +23,7 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
   const [nextPage, setNextPage] = useState((initialAds || []).length > 0 ? 2 : 1);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const fetchingRef = useRef(false);
+  const initializedRef = useRef(false);
 
   const load = useCallback(async (page: number, append: boolean) => {
     if (fetchingRef.current) return;
@@ -31,16 +37,18 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
       if (!res.ok) throw new Error('request_failed');
       const data = await res.json();
       const incomingAds = data.ads || [];
-      const totalPages = Number(data?.pagination?.totalPages || 0);
+      const totalPagesRaw = data?.pagination?.totalPages;
+      const totalPages = Number(totalPagesRaw);
+      const hasTotalPages = Number.isFinite(totalPages) && totalPages > 0;
 
       setAds((prev) => {
         if (!append) return incomingAds;
-        const seen = new Set(prev.map((ad: any) => String(ad._id)));
-        const uniqueIncoming = incomingAds.filter((ad: any) => !seen.has(String(ad._id)));
+        const seen = new Set(prev.map((ad) => String(ad._id)));
+        const uniqueIncoming = incomingAds.filter((ad: HomeAd) => !seen.has(String(ad._id)));
         return [...prev, ...uniqueIncoming];
       });
 
-      setHasMore(totalPages > 0 ? page < totalPages : incomingAds.length === PAGE_LIMIT);
+      setHasMore(hasTotalPages ? page < totalPages : false);
       setNextPage(page + 1);
     } catch {
       setError('خطا در دریافت آگهی‌ها');
@@ -52,6 +60,8 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
   }, []);
 
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     if (!initialAds || initialAds.length === 0) {
       load(1, false);
       return;
@@ -125,7 +135,7 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch auto-rows-fr">
-        {ads.map((ad: any) => (
+        {ads.map((ad) => (
           <AdCard key={ad._id} ad={ad} />
         ))}
       </div>
