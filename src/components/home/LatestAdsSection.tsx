@@ -4,22 +4,53 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import AdCard from '@/components/ads/AdCard';
 
 type LatestAdsSectionProps = {
-  initialAds: HomeAd[];
+  initialAds: AdCardAd[];
+  initialHasMore?: boolean;
 };
 
 const PAGE_LIMIT = 12;
 
-type HomeAd = {
+type AdCardAd = {
   _id: string;
-  [key: string]: unknown;
+  title: string;
+  price?: number;
+  priceType: string;
+  city: string;
+  category: string;
+  images: string[];
+  isFeatured: boolean;
+  featuredUntil?: string;
+  isUrgent?: boolean;
+  bumpedAt?: string;
+  bumpCount?: number;
+  marketPrice?: {
+    referencePrice: number;
+    sampleSize: number;
+  } | null;
+  housing?: {
+    residenceEligible?: boolean;
+    preferredGender?: 'male' | 'female' | 'any';
+    availabilityStartDate?: string;
+    billsInfo?: 'included' | 'not-included' | 'partial';
+    agencyFee?: number;
+    isAllInclusivePrice?: boolean;
+  };
+  listingMode?: 'offer' | 'request';
+  userId?: {
+    name?: string;
+    avatar?: string;
+    role?: string;
+  } | string;
+  views: number;
+  createdAt: string;
 };
 
-export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) {
-  const [ads, setAds] = useState<HomeAd[]>(initialAds || []);
+export default function LatestAdsSection({ initialAds, initialHasMore = false }: LatestAdsSectionProps) {
+  const [ads, setAds] = useState<AdCardAd[]>(initialAds || []);
   const [loading, setLoading] = useState(!initialAds || initialAds.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState((initialAds || []).length === PAGE_LIMIT);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [nextPage, setNextPage] = useState((initialAds || []).length > 0 ? 2 : 1);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const fetchingRef = useRef(false);
@@ -36,7 +67,7 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
       const res = await fetch(`/api/ads?page=${page}&limit=${PAGE_LIMIT}`);
       if (!res.ok) throw new Error('request_failed');
       const data = await res.json();
-      const incomingAds = data.ads || [];
+      const incomingAds = (data.ads || []) as AdCardAd[];
       const totalPagesRaw = data?.pagination?.totalPages;
       const totalPages = Number(totalPagesRaw);
       const hasTotalPages = Number.isFinite(totalPages) && totalPages > 0;
@@ -44,7 +75,7 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
       setAds((prev) => {
         if (!append) return incomingAds;
         const seen = new Set(prev.map((ad) => String(ad._id)));
-        const uniqueIncoming = incomingAds.filter((ad: HomeAd) => !seen.has(String(ad._id)));
+        const uniqueIncoming = incomingAds.filter((ad: AdCardAd) => !seen.has(String(ad._id)));
         return [...prev, ...uniqueIncoming];
       });
 
@@ -66,9 +97,9 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
       load(1, false);
       return;
     }
-    setHasMore(initialAds.length === PAGE_LIMIT);
+    setHasMore(initialHasMore);
     setNextPage(2);
-  }, [initialAds, load]);
+  }, [initialAds, initialHasMore, load]);
 
   useEffect(() => {
     if (!loadMoreRef.current || loading || loadingMore || !hasMore) return;
