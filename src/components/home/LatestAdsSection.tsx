@@ -75,7 +75,7 @@ export default function LatestAdsSection({ initialAds, initialHasMore = false }:
       setAds((prev) => {
         if (!append) return incomingAds;
         const seen = new Set(prev.map((ad) => String(ad._id)));
-        const uniqueIncoming = incomingAds.filter((ad: AdCardAd) => !seen.has(String(ad._id)));
+        const uniqueIncoming = incomingAds.filter((ad) => !seen.has(String(ad._id)));
         return [...prev, ...uniqueIncoming];
       });
 
@@ -95,10 +95,7 @@ export default function LatestAdsSection({ initialAds, initialHasMore = false }:
     initializedRef.current = true;
     if (!initialAds || initialAds.length === 0) {
       load(1, false);
-      return;
     }
-    setHasMore(initialHasMore);
-    setNextPage(2);
   }, [initialAds, initialHasMore, load]);
 
   useEffect(() => {
