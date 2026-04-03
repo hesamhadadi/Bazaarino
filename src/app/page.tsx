@@ -26,6 +26,7 @@ async function getLatestAds() {
     const ads = await Ad.find({ status: 'approved' })
       .populate('userId', 'name avatar role')
       .sort({ createdAt: -1 })
+      .limit(12)
       .lean();
     const normalized = ads.map((ad: any) => ({
       ...ad,
