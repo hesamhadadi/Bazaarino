@@ -6,6 +6,7 @@ import connectDB from '@/lib/mongodb';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { publishChatEvent } from '@/lib/chat-events';
 import { getUnreadCountForUser } from '@/lib/chat';
+import { emitToConversation, emitToUsers } from '@/lib/socket-server';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
 
@@ -64,11 +65,13 @@ export async function PATCH(_: Request, { params }: { params: { id: string } }) 
       userIds: [userId, otherUserId],
       payload: { conversationId: params.id, readerId: userId },
     });
+    emitToConversation(params.id, 'message_read', { conversationId: params.id, readerId: userId });
     publishChatEvent({
       type: 'unread:changed',
       userIds: [userId],
       payload: { unreadCount },
     });
+    emitToUsers([userId], 'unread_changed', { unreadCount });
 
     return NextResponse.json({ updated: result.modifiedCount });
   } catch {

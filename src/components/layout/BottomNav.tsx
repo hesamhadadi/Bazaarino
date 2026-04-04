@@ -4,12 +4,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Home, Search, Plus, User, Newspaper } from 'lucide-react';
+import { Home, Search, Plus, User, Newspaper, MessageCircle } from 'lucide-react';
+import { useChat } from '@/components/providers/ChatProvider';
+import { toFaDigits } from '@/lib/locale';
 
 const navItems = [
   { href: '/', icon: Home, label: 'خانه' },
   { href: '/search', icon: Search, label: 'جستجو' },
   { href: '/ads/new', icon: Plus, label: 'افزودن آگهی', special: true },
+  { href: '/messages', icon: MessageCircle, label: 'گفتگوها' },
   { href: '/news', icon: Newspaper, label: 'اخبار' },
   { href: '/profile', icon: User, label: '' },
 ];
@@ -17,6 +20,7 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { unreadCount } = useChat();
 
   if (!pathname || pathname.startsWith('/admin')) return null;
 
@@ -59,9 +63,14 @@ export default function BottomNav() {
           }
 
           return (
-            <Link key={href} href={href} className="flex flex-col items-center gap-0.5 px-3 py-1">
+            <Link key={href} href={href} className="flex flex-col items-center gap-0.5 px-3 py-1 relative">
               <Icon size={22} className={isActive ? 'text-orange-500' : 'text-gray-400'} />
               <span className={`text-xs ${isActive ? 'text-orange-500 font-medium' : 'text-gray-400'}`}>{label}</span>
+              {href === '/messages' && unreadCount > 0 && (
+                <span className="absolute -top-0.5 right-1 min-w-4 h-4 px-1 rounded-full bg-brand-500 text-white text-[9px] flex items-center justify-center">
+                  {toFaDigits(unreadCount > 99 ? '99+' : unreadCount)}
+                </span>
+              )}
             </Link>
           );
         })}

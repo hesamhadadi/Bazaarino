@@ -2,6 +2,10 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { io, Socket } from 'socket.io-client';
+
+const HEARTBEAT_INTERVAL_MS = 45000;
+const SOCKET_FALLBACK_POLL_MS = 12000;
 
 type ChatContextValue = {
   unreadCount: number;
@@ -18,9 +22,10 @@ export function useChat() {
 }
 
 export default function ChatProvider({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
-  const hasSseRef = useRef(false);
+  const hasSocketRef = useRef(false);
+  const socketRef = useRef<Socket | null>(null);
 
   const refreshUnreadCount = async () => {
     if (status !== 'authenticated') {
@@ -54,50 +59,53 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
     refreshUnreadCount();
     sendHeartbeat();
 
-    const heartbeat = setInterval(sendHeartbeat, 45000);
+    const heartbeat = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS);
 
-    const connectSSE = () => {
-      const source = new EventSource('/api/messages/stream');
-      hasSseRef.current = true;
+    const connectSocket = async () => {
+      await fetch('/api/socket', { cache: 'no-store' });
+      const userId = session?.user?.id;
+      const socket = io({
+        path: '/api/socket',
+        transports: ['websocket', 'polling'],
+        auth: { userId },
+      });
+      socketRef.current = socket;
+      hasSocketRef.current = true;
 
-      source.onmessage = (event) => {
-        try {
-          const parsed = JSON.parse(event.data || '{}');
-          if (parsed?.type === 'unread:changed') {
-            setUnreadCount(Number(parsed?.payload?.unreadCount || 0));
-            return;
-          }
-          if (parsed?.type === 'message:new' || parsed?.type === 'message:read' || parsed?.type === 'conversation:updated') {
-            refreshUnreadCount();
-          }
-        } catch {
-          // ignore parse errors
-        }
-      };
-
-      source.onerror = () => {
-        hasSseRef.current = false;
-        source.close();
-      };
-
-      return source;
+      socket.on('unread_changed', (payload) => {
+        setUnreadCount(Number(payload?.unreadCount || 0));
+      });
+      socket.on('conversation_updated', () => {
+        refreshUnreadCount();
+      });
+      socket.on('disconnect', () => {
+        hasSocketRef.current = false;
+      });
     };
 
-    let source = connectSSE();
+    connectSocket().catch(() => {
+      console.error('Chat socket connection failed');
+      hasSocketRef.current = false;
+    });
+
     const fallbackPoll = setInterval(() => {
-      if (!hasSseRef.current) {
-        source = connectSSE();
+      if (!hasSocketRef.current) {
+        connectSocket().catch(() => {
+          console.error('Chat socket reconnect failed');
+          hasSocketRef.current = false;
+        });
         refreshUnreadCount();
       }
-    }, 12000);
+    }, SOCKET_FALLBACK_POLL_MS);
 
     return () => {
       clearInterval(heartbeat);
       clearInterval(fallbackPoll);
-      source?.close();
-      hasSseRef.current = false;
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+      hasSocketRef.current = false;
     };
-  }, [status]);
+  }, [status, session?.user?.id]);
 
   const value = useMemo(
     () => ({

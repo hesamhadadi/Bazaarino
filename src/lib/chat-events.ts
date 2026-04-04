@@ -11,7 +11,7 @@ type Listener = (event: ChatEvent) => void;
 const listeners = new Set<Listener>();
 
 export function publishChatEvent(event: ChatEvent) {
-  for (const listener of listeners) {
+  for (const listener of Array.from(listeners)) {
     try {
       listener(event);
     } catch {

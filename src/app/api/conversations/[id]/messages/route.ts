@@ -5,10 +5,13 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { publishChatEvent } from '@/lib/chat-events';
-import { getUnreadCountForUser, scheduleUnreadMessageEmail } from '@/lib/chat';
+import { enqueueUnreadMessageEmail, getUnreadCountForUser } from '@/lib/chat';
+import { emitToConversation, emitToUsers } from '@/lib/socket-server';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
 import '@/models/User';
+
+const DEFAULT_MESSAGE_PAGE_LIMIT = 30;
 
 async function getCurrentUserId() {
   const session = await getServerSession(authOptions);
@@ -35,7 +38,7 @@ async function loadConversationForUser(conversationId: string, userId: string) {
   return conversation;
 }
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const userId = await getCurrentUserId();
     if (!userId) {
@@ -49,13 +52,27 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
       return NextResponse.json({ message: 'گفتگو یافت نشد یا دسترسی ندارید' }, { status: 404 });
     }
 
-    const messages = await Message.find({ conversationId: conversation._id })
-      .sort({ createdAt: 1 })
-      .limit(300)
+    const url = new URL(request.url);
+    const before = url.searchParams.get('before');
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || DEFAULT_MESSAGE_PAGE_LIMIT)));
+
+    const query: any = { conversationId: conversation._id };
+    if (before) {
+      const beforeDate = new Date(before);
+      if (!Number.isNaN(beforeDate.getTime())) {
+        query.createdAt = { $lt: beforeDate };
+      }
+    }
+
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
       .populate('senderId', 'name avatar')
       .lean();
 
-    return NextResponse.json({ messages });
+    const ordered = [...messages].reverse();
+    const nextCursor = messages.length ? messages[messages.length - 1]?.createdAt : null;
+    return NextResponse.json({ messages: ordered, nextCursor });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
   }
@@ -83,8 +100,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     if (content.length > 1000) {
       return NextResponse.json({ message: 'طول پیام بیش از حد مجاز است' }, { status: 400 });
     }
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim().toLowerCase();
+    const trustedCloudinaryPrefix = cloudName ? `https://res.cloudinary.com/${cloudName}/` : null;
     if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
       return NextResponse.json({ message: 'لینک تصویر معتبر نیست' }, { status: 400 });
+    }
+    if (type === 'image' && trustedCloudinaryPrefix && !imageUrl.startsWith(trustedCloudinaryPrefix)) {
+      return NextResponse.json({ message: 'تصویر باید از آپلودر معتبر ارسال شود' }, { status: 400 });
     }
 
     await connectDB();
@@ -136,18 +158,21 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         message: populatedMessage,
       },
     });
+    emitToConversation(params.id, 'new_message', { conversationId: params.id, message: populatedMessage });
     publishChatEvent({
       type: 'conversation:updated',
       userIds: [userId, receiverId],
       payload: { conversationId: params.id },
     });
+    emitToUsers([userId, receiverId], 'conversation_updated', { conversationId: params.id });
     publishChatEvent({
       type: 'unread:changed',
       userIds: [receiverId],
       payload: { unreadCount },
     });
+    emitToUsers([receiverId], 'unread_changed', { unreadCount });
 
-    await scheduleUnreadMessageEmail({
+    await enqueueUnreadMessageEmail({
       receiverId,
       senderName,
       conversationId: params.id,
