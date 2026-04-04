@@ -7,24 +7,13 @@ type EmailPayload = {
   html: string;
 };
 
-let resendClient: Resend | null = null;
-let resendClientKey: string | null = null;
-
-function getResendClient(apiKey: string) {
-  if (!resendClient || resendClientKey !== apiKey) {
-    resendClient = new Resend(apiKey);
-    resendClientKey = apiKey;
-  }
-  return resendClient;
-}
-
 export async function sendEmail(payload: EmailPayload) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM?.trim() || process.env.SMTP_FROM?.trim();
   if (!apiKey || !from || !payload.to) return false;
 
   try {
-    const resend = getResendClient(apiKey);
+    const resend = new Resend(apiKey);
     await resend.emails.send({
       from,
       to: payload.to,

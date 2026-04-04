@@ -73,4 +73,4 @@ src/
 - `RESEND_API_KEY`
 - `RESEND_FROM` (مثل `Bazaarino <noreply@your-domain.com>`)
 
-نکته: در صورت نیاز می‌توانید به‌جای `RESEND_FROM` از `SMTP_FROM` هم استفاده کنید.
+نکته: در صورت نیاز می‌توانید به جای `RESEND_FROM` از `SMTP_FROM` هم استفاده کنید.
