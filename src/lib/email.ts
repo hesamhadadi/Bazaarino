@@ -12,13 +12,17 @@ export async function sendEmail(payload: EmailPayload) {
   const from = process.env.RESEND_FROM?.trim() || process.env.SMTP_FROM?.trim();
   if (!apiKey || !from || !payload.to) return false;
 
-  const resend = new Resend(apiKey);
-  await resend.emails.send({
-    from,
-    to: payload.to,
-    subject: payload.subject,
-    text: payload.text,
-    html: payload.html,
-  });
-  return true;
+  try {
+    const resend = new Resend(apiKey);
+    await resend.emails.send({
+      from,
+      to: payload.to,
+      subject: payload.subject,
+      text: payload.text,
+      html: payload.html,
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
