@@ -30,6 +30,7 @@ export default function EditProfilePage() {
     businessCategory: '',
     businessDescription: '',
     businessSubscriptionActive: false,
+    chatEmailNotificationsEnabled: true,
   });
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function EditProfilePage() {
             businessCategory: user.businessCategory || '',
             businessDescription: user.businessDescription || '',
             businessSubscriptionActive: user.businessSubscriptionActive === true,
+            chatEmailNotificationsEnabled: user.chatEmailNotificationsEnabled !== false,
           });
       })
       .catch(() => undefined);
@@ -259,6 +261,15 @@ export default function EditProfilePage() {
                   className="accent-brand-500"
                 />
                 اشتراک بیزینس من فعال است
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.chatEmailNotificationsEnabled}
+                  onChange={(e) => setForm((prev) => ({ ...prev, chatEmailNotificationsEnabled: e.target.checked }))}
+                  className="accent-brand-500"
+                />
+                اعلان ایمیلی پیام‌های خوانده‌نشده فعال باشد
               </label>
             </div>
 

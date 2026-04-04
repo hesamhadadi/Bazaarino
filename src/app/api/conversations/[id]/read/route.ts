@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import { resolveSessionUserId } from '@/lib/session-user';
+import { publishChatEvent } from '@/lib/chat-events';
+import { getUnreadCountForUser } from '@/lib/chat';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
 
@@ -49,9 +51,24 @@ export async function PATCH(_: Request, { params }: { params: { id: string } }) 
         isRead: false,
       },
       {
-        $set: { isRead: true },
+        $set: { isRead: true, readAt: new Date() },
       }
     );
+
+    const buyerId = conversation.buyerId.toString();
+    const sellerId = conversation.sellerId.toString();
+    const otherUserId = buyerId === userId ? sellerId : buyerId;
+    const unreadCount = await getUnreadCountForUser(userId);
+    publishChatEvent({
+      type: 'message:read',
+      userIds: [userId, otherUserId],
+      payload: { conversationId: params.id, readerId: userId },
+    });
+    publishChatEvent({
+      type: 'unread:changed',
+      userIds: [userId],
+      payload: { unreadCount },
+    });
 
     return NextResponse.json({ updated: result.modifiedCount });
   } catch {

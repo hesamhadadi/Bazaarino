@@ -25,6 +25,8 @@ export interface IUser extends Document {
   businessCategory?: string;
   businessDescription?: string;
   businessSubscriptionActive?: boolean;
+  chatEmailNotificationsEnabled?: boolean;
+  lastSeenAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -134,6 +136,14 @@ const UserSchema = new Schema<IUser>(
     businessSubscriptionActive: {
       type: Boolean,
       default: false,
+    },
+    chatEmailNotificationsEnabled: {
+      type: Boolean,
+      default: true,
+    },
+    lastSeenAt: {
+      type: Date,
+      index: true,
     },
   },
   {
