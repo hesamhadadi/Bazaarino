@@ -4,9 +4,14 @@ import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import { resolveSessionUserId } from '@/lib/session-user';
+import { publishChatEvent } from '@/lib/chat-events';
+import { enqueueUnreadMessageEmail, getUnreadCountForUser } from '@/lib/chat';
+import { emitToConversation, emitToUsers } from '@/lib/socket-server';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
 import '@/models/User';
+
+const DEFAULT_MESSAGE_PAGE_LIMIT = 30;
 
 async function getCurrentUserId() {
   const session = await getServerSession(authOptions);
@@ -18,8 +23,8 @@ async function loadConversationForUser(conversationId: string, userId: string) {
   if (!mongoose.Types.ObjectId.isValid(conversationId)) return null;
 
   const conversation = await Conversation.findById(conversationId)
-    .populate('buyerId', 'name avatar')
-    .populate('sellerId', 'name avatar')
+    .populate('buyerId', 'name avatar email lastSeenAt')
+    .populate('sellerId', 'name avatar email lastSeenAt')
     .lean<any>();
 
   if (!conversation) return null;
@@ -33,7 +38,7 @@ async function loadConversationForUser(conversationId: string, userId: string) {
   return conversation;
 }
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const userId = await getCurrentUserId();
     if (!userId) {
@@ -47,13 +52,27 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
       return NextResponse.json({ message: 'گفتگو یافت نشد یا دسترسی ندارید' }, { status: 404 });
     }
 
-    const messages = await Message.find({ conversationId: conversation._id })
-      .sort({ createdAt: 1 })
-      .limit(300)
+    const url = new URL(request.url);
+    const before = url.searchParams.get('before');
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || DEFAULT_MESSAGE_PAGE_LIMIT)));
+
+    const query: any = { conversationId: conversation._id };
+    if (before) {
+      const beforeDate = new Date(before);
+      if (!Number.isNaN(beforeDate.getTime())) {
+        query.createdAt = { $lt: beforeDate };
+      }
+    }
+
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
       .populate('senderId', 'name avatar')
       .lean();
 
-    return NextResponse.json({ messages });
+    const ordered = [...messages].reverse();
+    const nextCursor = messages.length ? messages[messages.length - 1]?.createdAt : null;
+    return NextResponse.json({ messages: ordered, nextCursor });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
   }
@@ -67,14 +86,27 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     const body = await request.json();
+    const type = body?.type === 'image' ? 'image' : 'text';
     const content = String(body?.content || '').trim();
+    const imageUrl = String(body?.imageUrl || '').trim();
 
-    if (!content) {
+    if (type === 'text' && !content) {
       return NextResponse.json({ message: 'متن پیام نمی‌تواند خالی باشد' }, { status: 400 });
+    }
+    if (type === 'image' && !imageUrl) {
+      return NextResponse.json({ message: 'آدرس تصویر معتبر نیست' }, { status: 400 });
     }
 
     if (content.length > 1000) {
       return NextResponse.json({ message: 'طول پیام بیش از حد مجاز است' }, { status: 400 });
+    }
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim().toLowerCase();
+    const trustedCloudinaryPrefix = cloudName ? `https://res.cloudinary.com/${cloudName}/` : null;
+    if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+      return NextResponse.json({ message: 'لینک تصویر معتبر نیست' }, { status: 400 });
+    }
+    if (type === 'image' && trustedCloudinaryPrefix && !imageUrl.startsWith(trustedCloudinaryPrefix)) {
+      return NextResponse.json({ message: 'تصویر باید از آپلودر معتبر ارسال شود' }, { status: 400 });
     }
 
     await connectDB();
@@ -94,13 +126,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       adId: conversation.adId,
       senderId: new mongoose.Types.ObjectId(userId),
       receiverId: new mongoose.Types.ObjectId(receiverId),
-      content,
+      type,
+      content: type === 'text' ? content : '',
+      imageUrl: type === 'image' ? imageUrl : '',
       isRead: false,
+      deliveredAt: new Date(),
     });
 
     await Conversation.findByIdAndUpdate(conversation._id, {
       $set: {
-        lastMessage: content,
+        lastMessage: type === 'image' ? '📷 تصویر' : content,
         lastMessageAt: new Date(),
       },
     });
@@ -108,6 +143,41 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const populatedMessage = await Message.findById(message._id)
       .populate('senderId', 'name avatar')
       .lean();
+
+    const unreadCount = await getUnreadCountForUser(receiverId);
+    const senderName =
+      userId === String(conversation.buyerId?._id)
+        ? String(conversation.buyerId?.name || 'کاربر')
+        : String(conversation.sellerId?.name || 'کاربر');
+
+    publishChatEvent({
+      type: 'message:new',
+      userIds: [userId, receiverId],
+      payload: {
+        conversationId: params.id,
+        message: populatedMessage,
+      },
+    });
+    emitToConversation(params.id, 'new_message', { conversationId: params.id, message: populatedMessage });
+    publishChatEvent({
+      type: 'conversation:updated',
+      userIds: [userId, receiverId],
+      payload: { conversationId: params.id },
+    });
+    emitToUsers([userId, receiverId], 'conversation_updated', { conversationId: params.id });
+    publishChatEvent({
+      type: 'unread:changed',
+      userIds: [receiverId],
+      payload: { unreadCount },
+    });
+    emitToUsers([receiverId], 'unread_changed', { unreadCount });
+
+    await enqueueUnreadMessageEmail({
+      receiverId,
+      senderName,
+      conversationId: params.id,
+      messagePreview: type === 'image' ? 'یک تصویر جدید ارسال شده است.' : content,
+    });
 
     return NextResponse.json({ message: populatedMessage }, { status: 201 });
   } catch {

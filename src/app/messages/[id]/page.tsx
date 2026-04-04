@@ -9,17 +9,24 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import { ChevronRight, SendHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { io, Socket } from 'socket.io-client';
+
+const CONVERSATION_SOCKET_FALLBACK_MS = 7000;
+const TYPING_INDICATOR_MS = 2000;
+const MESSAGE_PAGE_LIMIT = 30;
 
 type Conversation = {
   _id: string;
   ad?: { _id: string; title?: string; images?: string[] };
-  otherUser?: { name?: string; avatar?: string };
+  otherUser?: { name?: string; avatar?: string; isOnline?: boolean; lastSeenAt?: string };
 };
 
 type MessageItem = {
   _id: string;
   senderId?: { _id?: string; name?: string; avatar?: string } | string;
+  type?: 'text' | 'image';
   content?: string;
+  imageUrl?: string;
   createdAt?: string;
 };
 
@@ -35,7 +42,13 @@ export default function ConversationPage({ params }: { params: { id: string } })
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [content, setContent] = useState('');
+  const [typing, setTyping] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
+  const typingTimerRef = useRef<any>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const currentUserId = session?.user?.id;
@@ -55,11 +68,20 @@ export default function ConversationPage({ params }: { params: { id: string } })
     setConversation(data.conversation);
   };
 
-  const fetchMessages = async () => {
-    const res = await fetch(`/api/conversations/${params.id}/messages`, { cache: 'no-store' });
+  const fetchMessages = async (before?: string, appendTop = false) => {
+    const qs = new URLSearchParams();
+    if (before) qs.set('before', before);
+    qs.set('limit', String(MESSAGE_PAGE_LIMIT));
+    const res = await fetch(`/api/conversations/${params.id}/messages?${qs.toString()}`, { cache: 'no-store' });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.message || 'خطا در دریافت پیام‌ها');
-    setMessages(data.messages || []);
+    const incoming = data.messages || [];
+    setNextCursor(data.nextCursor || null);
+    if (appendTop) {
+      setMessages((prev) => [...incoming, ...prev]);
+    } else {
+      setMessages(incoming);
+    }
   };
 
   useEffect(() => {
@@ -80,12 +102,60 @@ export default function ConversationPage({ params }: { params: { id: string } })
     };
 
     load();
+    const fallback = setInterval(() => {
+      if (!socketRef.current || !socketRef.current.connected) {
+        fetchMessages().then(markAsRead).catch(() => undefined);
+      }
+    }, CONVERSATION_SOCKET_FALLBACK_MS);
 
-    const interval = setInterval(() => {
-      fetchMessages().then(markAsRead).catch(() => undefined);
-    }, 5000);
+    const connectSocket = async () => {
+      await fetch('/api/socket', { cache: 'no-store' });
+      const socket = io({
+        path: '/api/socket',
+        transports: ['websocket', 'polling'],
+        auth: { userId: session?.user?.id },
+      });
+      socketRef.current = socket;
+      socket.emit('join_conversation', params.id);
+      socket.on('new_message', (payload) => {
+        if (payload?.conversationId !== params.id) return;
+        setMessages((prev) => [...prev, payload.message]);
+        markAsRead();
+      });
+      socket.on('message_read', () => {
+        markAsRead();
+      });
+      socket.on('presence_changed', (payload) => {
+        if (!payload?.userId) return;
+        setConversation((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            otherUser: {
+              ...prev.otherUser,
+              isOnline: payload.isOnline,
+              lastSeenAt: payload.lastSeenAt,
+            },
+          };
+        });
+      });
+      socket.on('user_typing', (payload) => {
+        if (!payload?.conversationId || payload.conversationId !== params.id) return;
+        setTyping(true);
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+        typingTimerRef.current = setTimeout(() => setTyping(false), TYPING_INDICATOR_MS);
+      });
+    };
 
-    return () => clearInterval(interval);
+    connectSocket().catch(() => undefined);
+
+    return () => {
+      clearInterval(fallback);
+      socketRef.current?.emit('leave_conversation', params.id);
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    };
   }, [session, params.id]);
 
   useEffect(() => {
@@ -109,12 +179,55 @@ export default function ConversationPage({ params }: { params: { id: string } })
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'ارسال پیام ناموفق بود');
 
-      setMessages((prev) => [...prev, data.message]);
       setContent('');
     } catch (error: any) {
       toast.error(error?.message || 'ارسال پیام ناموفق بود');
     } finally {
       setSending(false);
+    }
+  };
+
+  const onType = (value: string) => {
+    setContent(value);
+    socketRef.current?.emit('typing', { conversationId: params.id, userId: currentUserId });
+  };
+
+  const onUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('image', file);
+      const uploadRes = await fetch('/api/upload/chat-image', { method: 'POST', body: formData });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok || !uploadData?.url) throw new Error(uploadData?.message || 'آپلود تصویر ناموفق بود');
+
+      const sendRes = await fetch(`/api/conversations/${params.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'image', imageUrl: uploadData.url }),
+      });
+      const sendData = await sendRes.json();
+      if (!sendRes.ok) throw new Error(sendData?.message || 'ارسال تصویر ناموفق بود');
+      toast.success('تصویر ارسال شد');
+    } catch (error: any) {
+      toast.error(error?.message || 'ارسال تصویر ناموفق بود');
+    } finally {
+      setUploadingImage(false);
+      e.currentTarget.value = '';
+    }
+  };
+
+  const loadOlderMessages = async () => {
+    if (!nextCursor || loadingOlder) return;
+    try {
+      setLoadingOlder(true);
+      await fetchMessages(nextCursor, true);
+    } catch {
+      toast.error('دریافت پیام‌های قدیمی ناموفق بود');
+    } finally {
+      setLoadingOlder(false);
     }
   };
 
@@ -139,7 +252,13 @@ export default function ConversationPage({ params }: { params: { id: string } })
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm text-gray-800 truncate">{conversation.otherUser?.name || 'کاربر'}</p>
-            <p className="text-xs text-gray-500 truncate">{title}</p>
+            <p className="text-xs text-gray-500 truncate">
+              {conversation.otherUser?.isOnline
+                ? 'آنلاین'
+                : conversation.otherUser?.lastSeenAt
+                  ? `آخرین بازدید: ${new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'numeric' }).format(new Date(conversation.otherUser.lastSeenAt))}`
+                  : title}
+            </p>
           </div>
           {conversation.ad?._id && (
             <Link href={`/ads/${conversation.ad._id}`} className="text-xs text-brand-600 font-medium">مشاهده آگهی</Link>
@@ -147,6 +266,13 @@ export default function ConversationPage({ params }: { params: { id: string } })
         </div>
 
         <div ref={listRef} className="bg-white border border-gray-100 rounded-2xl p-3 h-[55vh] overflow-y-auto space-y-2">
+          {nextCursor && (
+            <div className="text-center">
+              <button onClick={loadOlderMessages} disabled={loadingOlder} className="text-xs text-brand-600 disabled:opacity-60">
+                {loadingOlder ? 'در حال بارگذاری...' : 'نمایش پیام‌های قدیمی‌تر'}
+              </button>
+            </div>
+          )}
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center text-gray-400 text-sm">اولین پیام را ارسال کنید</div>
           ) : (
@@ -157,13 +283,20 @@ export default function ConversationPage({ params }: { params: { id: string } })
               return (
                 <div key={message._id} className={`flex ${mine ? 'justify-start' : 'justify-end'}`}>
                   <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${mine ? 'bg-brand-500 text-white rounded-br-md' : 'bg-gray-100 text-gray-800 rounded-bl-md'}`}>
-                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    {message.type === 'image' && message.imageUrl ? (
+                      <a href={message.imageUrl} target="_blank" rel="noreferrer">
+                        <Image src={message.imageUrl} alt="chat-image" width={280} height={200} className="rounded-xl object-cover max-h-64 w-auto" />
+                      </a>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    )}
                     <p className={`text-[11px] mt-1 ${mine ? 'text-white/80' : 'text-gray-400'}`}>{formatTime(message.createdAt)}</p>
                   </div>
                 </div>
               );
             })
           )}
+          {typing && <p className="text-xs text-gray-400">در حال نوشتن...</p>}
         </div>
 
         <form onSubmit={onSend} className="mt-3 bg-white border border-gray-100 rounded-2xl p-2 flex items-center gap-2">
@@ -174,9 +307,13 @@ export default function ConversationPage({ params }: { params: { id: string } })
           >
             <SendHorizontal size={16} />
           </button>
+          <label className="text-xs text-gray-500 cursor-pointer px-2">
+            {uploadingImage ? 'در حال آپلود...' : '📷'}
+            <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onUploadImage} disabled={uploadingImage || sending} />
+          </label>
           <input
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => onType(e.target.value)}
             placeholder="پیام خود را بنویسید..."
             maxLength={1000}
             className="flex-1 bg-transparent outline-none text-sm px-2"

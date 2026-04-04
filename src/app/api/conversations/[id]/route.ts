@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import { resolveSessionUserId } from '@/lib/session-user';
+import { isUserOnline } from '@/lib/chat';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
 import '@/models/User';
@@ -30,8 +31,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 
     const conversation = await Conversation.findById(params.id)
       .populate('adId', 'title images city status')
-      .populate('buyerId', 'name avatar')
-      .populate('sellerId', 'name avatar')
+      .populate('buyerId', 'name avatar lastSeenAt')
+      .populate('sellerId', 'name avatar lastSeenAt')
       .lean<any>();
 
     if (!conversation) {
@@ -59,7 +60,11 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       conversation: {
         _id: conversation._id,
         ad: conversation.adId,
-        otherUser,
+        otherUser: {
+          ...otherUser,
+          isOnline: isUserOnline(otherUser?.lastSeenAt),
+          lastSeenAt: otherUser?.lastSeenAt,
+        },
         unreadCount,
         lastMessage: conversation.lastMessage || '',
         lastMessageAt: conversation.lastMessageAt,

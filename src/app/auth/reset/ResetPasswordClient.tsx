@@ -9,7 +9,7 @@ import { Lock, Eye, EyeOff } from 'lucide-react';
 export default function ResetPasswordClient() {
   const params = useSearchParams();
   const router = useRouter();
-  const token = params.get('token') || '';
+  const token = params?.get('token') || '';
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [show, setShow] = useState(false);
