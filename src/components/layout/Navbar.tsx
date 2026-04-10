@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import Image from 'next/image';
-import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper, MessageCircle } from 'lucide-react';
+import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper, MessageCircle, Bell } from 'lucide-react';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -33,6 +34,7 @@ export default function Navbar() {
             )}
             {session ? (
               <>
+                <NotificationBell />
                 <Link
                   href="/ads/new"
                   className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm"
@@ -78,6 +80,14 @@ export default function Navbar() {
                       >
                         <MessageCircle size={14} />
                         گفتگوها
+                      </Link>
+                      <Link
+                        href="/notifications"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Bell size={14} />
+                        اعلان‌ها
                       </Link>
                       <Link
                         href="/favorites"
@@ -160,6 +170,9 @@ export default function Navbar() {
                 </Link>
                 <Link href="/favorites" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                   <Heart size={16} /> علاقه‌مندی‌ها
+                </Link>
+                <Link href="/notifications" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
+                  <Bell size={16} /> اعلان‌ها
                 </Link>
                 <Link href="/messages" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                   <MessageCircle size={16} /> گفتگوها
