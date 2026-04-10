@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "mobile:start": "npm --prefix mobile run start",
+    "mobile:android": "npm --prefix mobile run android",
+    "mobile:typecheck": "npm --prefix mobile run typecheck",
     "db:up": "docker compose up -d mongodb",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f mongodb"
