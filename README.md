@@ -49,6 +49,7 @@ src/
 - ✅ طراحی موبایل‌فرست
 - ✅ فونت وزیرمتن فارسی
 - ✅ RTL کامل
+- ✅ نسخه موبایل React Native/Expo در پوشه `mobile/`
 
 ---
 
@@ -77,3 +78,22 @@ src/
 - `SMTP_PASS`
 - `SMTP_FROM` (اختیاری، اگر تنظیم نشود از `SMTP_USER` استفاده می‌شود)
 
+---
+
+## 📱 نسخه React Native
+
+نسخه موبایل در [`mobile/README.md`](/Users/hesamhadadinick/Desktop/My%20Projects/Bazaarino/bazaarino-final/bazaarino_work/mobile/README.md) مستند شده است.
+
+خلاصه مسیر اجرا:
+
+```bash
+npm run dev
+npm run mobile:start
+```
+
+برای APK اندروید:
+
+```bash
+cd mobile
+npx eas-cli build --platform android --profile preview
+```
