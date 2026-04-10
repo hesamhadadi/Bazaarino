@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
+import { createNotification } from '@/lib/notifications';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { publishChatEvent } from '@/lib/chat-events';
 import { enqueueUnreadMessageEmail, getUnreadCountForUser } from '@/lib/chat';
@@ -139,6 +140,29 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         lastMessageAt: new Date(),
       },
     });
+
+    const senderName =
+      userId === buyerId
+        ? conversation.buyerId?.name || 'کاربر'
+        : conversation.sellerId?.name || 'کاربر';
+
+    try {
+      await createNotification({
+        userId: receiverId,
+        actorId: userId,
+        type: 'message',
+        title: `پیام جدید از ${senderName}`,
+        body: content.length > 120 ? `${content.slice(0, 117)}...` : content,
+        href: `/messages/${conversation._id}`,
+        data: {
+          conversationId: conversation._id.toString(),
+          adId: conversation.adId?.toString?.() || String(conversation.adId || ''),
+          messageId: message._id.toString(),
+        },
+      });
+    } catch (notificationError) {
+      console.error('Create notification error:', notificationError);
+    }
 
     const populatedMessage = await Message.findById(message._id)
       .populate('senderId', 'name avatar')

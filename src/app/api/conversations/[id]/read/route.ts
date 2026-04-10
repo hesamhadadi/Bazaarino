@@ -9,6 +9,7 @@ import { getUnreadCountForUser } from '@/lib/chat';
 import { emitToConversation, emitToUsers } from '@/lib/socket-server';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
+import Notification from '@/models/Notification';
 
 async function getCurrentUserId() {
   const session = await getServerSession(authOptions);
@@ -50,6 +51,18 @@ export async function PATCH(_: Request, { params }: { params: { id: string } }) 
         conversationId: new mongoose.Types.ObjectId(params.id),
         receiverId: new mongoose.Types.ObjectId(userId),
         isRead: false,
+      },
+      {
+        $set: { isRead: true, readAt: new Date() },
+      }
+    );
+
+    await Notification.updateMany(
+      {
+        userId: new mongoose.Types.ObjectId(userId),
+        type: 'message',
+        isRead: false,
+        'data.conversationId': params.id,
       },
       {
         $set: { isRead: true, readAt: new Date() },
