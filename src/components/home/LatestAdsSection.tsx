@@ -1,37 +1,127 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import AdCard from '@/components/ads/AdCard';
 
 type LatestAdsSectionProps = {
-  initialAds: any[];
+  initialAds: AdCardAd[];
+  initialHasMore?: boolean;
 };
 
-export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) {
-  const [ads, setAds] = useState<any[]>(initialAds || []);
-  const [loading, setLoading] = useState(!initialAds || initialAds.length === 0);
-  const [error, setError] = useState<string | null>(null);
+const PAGE_LIMIT = 12;
 
-  const load = async (silent = false) => {
-    if (!silent) setLoading(true);
+type AdCardAd = {
+  _id: string;
+  title: string;
+  price?: number;
+  priceType: string;
+  city: string;
+  category: string;
+  images: string[];
+  isFeatured: boolean;
+  featuredUntil?: string;
+  isUrgent?: boolean;
+  bumpedAt?: string;
+  bumpCount?: number;
+  marketPrice?: {
+    referencePrice: number;
+    sampleSize: number;
+  } | null;
+  housing?: {
+    residenceEligible?: boolean;
+    preferredGender?: 'male' | 'female' | 'any';
+    availabilityStartDate?: string;
+    billsInfo?: 'included' | 'not-included' | 'partial';
+    agencyFee?: number;
+    isAllInclusivePrice?: boolean;
+  };
+  listingMode?: 'offer' | 'request';
+  userId?: {
+    name?: string;
+    avatar?: string;
+    role?: string;
+  } | string;
+  views: number;
+  createdAt: string;
+};
+
+export default function LatestAdsSection({ initialAds, initialHasMore = false }: LatestAdsSectionProps) {
+  const [ads, setAds] = useState<AdCardAd[]>(initialAds || []);
+  const [loading, setLoading] = useState(!initialAds || initialAds.length === 0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [nextPage, setNextPage] = useState((initialAds || []).length > 0 ? 2 : 1);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const fetchingRef = useRef(false);
+  const initializedRef = useRef(false);
+
+  const load = useCallback(async (page: number, append: boolean) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     setError(null);
+
     try {
-      const res = await fetch('/api/ads?limit=12');
+      const res = await fetch(`/api/ads?page=${page}&limit=${PAGE_LIMIT}`);
       if (!res.ok) throw new Error('request_failed');
       const data = await res.json();
-      setAds(data.ads || []);
+      const incomingAds = (data.ads || []) as AdCardAd[];
+      const totalPagesRaw = data?.pagination?.totalPages;
+      const totalPages = Number(totalPagesRaw);
+      const hasTotalPages = Number.isFinite(totalPages) && totalPages > 0;
+
+      setAds((prev) => {
+        if (!append) return incomingAds;
+        const seen = new Set(prev.map((ad) => String(ad._id)));
+        const uniqueIncoming = incomingAds.filter((ad) => !seen.has(String(ad._id)));
+        return [...prev, ...uniqueIncoming];
+      });
+
+      setHasMore(hasTotalPages ? page < totalPages : false);
+      setNextPage(page + 1);
     } catch {
       setError('خطا در دریافت آگهی‌ها');
     } finally {
-      if (!silent) setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
+      fetchingRef.current = false;
     }
-  };
-
-  useEffect(() => {
-    load(!!initialAds && initialAds.length > 0);
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    if (!initialAds || initialAds.length === 0) {
+      load(1, false);
+    }
+  }, [initialAds, initialHasMore, load]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || loading || loadingMore || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+        load(nextPage, true);
+      },
+      { rootMargin: '300px 0px' }
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, load, loading, loadingMore, nextPage]);
+
+  const retry = () => {
+    if (ads.length > 0) load(nextPage, true);
+    else load(1, false);
+  };
+
+  const showInitialLoading = loading && ads.length === 0;
+
+  if (showInitialLoading) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-4">
         <p className="text-sm text-gray-500 mb-4">در حال بارگذاری آگهی‌ها...</p>
@@ -52,11 +142,11 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
     );
   }
 
-  if (error) {
+  if (error && ads.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-4">
         <p className="text-sm text-gray-500 mb-3">{error}</p>
-        <button onClick={() => load()} className="text-sm text-brand-600">تلاش دوباره</button>
+        <button onClick={retry} className="text-sm text-brand-600">تلاش دوباره</button>
       </div>
     );
   }
@@ -65,16 +155,31 @@ export default function LatestAdsSection({ initialAds }: LatestAdsSectionProps) 
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-4">
         <p className="text-sm text-gray-500 mb-2">فعلاً آگهی‌ای ثبت نشده است.</p>
-        <button onClick={() => load()} className="text-sm text-brand-600">تلاش دوباره</button>
+        <button onClick={retry} className="text-sm text-brand-600">تلاش دوباره</button>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch auto-rows-fr">
-      {ads.map((ad: any) => (
-        <AdCard key={ad._id} ad={ad} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch auto-rows-fr">
+        {ads.map((ad) => (
+          <AdCard key={ad._id} ad={ad} />
+        ))}
+      </div>
+
+      {error && ads.length > 0 && (
+        <div className="mt-3 text-center">
+          <p className="text-sm text-gray-500 mb-2">{error}</p>
+          <button onClick={retry} className="text-sm text-brand-600">تلاش دوباره</button>
+        </div>
+      )}
+
+      {hasMore && (
+        <div ref={loadMoreRef} className="py-4 text-center">
+          {loadingMore && <p className="text-sm text-gray-500">در حال بارگذاری آگهی‌های بیشتر...</p>}
+        </div>
+      )}
+    </>
   );
 }

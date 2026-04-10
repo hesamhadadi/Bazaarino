@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import AuthProvider from '@/components/providers/AuthProvider';
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
 import BrandColorProvider from '@/components/providers/BrandColorProvider';
+import ChatProvider from '@/components/providers/ChatProvider';
 
 export const metadata: Metadata = {
   title: 'بازارینو | نیازمندی‌های ایرانیان ایتالیا',
@@ -49,18 +50,20 @@ export default function RootLayout({
       <body className="font-vazir bg-gray-50 min-h-screen">
         <AuthProvider>
           <BrandColorProvider />
-          {children}
-          <PWAInstallPrompt />
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                fontFamily: 'Vazirmatn, sans-serif',
-                direction: 'rtl',
-              },
-            }}
-          />
+          <ChatProvider>
+            {children}
+            <PWAInstallPrompt />
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  fontFamily: 'Vazirmatn, sans-serif',
+                  direction: 'rtl',
+                },
+              }}
+            />
+          </ChatProvider>
         </AuthProvider>
       </body>
     </html>

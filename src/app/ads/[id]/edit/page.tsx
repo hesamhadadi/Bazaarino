@@ -50,7 +50,7 @@ export default function EditAdPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
-  const adId = params.id as string;
+  const adId = params?.id as string;
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);

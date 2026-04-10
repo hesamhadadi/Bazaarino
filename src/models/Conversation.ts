@@ -22,6 +22,8 @@ const ConversationSchema = new Schema<IConversation>(
 );
 
 ConversationSchema.index({ adId: 1, buyerId: 1, sellerId: 1 }, { unique: true });
+ConversationSchema.index({ buyerId: 1, lastMessageAt: -1 });
+ConversationSchema.index({ sellerId: 1, lastMessageAt: -1 });
 
 const Conversation = mongoose.models.Conversation || mongoose.model<IConversation>('Conversation', ConversationSchema);
 

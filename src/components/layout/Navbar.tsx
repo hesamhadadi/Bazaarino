@@ -6,9 +6,12 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper, MessageCircle, Bell } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { useChat } from '@/components/providers/ChatProvider';
+import { toFaDigits } from '@/lib/locale';
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const { unreadCount } = useChat();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -28,8 +31,13 @@ export default function Navbar() {
               اخبار
             </Link>
             {session && (
-              <Link href="/messages" className="text-gray-600 hover:text-gray-800 text-sm font-medium px-2 py-2">
+              <Link href="/messages" className="text-gray-600 hover:text-gray-800 text-sm font-medium px-2 py-2 relative">
                 گفتگوها
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-brand-500 text-white text-[10px] flex items-center justify-center">
+                    {toFaDigits(unreadCount > 99 ? '99+' : unreadCount)}
+                  </span>
+                )}
               </Link>
             )}
             {session ? (
@@ -75,11 +83,16 @@ export default function Navbar() {
                       </Link>
                       <Link
                         href="/messages"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 relative"
                         onClick={() => setUserMenuOpen(false)}
                       >
                         <MessageCircle size={14} />
                         گفتگوها
+                        {unreadCount > 0 && (
+                          <span className="mr-auto min-w-5 h-5 px-1 rounded-full bg-brand-500 text-white text-[10px] flex items-center justify-center">
+                            {toFaDigits(unreadCount > 99 ? '99+' : unreadCount)}
+                          </span>
+                        )}
                       </Link>
                       <Link
                         href="/notifications"
@@ -176,6 +189,11 @@ export default function Navbar() {
                 </Link>
                 <Link href="/messages" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                   <MessageCircle size={16} /> گفتگوها
+                  {unreadCount > 0 && (
+                    <span className="mr-auto min-w-5 h-5 px-1 rounded-full bg-brand-500 text-white text-[10px] flex items-center justify-center">
+                      {toFaDigits(unreadCount > 99 ? '99+' : unreadCount)}
+                    </span>
+                  )}
                 </Link>
                 <Link href="/news" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                   <Newspaper size={16} /> اخبار و مقالات

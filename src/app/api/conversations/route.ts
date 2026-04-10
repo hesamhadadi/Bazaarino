@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import { resolveSessionUserId } from '@/lib/session-user';
+import { isUserOnline } from '@/lib/chat';
 import Ad from '@/models/Ad';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
@@ -15,7 +16,7 @@ async function getCurrentUserId() {
   return resolveSessionUserId(session.user);
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const userId = await getCurrentUserId();
     if (!userId) {
@@ -24,13 +25,17 @@ export async function GET() {
 
     await connectDB();
 
+    const query = request.nextUrl.searchParams.get('q')?.trim().toLowerCase() || '';
+    const sortMode = request.nextUrl.searchParams.get('sort') || 'recent';
+    const page = Math.max(1, Number(request.nextUrl.searchParams.get('page') || 1));
+    const limit = Math.min(50, Math.max(1, Number(request.nextUrl.searchParams.get('limit') || 20)));
     const conversations = await Conversation.find({
       $or: [{ buyerId: userId }, { sellerId: userId }],
     })
       .sort({ lastMessageAt: -1, updatedAt: -1 })
       .populate('adId', 'title images city status')
-      .populate('buyerId', 'name avatar')
-      .populate('sellerId', 'name avatar')
+      .populate('buyerId', 'name avatar lastSeenAt')
+      .populate('sellerId', 'name avatar lastSeenAt')
       .lean();
 
     const enriched = await Promise.all(
@@ -46,7 +51,11 @@ export async function GET() {
         return {
           _id: conversation._id,
           ad: conversation.adId,
-          otherUser,
+          otherUser: {
+            ...otherUser,
+            isOnline: isUserOnline(otherUser?.lastSeenAt),
+            lastSeenAt: otherUser?.lastSeenAt,
+          },
           lastMessage: conversation.lastMessage || '',
           lastMessageAt: conversation.lastMessageAt,
           unreadCount,
@@ -56,7 +65,28 @@ export async function GET() {
       })
     );
 
-    return NextResponse.json({ conversations: enriched });
+    let filtered = enriched;
+    if (query) {
+      filtered = filtered.filter((item: any) => {
+        const name = String(item.otherUser?.name || '').toLowerCase();
+        const title = String(item.ad?.title || '').toLowerCase();
+        const message = String(item.lastMessage || '').toLowerCase();
+        return name.includes(query) || title.includes(query) || message.includes(query);
+      });
+    }
+
+    filtered.sort((a: any, b: any) => {
+      if (sortMode === 'unread') return Number(b.unreadCount || 0) - Number(a.unreadCount || 0);
+      const ta = new Date(a.lastMessageAt || a.updatedAt || 0).getTime();
+      const tb = new Date(b.lastMessageAt || b.updatedAt || 0).getTime();
+      return tb - ta;
+    });
+
+    const total = filtered.length;
+    const start = (page - 1) * limit;
+    const conversationsPaged = filtered.slice(start, start + limit);
+
+    return NextResponse.json({ conversations: conversationsPaged, total, page, limit });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
   }

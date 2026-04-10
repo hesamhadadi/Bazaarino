@@ -23,18 +23,25 @@ async function getLatestAds() {
   try {
     await connectDB();
     const now = new Date();
-    const ads = await Ad.find({ status: 'approved' })
-      .populate('userId', 'name avatar role')
-      .sort({ createdAt: -1 })
-      .lean();
+    const [ads, total] = await Promise.all([
+      Ad.find({ status: 'approved' })
+        .populate('userId', 'name avatar role')
+        .sort({ createdAt: -1 })
+        .limit(12)
+        .lean(),
+      Ad.countDocuments({ status: 'approved' }),
+    ]);
     const normalized = ads.map((ad: any) => ({
       ...ad,
       isFeatured: ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now),
     }));
     const normalizedWithMarketPrice = await attachMarketPriceToAds(normalized as any[]);
-    return JSON.parse(JSON.stringify(normalizedWithMarketPrice));
+    return {
+      ads: JSON.parse(JSON.stringify(normalizedWithMarketPrice)),
+      hasMore: total > 12,
+    };
   } catch {
-    return [];
+    return { ads: [], hasMore: false };
   }
 }
 
@@ -74,7 +81,8 @@ async function getActiveBanners() {
 }
 
 export default async function HomePage() {
-  const [latestAds, featuredAds, banners] = await Promise.all([getLatestAds(), getFeaturedAds(), getActiveBanners()]);
+  const [latestAdsData, featuredAds, banners] = await Promise.all([getLatestAds(), getFeaturedAds(), getActiveBanners()]);
+  const latestAds = latestAdsData.ads;
   const countryCards = [
     { id: 'italy', label: 'ایتالیا', stripes: ['bg-green-500', 'bg-white', 'bg-red-500'], subtitle: 'رم، میلان، تورین' },
     { id: 'germany', label: 'آلمان', stripes: ['bg-black', 'bg-red-600', 'bg-yellow-400'], subtitle: 'برلین، هامبورگ، مونیخ' },
@@ -491,7 +499,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <LatestAdsSection initialAds={latestAds} />
+          <LatestAdsSection initialAds={latestAds} initialHasMore={latestAdsData.hasMore} />
         </section>
       </div>
 
