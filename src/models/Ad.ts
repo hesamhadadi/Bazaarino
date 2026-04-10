@@ -11,6 +11,7 @@ export interface IAd extends Document {
   country?: string;
   city: string;
   images: string[];
+  videos?: string[];
   status: 'pending' | 'approved' | 'rejected' | 'expired' | 'sold';
   userId: mongoose.Types.ObjectId;
   phone?: string;
@@ -108,6 +109,14 @@ const AdSchema = new Schema<IAd>(
       validate: {
         validator: (v: string[]) => v.length <= 8,
         message: 'حداکثر ۸ تصویر می‌توانید آپلود کنید',
+      },
+    },
+    videos: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: (v: string[]) => v.length <= 1,
+        message: 'حداکثر ۱ ویدیو می‌توانید آپلود کنید',
       },
     },
     status: {

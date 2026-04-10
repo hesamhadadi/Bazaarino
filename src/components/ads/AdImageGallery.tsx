@@ -6,12 +6,17 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface AdImageGalleryProps {
   images: string[];
+  videos?: string[];
   title: string;
 }
 
-export default function AdImageGallery({ images, title }: AdImageGalleryProps) {
+export default function AdImageGallery({ images, videos = [], title }: AdImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [open, setOpen] = useState(false);
+  const mediaItems = [
+    ...images.map((url) => ({ type: 'image' as const, url })),
+    ...videos.map((url) => ({ type: 'video' as const, url })),
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -22,10 +27,11 @@ export default function AdImageGallery({ images, title }: AdImageGalleryProps) {
     };
   }, [open]);
 
-  if (!images.length) return null;
+  if (!mediaItems.length) return null;
 
-  const next = () => setActiveIndex((prev) => (prev + 1) % images.length);
-  const prev = () => setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+  const next = () => setActiveIndex((prev) => (prev + 1) % mediaItems.length);
+  const prev = () => setActiveIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length);
+  const activeItem = mediaItems[activeIndex];
 
   return (
     <>
@@ -35,21 +41,29 @@ export default function AdImageGallery({ images, title }: AdImageGalleryProps) {
           onClick={() => setOpen(true)}
           className="relative aspect-[4/3] w-full block"
         >
-          <Image src={images[activeIndex]} alt={title} fill className="object-cover" priority />
+          {activeItem.type === 'image' ? (
+            <Image src={activeItem.url} alt={title} fill className="object-cover" priority />
+          ) : (
+            <video src={activeItem.url} className="w-full h-full object-cover" muted />
+          )}
         </button>
 
-        {images.length > 1 && (
+        {mediaItems.length > 1 && (
           <div className="flex gap-2 p-2 overflow-x-auto">
-            {images.map((img, i) => (
+            {mediaItems.map((item, i) => (
               <button
-                key={`${img}-${i}`}
+                key={`${item.url}-${i}`}
                 type="button"
                 onClick={() => setActiveIndex(i)}
                 className={`relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border-2 ${
                   i === activeIndex ? 'border-brand-500' : 'border-gray-200'
                 }`}
               >
-                <Image src={img} alt={`تصویر ${i + 1}`} fill className="object-cover" />
+                {item.type === 'image' ? (
+                  <Image src={item.url} alt={`تصویر ${i + 1}`} fill className="object-cover" />
+                ) : (
+                  <video src={item.url} className="w-full h-full object-cover" muted />
+                )}
               </button>
             ))}
           </div>
@@ -69,7 +83,7 @@ export default function AdImageGallery({ images, title }: AdImageGalleryProps) {
             <X size={18} />
           </button>
 
-          {images.length > 1 && (
+          {mediaItems.length > 1 && (
             <>
               <button
                 type="button"
@@ -89,7 +103,11 @@ export default function AdImageGallery({ images, title }: AdImageGalleryProps) {
           )}
 
           <div className="relative w-full h-full max-w-6xl mx-auto" onClick={(e) => e.stopPropagation()}>
-            <Image src={images[activeIndex]} alt={title} fill className="object-contain" />
+            {activeItem.type === 'image' ? (
+              <Image src={activeItem.url} alt={title} fill className="object-contain" />
+            ) : (
+              <video src={activeItem.url} className="w-full h-full object-contain" controls autoPlay />
+            )}
           </div>
         </div>
       )}

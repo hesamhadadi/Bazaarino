@@ -28,8 +28,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'فایلی انتخاب نشده' }, { status: 400 });
     }
 
-    if (files.length > 8) {
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+    const videoFiles = files.filter((file) => file.type.startsWith('video/'));
+    const unsupportedFiles = files.filter((file) => !file.type.startsWith('image/') && !file.type.startsWith('video/'));
+
+    if (unsupportedFiles.length > 0) {
+      return NextResponse.json({ message: 'فقط تصویر یا ویدیو مجاز است' }, { status: 400 });
+    }
+
+    if (imageFiles.length > 8) {
       return NextResponse.json({ message: 'حداکثر ۸ تصویر مجاز است' }, { status: 400 });
+    }
+
+    if (videoFiles.length > 1) {
+      return NextResponse.json({ message: 'حداکثر ۱ ویدیو مجاز است' }, { status: 400 });
+    }
+
+    const maxVideoSize = 10 * 1024 * 1024;
+    const oversizedVideo = videoFiles.find((file) => file.size > maxVideoSize);
+    if (oversizedVideo) {
+      return NextResponse.json({ message: 'حجم ویدیو باید کمتر از ۱۰ مگابایت باشد' }, { status: 400 });
     }
 
     const uploadPromises = files.map(async (file) => {
@@ -37,23 +55,32 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(bytes);
       const base64 = `data:${file.type};base64,${buffer.toString('base64')}`;
 
-      const result = await cloudinary.uploader.upload(base64, {
-        folder: 'bazaarino/ads',
-        transformation: [
-          { width: 1200, height: 900, crop: 'limit' },
-          { quality: 'auto:good' },
-          { format: 'webp' },
-        ],
-      });
+      const isVideo = file.type.startsWith('video/');
+      const result = await cloudinary.uploader.upload(base64, isVideo
+        ? {
+            folder: 'bazaarino/ads/videos',
+            resource_type: 'video',
+          }
+        : {
+            folder: 'bazaarino/ads',
+            transformation: [
+              { width: 1200, height: 900, crop: 'limit' },
+              { quality: 'auto:good' },
+              { format: 'webp' },
+            ],
+          });
 
-      return result.secure_url;
+      return { url: result.secure_url, isVideo };
     });
 
-    const urls = await Promise.all(uploadPromises);
+    const uploaded = await Promise.all(uploadPromises);
+    const imageUrls = uploaded.filter((item) => !item.isVideo).map((item) => item.url);
+    const videoUrls = uploaded.filter((item) => item.isVideo).map((item) => item.url);
+    const urls = uploaded.map((item) => item.url);
 
-    return NextResponse.json({ urls });
+    return NextResponse.json({ urls, imageUrls, videoUrls });
   } catch (error) {
     console.error('Upload error:', error);
-    return NextResponse.json({ message: 'خطا در آپلود تصویر' }, { status: 500 });
+    return NextResponse.json({ message: 'خطا در آپلود فایل' }, { status: 500 });
   }
 }

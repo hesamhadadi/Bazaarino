@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       title, description, price, priceType, currency,
-      category, subcategory, city, country, images,
+      category, subcategory, city, country, images, videos,
       phone, email, showPhone, showEmail,
       listingMode,
       isUrgent,
@@ -200,6 +200,7 @@ export async function POST(request: NextRequest) {
       country: resolvedCountry,
       city,
       images: images || [],
+      videos: videos || [],
       phone,
       email,
       showPhone: showPhone !== false,

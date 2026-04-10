@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     // Owner can update content
     if (isOwner) {
-      const allowedFields = ['title', 'description', 'price', 'priceType', 'city', 'phone', 'email', 'showPhone', 'showEmail', 'images', 'housing', 'listingMode'];
+      const allowedFields = ['title', 'description', 'price', 'priceType', 'city', 'phone', 'email', 'showPhone', 'showEmail', 'images', 'videos', 'housing', 'listingMode'];
       allowedFields.forEach(field => {
         if (body[field] !== undefined) (ad as any)[field] = body[field];
       });

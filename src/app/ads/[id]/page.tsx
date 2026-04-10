@@ -133,8 +133,8 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
         <div className="grid md:grid-cols-3 gap-4">
           <div className="md:col-span-2 space-y-4">
             <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
-              {ad.images?.length > 0 ? (
-                <AdImageGallery images={ad.images} title={ad.title} />
+              {(ad.images?.length > 0 || ad.videos?.length > 0) ? (
+                <AdImageGallery images={ad.images || []} videos={ad.videos || []} title={ad.title} />
               ) : (
                 <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
                   <CategoryIcon categoryId={ad.category} size={56} className="text-gray-400" />

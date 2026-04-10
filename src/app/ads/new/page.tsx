@@ -53,6 +53,7 @@ export default function NewAdPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [images, setImages] = useState<string[]>([]);
+  const [videos, setVideos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -106,12 +107,32 @@ export default function NewAdPage() {
     loadMarketPrice();
   }, [category, city, subcategory]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    if (images.length + files.length > 8) {
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+    const videoFiles = files.filter((file) => file.type.startsWith('video/'));
+    const invalidFiles = files.filter((file) => !file.type.startsWith('image/') && !file.type.startsWith('video/'));
+
+    if (invalidFiles.length > 0) {
+      toast.error('فقط تصویر یا ویدیو مجاز است');
+      return;
+    }
+
+    if (images.length + imageFiles.length > 8) {
       toast.error('حداکثر ۸ تصویر مجاز است');
+      return;
+    }
+
+    if (videos.length + videoFiles.length > 1) {
+      toast.error('حداکثر ۱ ویدیو مجاز است');
+      return;
+    }
+
+    const oversizedVideo = videoFiles.find((file) => file.size > 10 * 1024 * 1024);
+    if (oversizedVideo) {
+      toast.error('حجم ویدیو باید کمتر از ۱۰ مگابایت باشد');
       return;
     }
 
@@ -123,8 +144,9 @@ export default function NewAdPage() {
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (res.ok) {
-        setImages(prev => [...prev, ...data.urls]);
-        toast.success('تصاویر آپلود شدند');
+        setImages(prev => [...prev, ...(data.imageUrls || [])]);
+        setVideos(prev => [...prev, ...(data.videoUrls || [])]);
+        toast.success('فایل‌ها آپلود شدند');
       } else {
         toast.error(data.message || 'خطا در آپلود');
       }
@@ -138,6 +160,9 @@ export default function NewAdPage() {
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
+  const removeVideo = (index: number) => {
+    setVideos(prev => prev.filter((_, i) => i !== index));
+  };
 
   const onSubmit = async (data: AdForm) => {
     setSubmitting(true);
@@ -148,6 +173,7 @@ export default function NewAdPage() {
         body: JSON.stringify({
           ...data,
           images,
+          videos,
           housing: category === 'real-estate' ? {
             deposit: data.deposit ? Number(data.deposit) : undefined,
             residenceEligible: data.residenceEligible === true,
@@ -517,8 +543,8 @@ export default function NewAdPage() {
 
           {/* Images */}
           <div className="bg-white rounded-2xl p-4 border border-gray-100">
-            <h2 className="font-semibold text-gray-800 mb-3">تصاویر</h2>
-            <p className="text-xs text-gray-400 mb-3">حداکثر ۸ تصویر (اختیاری)</p>
+            <h2 className="font-semibold text-gray-800 mb-3">تصاویر و ویدیو</h2>
+            <p className="text-xs text-gray-400 mb-3">حداکثر ۸ تصویر و ۱ ویدیو (ویدیو زیر ۱۰MB)</p>
 
             <div className="grid grid-cols-4 gap-2">
               {images.map((url, index) => (
@@ -537,7 +563,20 @@ export default function NewAdPage() {
                 </div>
               ))}
 
-              {images.length < 8 && (
+              {videos.map((url, index) => (
+                <div key={`video-${index}`} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-black">
+                  <video src={url} className="w-full h-full object-cover" controls />
+                  <button
+                    type="button"
+                    onClick={() => removeVideo(index)}
+                    className="absolute top-1 left-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+
+              {(images.length < 8 || videos.length < 1) && (
                 <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-brand-400 hover:bg-brand-50 transition-colors">
                   {uploading ? (
                     <div className="w-6 h-6 border-2 border-brand-300 border-t-brand-500 rounded-full animate-spin" />
@@ -549,10 +588,10 @@ export default function NewAdPage() {
                   )}
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,video/*"
                     multiple
                     className="hidden"
-                    onChange={handleImageUpload}
+                    onChange={handleMediaUpload}
                     disabled={uploading}
                   />
                 </label>
