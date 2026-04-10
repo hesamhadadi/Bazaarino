@@ -44,7 +44,7 @@ export default function AdImageGallery({ images, videos = [], title }: AdImageGa
           {activeItem.type === 'image' ? (
             <Image src={activeItem.url} alt={title} fill className="object-cover" priority />
           ) : (
-            <video src={activeItem.url} className="w-full h-full object-cover" muted />
+            <video src={activeItem.url} className="w-full h-full object-cover" muted autoPlay loop playsInline />
           )}
         </button>
 
@@ -62,7 +62,7 @@ export default function AdImageGallery({ images, videos = [], title }: AdImageGa
                 {item.type === 'image' ? (
                   <Image src={item.url} alt={`تصویر ${i + 1}`} fill className="object-cover" />
                 ) : (
-                  <video src={item.url} className="w-full h-full object-cover" muted />
+                  <video src={item.url} className="w-full h-full object-cover" muted autoPlay loop playsInline />
                 )}
               </button>
             ))}

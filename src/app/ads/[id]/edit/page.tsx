@@ -363,7 +363,7 @@ export default function EditAdPage() {
               ))}
               {videos.map((url, i) => (
                 <div key={`video-${i}`} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-black">
-                  <video src={url} className="w-full h-full object-cover" controls />
+                  <video src={url} className="w-full h-full object-cover" muted autoPlay loop playsInline />
                   <button
                     type="button"
                     onClick={() => setVideos(prev => prev.filter((_, idx) => idx !== i))}

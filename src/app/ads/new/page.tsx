@@ -565,7 +565,7 @@ export default function NewAdPage() {
 
               {videos.map((url, index) => (
                 <div key={`video-${index}`} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-black">
-                  <video src={url} className="w-full h-full object-cover" controls />
+                  <video src={url} className="w-full h-full object-cover" muted autoPlay loop playsInline />
                   <button
                     type="button"
                     onClick={() => removeVideo(index)}
