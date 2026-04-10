@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
-import { Bell, CheckCheck, ChevronLeft } from 'lucide-react';
+import { Bell, CheckCheck, ChevronLeft, FlaskConical } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type NotificationItem = {
@@ -33,6 +33,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [creatingTest, setCreatingTest] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/auth/login');
@@ -73,6 +74,27 @@ export default function NotificationsPage() {
     }
   };
 
+  const createTestNotification = async () => {
+    try {
+      setCreatingTest(true);
+      const res = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'test' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'ساخت اعلان تستی ناموفق بود');
+      if (data?.notification) {
+        setNotifications((prev) => [data.notification, ...prev]);
+      }
+      toast.success('اعلان تستی ساخته شد');
+    } catch (error: any) {
+      toast.error(error?.message || 'ساخت اعلان تستی ناموفق بود');
+    } finally {
+      setCreatingTest(false);
+    }
+  };
+
   const openNotification = async (item: NotificationItem) => {
     if (!item.isRead) {
       try {
@@ -105,15 +127,26 @@ export default function NotificationsPage() {
             <Bell size={18} className="text-brand-500" />
             <h1 className="text-xl font-bold text-gray-800">اعلان‌ها</h1>
           </div>
-          <button
-            type="button"
-            onClick={markAllAsRead}
-            disabled={markingAll || notifications.every((item) => item.isRead)}
-            className="inline-flex items-center gap-2 text-xs md:text-sm px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 disabled:opacity-50"
-          >
-            <CheckCheck size={14} />
-            همه خوانده شد
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={createTestNotification}
+              disabled={creatingTest}
+              className="inline-flex items-center gap-2 text-xs md:text-sm px-3 py-2 rounded-xl bg-brand-500 text-white disabled:opacity-50"
+            >
+              <FlaskConical size={14} />
+              تست نوتیف
+            </button>
+            <button
+              type="button"
+              onClick={markAllAsRead}
+              disabled={markingAll || notifications.every((item) => item.isRead)}
+              className="inline-flex items-center gap-2 text-xs md:text-sm px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 disabled:opacity-50"
+            >
+              <CheckCheck size={14} />
+              همه خوانده شد
+            </button>
+          </div>
         </div>
 
         {notifications.length === 0 ? (
