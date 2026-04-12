@@ -169,10 +169,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       .lean();
 
     const unreadCount = await getUnreadCountForUser(receiverId);
-    const senderName =
-      userId === String(conversation.buyerId?._id)
-        ? String(conversation.buyerId?.name || 'کاربر')
-        : String(conversation.sellerId?.name || 'کاربر');
 
     publishChatEvent({
       type: 'message:new',
