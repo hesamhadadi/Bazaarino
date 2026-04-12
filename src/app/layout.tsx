@@ -6,6 +6,7 @@ import AuthProvider from '@/components/providers/AuthProvider';
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
 import BrandColorProvider from '@/components/providers/BrandColorProvider';
 import ChatProvider from '@/components/providers/ChatProvider';
+import PushNotificationProvider from '@/components/providers/PushNotificationProvider';
 
 export const metadata: Metadata = {
   title: 'بازارینو | نیازمندی‌های ایرانیان ایتالیا',
@@ -53,6 +54,7 @@ export default function RootLayout({
           <ChatProvider>
             {children}
             <PWAInstallPrompt />
+            <PushNotificationProvider />
             <Toaster
               position="top-center"
               toastOptions={{

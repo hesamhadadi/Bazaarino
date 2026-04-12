@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Notification, { NotificationType } from '@/models/Notification';
+import { sendPushNotificationToUser } from '@/lib/push-notifications';
 
 type CreateNotificationInput = {
   userId: string | mongoose.Types.ObjectId;
@@ -29,7 +30,7 @@ export async function createNotification(input: CreateNotificationInput) {
     return null;
   }
 
-  return Notification.create({
+  const notification = await Notification.create({
     userId,
     actorId,
     type: input.type,
@@ -38,4 +39,19 @@ export async function createNotification(input: CreateNotificationInput) {
     href: input.href?.trim(),
     data: input.data,
   });
+
+  sendPushNotificationToUser(userId, {
+    title: notification.title,
+    body: notification.body,
+    href: notification.href,
+    type: notification.type,
+    data: {
+      notificationId: notification._id.toString(),
+      ...(notification.data || {}),
+    },
+  }).catch((error) => {
+    console.error('Push notification error:', error);
+  });
+
+  return notification;
 }

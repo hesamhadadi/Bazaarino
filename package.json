@@ -17,6 +17,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@types/leaflet": "^1.9.21",
+    "@types/web-push": "^3.6.4",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.4.0",
     "clsx": "^2.1.1",
@@ -37,6 +38,7 @@
     "socket.io-client": "^4.8.3",
     "swiper": "^11.1.9",
     "tailwind-merge": "^2.4.0",
+    "web-push": "^3.6.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {

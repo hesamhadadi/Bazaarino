@@ -40,8 +40,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const [action, adId] = String(callback.data).split(':');
-    if (!adId) return NextResponse.json({ ok: true });
+    const callbackData = String(callback.data || '');
+    const [action, adId] = callbackData.split(':');
+    if (!['approve', 'reject'].includes(action) || !adId) {
+      await answerCallback(token, callback.id, 'درخواست معتبر نیست');
+      return NextResponse.json({ ok: true });
+    }
 
     const messageId = callback.message?.message_id;
 
@@ -60,7 +64,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (error) {
+    console.error('Telegram webhook error:', error);
     return NextResponse.json({ ok: true });
   }
 }

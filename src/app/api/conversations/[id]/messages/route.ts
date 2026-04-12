@@ -152,7 +152,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         actorId: userId,
         type: 'message',
         title: `پیام جدید از ${senderName}`,
-        body: content.length > 120 ? `${content.slice(0, 117)}...` : content,
+        body: type === 'image' ? 'یک تصویر جدید ارسال شده است.' : (content.length > 120 ? `${content.slice(0, 117)}...` : content),
         href: `/messages/${conversation._id}`,
         data: {
           conversationId: conversation._id.toString(),

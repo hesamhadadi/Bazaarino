@@ -2,6 +2,7 @@ import Ad from '@/models/Ad';
 import User from '@/models/User';
 import { sendEmail } from '@/lib/email';
 import { getAppUrl } from '@/lib/app-url';
+import { createNotification } from '@/lib/notifications';
 
 type ModerationStatus = 'approved' | 'rejected';
 
@@ -17,14 +18,34 @@ export async function updateAdStatusAndNotifyOwner(adId: string, status: Moderat
   }
   await ad.save();
 
+  const appUrl = getAppUrl().replace(/\/$/, '');
+  const adUrl = `${appUrl}/ads/${ad._id}`;
+  const adTitle = String(ad.title || 'آگهی شما');
+  const reason = (status === 'rejected' ? (rejectionReason || ad.rejectionReason || 'رد شده توسط مدیر') : '').trim();
+
+  try {
+    await createNotification({
+      userId: ad.userId,
+      type: status === 'approved' ? 'ad_approved' : 'ad_rejected',
+      title: status === 'approved' ? 'آگهی شما تأیید شد' : 'آگهی شما رد شد',
+      body: status === 'approved'
+        ? `آگهی «${adTitle}» تأیید شد و در سایت قابل مشاهده است.`
+        : `آگهی «${adTitle}» رد شد.${reason ? ` دلیل: ${reason}` : ''}`,
+      href: `/ads/${ad._id}`,
+      data: {
+        adId: ad._id.toString(),
+        status,
+        rejectionReason: status === 'rejected' ? reason : undefined,
+      },
+    });
+  } catch (notificationError) {
+    console.error('Ad moderation notification error:', notificationError);
+  }
+
   try {
     const owner = (await User.findById(ad.userId).select('email name').lean()) as { email?: string; name?: string } | null;
     const to = owner?.email || ad.email;
     if (to) {
-      const appUrl = getAppUrl().replace(/\/$/, '');
-      const adUrl = `${appUrl}/ads/${ad._id}`;
-      const adTitle = String(ad.title || 'آگهی شما');
-      const reason = (status === 'rejected' ? (rejectionReason || ad.rejectionReason || 'رد شده توسط مدیر') : '').trim();
       const escapeHtml = (value: string) =>
         value
           .replaceAll('&', '&amp;')

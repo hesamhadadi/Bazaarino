@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type NotificationType = 'message';
+export type NotificationType = 'message' | 'ad_approved' | 'ad_rejected' | 'system';
 
 export interface INotification extends Document {
   userId: mongoose.Types.ObjectId;
@@ -20,7 +20,7 @@ const NotificationSchema = new Schema<INotification>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     actorId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
-    type: { type: String, enum: ['message'], required: true, index: true },
+    type: { type: String, enum: ['message', 'ad_approved', 'ad_rejected', 'system'], required: true, index: true },
     title: { type: String, required: true, trim: true, maxlength: 160 },
     body: { type: String, required: true, trim: true, maxlength: 500 },
     href: { type: String, trim: true, maxlength: 500 },
