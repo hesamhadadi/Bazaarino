@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { CheckCircle, XCircle, Eye, Users, FileText, Clock, Star, BarChart3, UserCheck, UserX, ImagePlus, Trash2, Filter, RotateCcw, ShieldCheck } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Users, FileText, Clock, Star, UserCheck, ImagePlus, Trash2, Filter, RotateCcw, ShieldCheck, Activity, AlertTriangle, BadgeCheck, Gauge, Heart, Megaphone, MousePointerClick, PieChart, TrendingUp } from 'lucide-react';
 import { CITIES, CATEGORIES, getCityLabel } from '@/lib/constants';
 import { applyBrandPaletteToDocument, normalizeBrandPrimary } from '@/lib/brand-color';
 
@@ -486,8 +486,47 @@ export default function AdminDashboard() {
     sold: 'status-sold',
   };
 
+  const STATUS_DOT_COLORS: Record<string, string> = {
+    approved: '#16a34a',
+    pending: '#f59e0b',
+    rejected: '#ef4444',
+    expired: '#64748b',
+    sold: '#2563eb',
+  };
+
+  const LISTING_MODE_LABELS: Record<string, string> = {
+    offer: 'عرضه',
+    request: 'درخواست',
+  };
+
+  const formatCompact = (value?: number) => new Intl.NumberFormat('fa-IR', { notation: 'compact' }).format(value || 0);
+  const formatNumber = (value?: number) => new Intl.NumberFormat('fa-IR').format(value || 0);
+  const getCategoryLabel = (id?: string) => CATEGORIES.find((x) => x.id === id)?.label || id || '-';
+
+  const makeLastDaysSeries = (rawItems: Array<{ _id: string; count: number }> = [], days = 14) => {
+    const countByDate = new Map(rawItems.map((item) => [item._id, item.count]));
+    return Array.from({ length: days }).map((_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (days - 1 - index));
+      const key = date.toISOString().slice(0, 10);
+      return {
+        key,
+        label: date.toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' }),
+        count: countByDate.get(key) || 0,
+      };
+    });
+  };
+
   const topCities = useMemo(() => stats?.topCities || [], [stats]);
   const topCategories = useMemo(() => stats?.topCategories || [], [stats]);
+  const adsTrendSeries = useMemo(() => makeLastDaysSeries(stats?.adsTrend || []), [stats]);
+  const usersTrendSeries = useMemo(() => makeLastDaysSeries(stats?.usersTrend || []), [stats]);
+  const maxAdsTrend = useMemo(() => Math.max(1, ...adsTrendSeries.map((item) => item.count)), [adsTrendSeries]);
+  const maxUsersTrend = useMemo(() => Math.max(1, ...usersTrendSeries.map((item) => item.count)), [usersTrendSeries]);
+  const moderationLoad = useMemo(() => {
+    if (!stats?.totalAds) return 0;
+    return Math.round(((stats.pendingAds || 0) / Math.max(1, stats.totalAds)) * 100);
+  }, [stats]);
   const activeAdFilterCount = useMemo(
     () => Object.entries(adFilters).filter(([key, value]) => key !== 'status' ? Boolean(value) : activeTab === 'all' && value !== 'all').length,
     [adFilters, activeTab]
@@ -524,32 +563,143 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {stats && (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-7 gap-3 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3 mb-4">
               {[
-                { label: 'کل آگهی‌ها', value: stats.totalAds, icon: FileText, color: 'bg-blue-50 text-blue-600' },
-                { label: 'در انتظار', value: stats.pendingAds, icon: Clock, color: 'bg-yellow-50 text-yellow-600' },
-                { label: 'تأیید شده', value: stats.approvedAds, icon: CheckCircle, color: 'bg-green-50 text-green-600' },
-                { label: 'رد شده', value: stats.rejectedAds, icon: XCircle, color: 'bg-red-50 text-red-600' },
-                { label: 'کاربران فعال', value: stats.activeUsers, icon: UserCheck, color: 'bg-emerald-50 text-emerald-600' },
-                { label: 'کاربران غیرفعال', value: stats.inactiveUsers, icon: UserX, color: 'bg-gray-100 text-gray-600' },
-                { label: 'آگهی ۷ روز اخیر', value: stats.adsLast7Days, icon: BarChart3, color: 'bg-purple-50 text-purple-600' },
+                { label: 'کل آگهی‌ها', value: stats.totalAds, hint: `امروز ${formatNumber(stats.adsToday)}`, icon: FileText, color: 'bg-sky-50 text-sky-700' },
+                { label: 'در انتظار بررسی', value: stats.pendingAds, hint: `${moderationLoad}% از کل`, icon: Clock, color: 'bg-amber-50 text-amber-700' },
+                { label: 'تأیید شده', value: stats.approvedAds, hint: `${formatNumber(stats.soldAds)} فروخته`, icon: CheckCircle, color: 'bg-emerald-50 text-emerald-700' },
+                { label: 'رد یا منقضی', value: (stats.rejectedAds || 0) + (stats.expiredAds || 0), hint: `${formatNumber(stats.rejectedAds)} رد شده`, icon: XCircle, color: 'bg-rose-50 text-rose-700' },
+                { label: 'کاربران فعال', value: stats.activeUsers, hint: `${formatNumber(stats.newUsersLast7Days)} جدید`, icon: UserCheck, color: 'bg-teal-50 text-teal-700' },
+                { label: 'بازدید کل', value: stats.totalViews, hint: `میانگین ${formatNumber(stats.avgViews)}`, icon: Eye, color: 'bg-violet-50 text-violet-700' },
+                { label: 'ویژه فعال', value: stats.featuredAds, hint: `${formatNumber(stats.urgentAds)} فوری`, icon: Star, color: 'bg-orange-50 text-orange-700' },
+                { label: 'نیازمند اقدام', value: (stats.openReports || 0) + (stats.pendingIdentityUsers || 0), hint: `${formatNumber(stats.openReports)} گزارش باز`, icon: AlertTriangle, color: 'bg-red-50 text-red-700' },
               ].map((stat) => (
-                <div key={stat.label} className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 border border-white shadow-sm hover:shadow-lg transition-all">
+                <div key={stat.label} className="bg-white/90 backdrop-blur-sm rounded-lg p-4 border border-white shadow-sm hover:shadow-md transition-all">
                   <div className="flex items-center justify-between mb-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.color}`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
                       <stat.icon size={18} />
                     </div>
-                    <span className="text-2xl font-bold text-gray-800">{stat.value}</span>
+                    <span className="text-2xl font-bold text-gray-900">{formatCompact(stat.value)}</span>
                   </div>
                   <p className="text-xs text-gray-500">{stat.label}</p>
+                  <p className="mt-1 text-[11px] text-gray-400">{stat.hint}</p>
                 </div>
               ))}
             </div>
 
-            <div className="grid md:grid-cols-2 gap-3 mb-6">
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-4">
-                <h3 className="font-semibold text-gray-800 mb-3">شهرهای پرآگهی</h3>
-                <div className="space-y-2">
+            <div className="grid xl:grid-cols-3 gap-4 mb-4">
+              <div className="xl:col-span-2 bg-white/90 backdrop-blur-sm rounded-lg border border-white shadow-sm p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">روند رشد ۱۴ روزه</h3>
+                    <p className="text-xs text-gray-400 mt-1">آگهی‌های جدید و ثبت‌نام کاربران</p>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-500"></span> آگهی</span>
+                    <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500"></span> کاربر</span>
+                  </div>
+                </div>
+                <div className="flex gap-2 h-52 items-end border-b border-gray-100 pb-2">
+                  {adsTrendSeries.map((item, index) => {
+                    const userItem = usersTrendSeries[index];
+                    return (
+                      <div key={item.key} className="h-full flex-1 min-w-0 flex flex-col items-center justify-end gap-1">
+                        <div className="w-full h-40 flex items-end justify-center gap-1">
+                          <div
+                            title={`آگهی: ${item.count}`}
+                            className="w-3 rounded-t bg-brand-500 transition-all"
+                            style={{ height: `${Math.max(4, (item.count / maxAdsTrend) * 100)}%` }}
+                          />
+                          <div
+                            title={`کاربر: ${userItem?.count || 0}`}
+                            className="w-3 rounded-t bg-cyan-500 transition-all"
+                            style={{ height: `${Math.max(4, ((userItem?.count || 0) / maxUsersTrend) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-gray-400 -rotate-45 origin-top whitespace-nowrap">{item.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="grid sm:grid-cols-4 gap-3 mt-4">
+                  {[
+                    { label: 'آگهی ۷ روز اخیر', value: stats.adsLast7Days, icon: TrendingUp },
+                    { label: 'کاربر جدید', value: stats.newUsersLast7Days, icon: Users },
+                    { label: 'بازدید میانگین', value: stats.avgViews, icon: MousePointerClick },
+                    { label: 'علاقه‌مندی‌ها', value: stats.totalFavorites, icon: Heart },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-lg bg-gray-50 p-3 border border-gray-100">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                        <item.icon size={14} />
+                        {item.label}
+                      </div>
+                      <p className="text-lg font-bold text-gray-900">{formatNumber(item.value)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg border border-white shadow-sm p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">وضعیت آگهی‌ها</h3>
+                  <PieChart size={18} className="text-gray-400" />
+                </div>
+                <div className="flex items-center gap-5 justify-center">
+                  <svg viewBox="0 0 140 140" className="w-36 h-36">
+                    {(() => {
+                      const total = stats.totalAds || 1;
+                      const slices = (stats.statusBreakdown || []).filter((slice: any) => slice.count > 0);
+                      let cumulative = 0;
+                      const radius = 52;
+                      const circumference = 2 * Math.PI * radius;
+                      return slices.map((slice: any) => {
+                        const pct = slice.count / total;
+                        const offset = cumulative * circumference;
+                        cumulative += pct;
+                        return (
+                          <circle
+                            key={slice._id}
+                            cx="70"
+                            cy="70"
+                            r={radius}
+                            fill="none"
+                            stroke={STATUS_DOT_COLORS[slice._id] || '#94a3b8'}
+                            strokeWidth="20"
+                            strokeDasharray={`${pct * circumference} ${circumference}`}
+                            strokeDashoffset={-offset}
+                            style={{ transform: 'rotate(-90deg)', transformOrigin: '70px 70px' }}
+                          />
+                        );
+                      });
+                    })()}
+                    <text x="70" y="68" textAnchor="middle" className="font-bold fill-gray-900" style={{ fontSize: '20px' }}>{formatCompact(stats.totalAds)}</text>
+                    <text x="70" y="86" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>کل آگهی</text>
+                  </svg>
+                  <div className="space-y-2 min-w-32">
+                    {(stats.statusBreakdown || []).map((item: any) => (
+                      <div key={item._id} className="flex items-center gap-2 text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_DOT_COLORS[item._id] || '#94a3b8' }}></span>
+                        <span className="text-gray-600">{STATUS_LABELS[item._id] || item._id}</span>
+                        <span className="font-semibold text-gray-900 mr-auto">{formatNumber(item.count)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-5">
+                  {(stats.listingModeBreakdown || []).map((item: any) => (
+                    <div key={item._id} className="rounded-lg bg-gray-50 p-3 border border-gray-100">
+                      <p className="text-xs text-gray-500">{LISTING_MODE_LABELS[item._id] || item._id}</p>
+                      <p className="text-lg font-bold text-gray-900 mt-1">{formatNumber(item.count)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid xl:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg border border-white shadow-sm p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">شهرهای پرآگهی</h3>
+                <div className="space-y-3">
                   {topCities.map((c: any) => {
                     const cityLabel = CITIES.find((x) => x.value === c._id)?.label || c._id;
                     const pct = Math.max(6, Math.round((c.count / Math.max(1, stats.approvedAds)) * 100));
@@ -568,9 +718,9 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-4">
-                <h3 className="font-semibold text-gray-800 mb-3">دسته‌های پرآگهی</h3>
-                <div className="space-y-2">
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg border border-white shadow-sm p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">دسته‌های پرآگهی</h3>
+                <div className="space-y-3">
                   {topCategories.map((c: any) => {
                     const cat = CATEGORIES.find((x) => x.id === c._id);
                     const pct = Math.max(6, Math.round((c.count / Math.max(1, stats.approvedAds)) * 100));
@@ -581,71 +731,88 @@ export default function AdminDashboard() {
                           <span className="text-gray-400">{c.count}</span>
                         </div>
                         <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-l from-purple-400 to-purple-600 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}></div>
+                          <div className="h-full bg-gradient-to-l from-indigo-400 to-cyan-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}></div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
+
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg border border-white shadow-sm p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">مرکز اقدام سریع</h3>
+                <div className="space-y-3">
+                  {[
+                    { label: 'آگهی در صف بررسی', value: stats.pendingAds, icon: Clock, tab: 'pending' as AdminTab, tone: 'bg-amber-50 text-amber-700' },
+                    { label: 'گزارش باز کاربران', value: stats.openReports, icon: AlertTriangle, tab: 'reports' as AdminTab, tone: 'bg-red-50 text-red-700' },
+                    { label: 'احراز هویت در انتظار', value: stats.pendingIdentityUsers, icon: BadgeCheck, tab: 'users' as AdminTab, tone: 'bg-emerald-50 text-emerald-700' },
+                    { label: 'بنر فعال', value: stats.activeBanners, icon: Megaphone, tab: 'banners' as AdminTab, tone: 'bg-sky-50 text-sky-700' },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => changeTab(item.tab)}
+                      className="w-full rounded-lg border border-gray-100 bg-gray-50 p-3 flex items-center justify-between text-right hover:bg-white transition-colors"
+                    >
+                      <span className="flex items-center gap-2 text-sm text-gray-700">
+                        <span className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.tone}`}>
+                          <item.icon size={16} />
+                        </span>
+                        {item.label}
+                      </span>
+                      <span className="text-lg font-bold text-gray-900">{formatNumber(item.value)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {stats.totalAds > 0 && (
-               <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-4 mb-6">
-                <h3 className="font-semibold text-gray-800 mb-4">نمودار وضعیت آگهی‌ها</h3>
-                <div className="flex items-center gap-8 justify-center">
-                  <svg viewBox="0 0 120 120" className="w-32 h-32">
-                    {(() => {
-                      const total = stats.totalAds || 1;
-                      const slices = [
-                        { value: stats.approvedAds, color: '#22c55e', label: 'تأیید شده' },
-                        { value: stats.pendingAds, color: '#eab308', label: 'در انتظار' },
-                        { value: stats.rejectedAds, color: '#ef4444', label: 'رد شده' },
-                        { value: Math.max(0, total - stats.approvedAds - stats.pendingAds - stats.rejectedAds), color: '#94a3b8', label: 'سایر' },
-                      ].filter(s => s.value > 0);
-                      let cumulative = 0;
-                      const radius = 45;
-                      const circumference = 2 * Math.PI * radius;
-                      return slices.map((slice, i) => {
-                        const pct = slice.value / total;
-                        const offset = cumulative * circumference;
-                        cumulative += pct;
-                        return (
-                          <circle
-                            key={i}
-                            cx="60"
-                            cy="60"
-                            r={radius}
-                            fill="none"
-                            stroke={slice.color}
-                            strokeWidth="18"
-                            strokeDasharray={`${pct * circumference} ${circumference}`}
-                            strokeDashoffset={-offset}
-                            className="transition-all duration-700"
-                            style={{ transform: 'rotate(-90deg)', transformOrigin: '60px 60px' }}
-                          />
-                        );
-                      });
-                    })()}
-                    <text x="60" y="56" textAnchor="middle" className="text-lg font-bold fill-gray-800" style={{ fontSize: '18px' }}>{stats.totalAds}</text>
-                    <text x="60" y="72" textAnchor="middle" className="fill-gray-400" style={{ fontSize: '10px' }}>کل آگهی</text>
-                  </svg>
-                  <div className="flex flex-col gap-2">
-                    {[
-                      { label: 'تأیید شده', value: stats.approvedAds, color: 'bg-green-500' },
-                      { label: 'در انتظار', value: stats.pendingAds, color: 'bg-yellow-500' },
-                      { label: 'رد شده', value: stats.rejectedAds, color: 'bg-red-500' },
-                    ].map((item) => (
-                      <div key={item.label} className="flex items-center gap-2 text-sm">
-                        <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
-                        <span className="text-gray-600">{item.label}</span>
-                        <span className="font-semibold text-gray-800 mr-auto">{item.value}</span>
+            <div className="grid lg:grid-cols-2 gap-4 mb-6">
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg border border-white shadow-sm p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900">پربازدیدترین آگهی‌ها</h3>
+                  <Gauge size={18} className="text-gray-400" />
+                </div>
+                <div className="space-y-3">
+                  {(stats.topViewedAds || []).map((ad: any, index: number) => (
+                    <Link key={ad._id} href={`/ads/${ad._id}`} target="_blank" className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 hover:bg-white transition-colors">
+                      <span className="w-7 h-7 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">{index + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 line-clamp-1">{ad.title}</p>
+                        <p className="text-xs text-gray-400 mt-1">{getCityLabel(ad.city)} · {getCategoryLabel(ad.category)}</p>
                       </div>
+                      <span className="text-xs font-semibold text-gray-700">{formatNumber(ad.views)} بازدید</span>
+                    </Link>
+                  ))}
+                  {(stats.topViewedAds || []).length === 0 && <p className="text-sm text-gray-400">هنوز بازدیدی ثبت نشده است.</p>}
+                </div>
+              </div>
+
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg border border-white shadow-sm p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900">ریسک و کاربران تازه</h3>
+                  <Activity size={18} className="text-gray-400" />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="space-y-3">
+                    {(stats.topReportedAds || []).map((ad: any) => (
+                      <Link key={ad._id} href={`/ads/${ad._id}`} target="_blank" className="block rounded-lg border border-red-100 bg-red-50/60 p-3 hover:bg-white transition-colors">
+                        <p className="text-sm font-medium text-gray-800 line-clamp-1">{ad.title}</p>
+                        <p className="text-xs text-red-600 mt-1">{formatNumber(ad.fraudReportCount)} گزارش تقلب</p>
+                      </Link>
+                    ))}
+                    {(stats.topReportedAds || []).length === 0 && <p className="text-sm text-gray-400">آگهی پرریسک ثبت نشده است.</p>}
+                  </div>
+                  <div className="space-y-3">
+                    {(stats.newestUsers || []).map((user: any) => (
+                      <Link key={user._id} href={`/u/${user._id}`} target="_blank" className="block rounded-lg border border-gray-100 bg-gray-50 p-3 hover:bg-white transition-colors">
+                        <p className="text-sm font-medium text-gray-800 line-clamp-1">{user.name || user.email}</p>
+                        <p className="text-xs text-gray-400 mt-1">{user.email} · {new Date(user.createdAt).toLocaleDateString('fa-IR')}</p>
+                      </Link>
                     ))}
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </>
         )}
 
