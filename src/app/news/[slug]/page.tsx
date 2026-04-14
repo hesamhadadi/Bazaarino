@@ -8,7 +8,8 @@ import { toFaDigits } from '@/lib/locale';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
-const estimateReadMinutes = (text: string) => Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
+const toPlainText = (value: unknown) => (typeof value === 'string' ? value : '');
+const estimateReadMinutes = (text: unknown) => Math.max(1, Math.ceil(toPlainText(text).trim().split(/\s+/).length / 220));
 
 async function getArticle(slug: string) {
   try {
@@ -63,7 +64,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   if (!article) {
     notFound();
   }
-  const readMinutes = estimateReadMinutes(article.content || '');
+  const articleContent = toPlainText(article.content);
+  const readMinutes = estimateReadMinutes(articleContent);
   const relatedArticles = await getRelatedArticles(article.slug, Array.isArray(article.tags) ? article.tags : []);
 
   return (
@@ -94,7 +96,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         )}
 
         <div className="prose prose-sm max-w-none text-gray-800 leading-8">
-          {article.content.split('\n').filter(Boolean).map((p: string, idx: number) => (
+          {articleContent.split('\n').filter(Boolean).map((p: string, idx: number) => (
             <p key={idx}>{p}</p>
           ))}
         </div>
