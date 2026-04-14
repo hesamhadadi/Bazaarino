@@ -8,8 +8,13 @@ import { toFaDigits } from '@/lib/locale';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
-const toPlainText = (value: unknown) => (typeof value === 'string' ? value : '');
-const estimateReadMinutes = (text: unknown) => Math.max(1, Math.ceil(toPlainText(text).trim().split(/\s+/).length / 220));
+const normalizeToString = (value: unknown) => (typeof value === 'string' ? value : '');
+const estimateReadMinutes = (text: unknown) => {
+  const normalizedText = normalizeToString(text).trim();
+  if (!normalizedText) return 1;
+  const wordsCount = normalizedText.split(/\s+/).length;
+  return Math.max(1, Math.ceil(wordsCount / 220));
+};
 
 async function getArticle(slug: string) {
   try {
@@ -64,7 +69,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   if (!article) {
     notFound();
   }
-  const articleContent = toPlainText(article.content);
+  const articleContent = normalizeToString(article.content);
   const readMinutes = estimateReadMinutes(articleContent);
   const relatedArticles = await getRelatedArticles(article.slug, Array.isArray(article.tags) ? article.tags : []);
 
