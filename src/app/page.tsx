@@ -4,6 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdCard from '@/components/ads/AdCard';
 import LatestAdsSection from '@/components/home/LatestAdsSection';
+import ReservationSearchForm from '@/components/reservations/ReservationSearchForm';
 import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
 import {
   Search, ChevronLeft, TrendingUp, MapPin, ShieldCheck, Sparkles, CircleDashed, ArrowUpLeft,
@@ -415,6 +416,16 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="mb-6">
+          <div className="rounded-3xl border border-indigo-100 bg-white p-5">
+            <div className="mb-3">
+              <p className="section-kicker">رزرو خانه</p>
+              <h2 className="mt-1 text-base font-bold text-slate-900">جست‌وجوی خانه‌های آزاد با تاریخ ورود و خروج</h2>
+            </div>
+            <ReservationSearchForm countries={COUNTRIES} cities={CITIES} />
           </div>
         </section>
 
