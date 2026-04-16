@@ -30,6 +30,9 @@ export default function Navbar() {
             <Link href="/news" className="text-gray-600 hover:text-gray-800 text-sm font-medium px-2 py-2">
               اخبار
             </Link>
+            <Link href="/house-reservation" className="text-gray-600 hover:text-gray-800 text-sm font-medium px-2 py-2">
+              رزرو خونه
+            </Link>
             {session && (
               <Link href="/messages" className="text-gray-600 hover:text-gray-800 text-sm font-medium px-2 py-2 relative">
                 گفتگوها
@@ -198,6 +201,9 @@ export default function Navbar() {
                 <Link href="/news" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                   <Newspaper size={16} /> اخبار و مقالات
                 </Link>
+                <Link href="/house-reservation" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
+                  🏠 رزرو خونه
+                </Link>
                 {session.user.role === 'admin' && (
                   <Link href="/admin" className="flex items-center gap-2 text-orange-600 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
                     <Settings size={16} /> پنل مدیریت
@@ -210,6 +216,7 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/news" className="block text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>اخبار و مقالات</Link>
+                <Link href="/house-reservation" className="block text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>رزرو خونه</Link>
                 <Link href="/auth/login" className="block text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>ورود</Link>
                 <Link href="/auth/register" className="block text-brand-600 font-medium px-2 py-2.5" onClick={() => setMenuOpen(false)}>ثبت‌نام</Link>
               </>

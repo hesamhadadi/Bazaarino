@@ -14,6 +14,7 @@ import RateUser from '@/components/ads/RateUser';
 import ReportForm from '@/components/ads/ReportForm';
 import StartChatButton from '@/components/ads/StartChatButton';
 import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
+import ReservationRequestForm from '@/components/reservations/ReservationRequestForm';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel, getCountryLabel, getCountryByCity } from '@/lib/constants';
 import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle } from 'lucide-react';
@@ -21,6 +22,7 @@ import { formatFaNumber, toFaDigits } from '@/lib/locale';
 import nextDynamic from 'next/dynamic';
 import mongoose from 'mongoose';
 import { getMarketPriceSnapshot } from '@/lib/market-price';
+import { RENTAL_REAL_ESTATE_SUBCATEGORIES } from '@/lib/reservation';
 
 const HousingLocationPreview = nextDynamic(() => import('@/components/maps/HousingLocationPreview'), { ssr: false });
 
@@ -114,6 +116,10 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
         excludeAdId: String(ad._id),
       })
     : null;
+  const isReservableHousing =
+    ad.category === 'real-estate' &&
+    RENTAL_REAL_ESTATE_SUBCATEGORIES.includes(ad.subcategory as any) &&
+    (ad.listingMode || 'offer') === 'offer';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -362,6 +368,11 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 {ad.userId?._id && (
                   <StartChatButton adId={ad._id.toString()} sellerId={ad.userId._id.toString()} />
                 )}
+                <ReservationRequestForm
+                  adId={ad._id.toString()}
+                  nightlyPrice={ad.priceType === 'fixed' && ad.price ? Number(ad.price) : 0}
+                  isReservable={isReservableHousing}
+                />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {ad.showPhone && ad.phone && (
                     <a
