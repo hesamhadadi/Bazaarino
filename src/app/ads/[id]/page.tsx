@@ -371,7 +371,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 <ReservationRequestForm
                   adId={ad._id.toString()}
                   nightlyPrice={ad.priceType === 'fixed' && ad.price ? Number(ad.price) : 0}
-                  reservable={isReservableHousing}
+                  isReservable={isReservableHousing}
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {ad.showPhone && ad.phone && (

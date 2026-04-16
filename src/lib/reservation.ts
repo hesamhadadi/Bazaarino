@@ -12,7 +12,8 @@ export function parseDateOnlyInput(value: string | null | undefined): Date | nul
 }
 
 export function calculateNights(startDate: Date, endDate: Date): number {
-  return Math.round((endDate.getTime() - startDate.getTime()) / DAY_MS);
+  const diff = Math.round((endDate.getTime() - startDate.getTime()) / DAY_MS);
+  return diff > 0 ? diff : 0;
 }
 
 export function overlapQuery(startDate: Date, endDate: Date) {

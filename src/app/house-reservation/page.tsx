@@ -77,6 +77,7 @@ async function getAvailableHomes(params: SearchParams) {
 
 export default async function HouseReservationPage({ searchParams }: { searchParams: SearchParams }) {
   const { ads, nights, hasDates } = await getAvailableHomes(searchParams);
+  const minDate = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -99,8 +100,8 @@ export default async function HouseReservationPage({ searchParams }: { searchPar
                 <option key={city.value} value={city.value}>{city.label}</option>
               ))}
             </select>
-            <input type="date" name="startDate" defaultValue={searchParams.startDate || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
-            <input type="date" name="endDate" defaultValue={searchParams.endDate || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+            <input aria-label="تاریخ ورود" min={minDate} type="date" name="startDate" defaultValue={searchParams.startDate || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+            <input aria-label="تاریخ خروج" min={searchParams.startDate || minDate} type="date" name="endDate" defaultValue={searchParams.endDate || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
             <button type="submit" className="bg-brand-500 hover:bg-brand-600 text-white rounded-xl px-4 py-2 text-sm font-medium">نمایش خانه‌های آزاد</button>
           </form>
         </div>

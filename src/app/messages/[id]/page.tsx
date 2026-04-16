@@ -9,6 +9,7 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import { ChevronRight, SendHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { parseReservationToken } from '@/lib/reservation';
 import { io, Socket } from 'socket.io-client';
 
 const CONVERSATION_SOCKET_FALLBACK_MS = 7000;
@@ -42,9 +43,11 @@ type ReservationItem = {
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
 };
 
-function extractReservationId(content?: string) {
-  const match = String(content || '').match(/\[reservation:([a-fA-F0-9]{24})\]/);
-  return match?.[1] || null;
+function formatReservationDate(value?: string) {
+  if (!value) return '-';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '-';
+  return parsed.toISOString().slice(0, 10);
 }
 
 function formatTime(value?: string) {
@@ -64,7 +67,7 @@ export default function ConversationPage({ params }: { params: { id: string } })
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [content, setContent] = useState('');
   const [typing, setTyping] = useState(false);
-  const [reservationMap, setReservationMap] = useState<Record<string, ReservationItem>>({});
+  const [reservationMap, setReservationMap] = useState<Record<string, ReservationItem | null>>({});
   const [reservationLoadingMap, setReservationLoadingMap] = useState<Record<string, boolean>>({});
   const socketRef = useRef<Socket | null>(null);
   const typingTimerRef = useRef<any>(null);
@@ -184,22 +187,37 @@ export default function ConversationPage({ params }: { params: { id: string } })
 
   useEffect(() => {
     const ids = Array.from(
-      new Set(messages.map((message) => extractReservationId(message.content)).filter(Boolean))
+      new Set(messages.map((message) => parseReservationToken(message.content)).filter(Boolean))
     ) as string[];
 
-    ids.forEach(async (id) => {
-      if (reservationMap[id] || reservationLoadingMap[id]) return;
-      setReservationLoadingMap((prev) => ({ ...prev, [id]: true }));
-      try {
-        const res = await fetch(`/api/reservations/${id}`, { cache: 'no-store' });
-        const data = await res.json();
-        if (res.ok && data?.reservation) {
-          setReservationMap((prev) => ({ ...prev, [id]: data.reservation }));
-        }
-      } finally {
-        setReservationLoadingMap((prev) => ({ ...prev, [id]: false }));
-      }
-    });
+    const missingIds = ids.filter((id) => !(id in reservationMap) && !reservationLoadingMap[id]);
+    if (missingIds.length === 0) return;
+
+    const load = async () => {
+      setReservationLoadingMap((prev) => {
+        const next = { ...prev };
+        missingIds.forEach((id) => { next[id] = true; });
+        return next;
+      });
+
+      await Promise.all(
+        missingIds.map(async (id) => {
+          try {
+            const res = await fetch(`/api/reservations/${id}`, { cache: 'no-store' });
+            const data = await res.json();
+            if (res.ok && data?.reservation) {
+              setReservationMap((prev) => ({ ...prev, [id]: data.reservation }));
+            }
+          } catch {
+            setReservationMap((prev) => ({ ...prev, [id]: null }));
+          } finally {
+            setReservationLoadingMap((prev) => ({ ...prev, [id]: false }));
+          }
+        })
+      );
+    };
+
+    load();
   }, [messages, reservationMap, reservationLoadingMap]);
 
   const updateReservationStatus = async (reservationId: string, status: 'approved' | 'rejected') => {
@@ -351,16 +369,17 @@ export default function ConversationPage({ params }: { params: { id: string } })
                     ) : (
                       <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                     )}
-                    {extractReservationId(message.content) && (
+                    {parseReservationToken(message.content) && (
                       <div className={`mt-2 rounded-xl px-2.5 py-2 text-xs ${mine ? 'bg-white/20 text-white' : 'bg-white text-gray-700 border border-gray-200'}`}>
                         {(() => {
-                          const reservationId = extractReservationId(message.content)!;
+                          const reservationId = parseReservationToken(message.content)!;
                           const reservation = reservationMap[reservationId];
+                          if (reservation === null) return <p>خطا در دریافت اطلاعات رزرو</p>;
                           if (!reservation) return <p>در حال دریافت اطلاعات رزرو...</p>;
                           const canManage = currentUserId && reservation.sellerId === currentUserId && reservation.status === 'pending';
                           return (
                             <div className="space-y-1.5">
-                              <p>تاریخ: {reservation.startDate?.slice(0, 10)} تا {reservation.endDate?.slice(0, 10)}</p>
+                              <p>تاریخ: {formatReservationDate(reservation.startDate)} تا {formatReservationDate(reservation.endDate)}</p>
                               <p>مدت: {reservation.nights} شب</p>
                               <p>مجموع: €{reservation.totalPrice}</p>
                               <p>وضعیت: {reservation.status === 'pending' ? 'در انتظار تایید' : reservation.status === 'approved' ? 'تایید شده' : 'رد شده'}</p>
@@ -368,12 +387,14 @@ export default function ConversationPage({ params }: { params: { id: string } })
                                 <div className="flex gap-2 pt-1">
                                   <button
                                     onClick={() => updateReservationStatus(reservationId, 'approved')}
+                                    aria-label="تایید درخواست رزرو"
                                     className="px-2 py-1 rounded-md bg-emerald-600 text-white"
                                   >
                                     تایید
                                   </button>
                                   <button
                                     onClick={() => updateReservationStatus(reservationId, 'rejected')}
+                                    aria-label="رد درخواست رزرو"
                                     className="px-2 py-1 rounded-md bg-red-600 text-white"
                                   >
                                     رد

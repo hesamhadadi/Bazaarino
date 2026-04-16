@@ -152,7 +152,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch {
+  } catch (error) {
+    console.error('Reservation API error:', error);
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
   }
 }

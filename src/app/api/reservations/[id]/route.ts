@@ -38,7 +38,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     }
 
     return NextResponse.json({ reservation });
-  } catch {
+  } catch (error) {
+    console.error('Reservation API error:', error);
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
   }
 }

@@ -15,7 +15,7 @@ export interface IReservation extends Document {
   status: ReservationStatus;
   approvedAt?: Date;
   rejectedAt?: Date;
-  rejectionReason?: string;
+  rejectionReason?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

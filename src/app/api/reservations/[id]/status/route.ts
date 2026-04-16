@@ -63,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     } else {
       reservation.status = 'rejected';
       reservation.rejectedAt = new Date();
-      reservation.rejectionReason = body?.reason ? String(body.reason).slice(0, 300) : undefined;
+      reservation.rejectionReason = body?.reason ? String(body.reason).slice(0, 300) : null;
     }
 
     await reservation.save();
@@ -96,7 +96,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         rejectedAt: reservation.rejectedAt,
       },
     });
-  } catch {
+  } catch (error) {
+    console.error('Reservation API error:', error);
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
   }
 }
