@@ -7,6 +7,7 @@ import Ad from '@/models/Ad';
 import Reservation from '@/models/Reservation';
 import { CITIES, COUNTRIES, getCityLabel } from '@/lib/constants';
 import { attachMarketPriceToAds } from '@/lib/market-price';
+import ReservationSearchForm from '@/components/reservations/ReservationSearchForm';
 import {
   calculateNights,
   overlapQuery,
@@ -77,7 +78,6 @@ async function getAvailableHomes(params: SearchParams) {
 
 export default async function HouseReservationPage({ searchParams }: { searchParams: SearchParams }) {
   const { ads, nights, hasDates } = await getAvailableHomes(searchParams);
-  const minDate = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -87,23 +87,14 @@ export default async function HouseReservationPage({ searchParams }: { searchPar
           <h1 className="text-xl font-bold text-gray-800 mb-1">رزرو خونه</h1>
           <p className="text-sm text-gray-500 mb-4">بازه تاریخی انتخاب کن تا فقط خانه‌های فعال و آزاد در همان بازه را ببینی.</p>
 
-          <form method="GET" className="grid grid-cols-1 md:grid-cols-5 gap-2">
-            <select name="country" defaultValue={searchParams.country || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white">
-              <option value="">همه کشورها</option>
-              {COUNTRIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
-            <select name="city" defaultValue={searchParams.city || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white">
-              <option value="">همه شهرها</option>
-              {CITIES.map((city) => (
-                <option key={city.value} value={city.value}>{city.label}</option>
-              ))}
-            </select>
-            <input aria-label="تاریخ ورود" min={minDate} type="date" name="startDate" defaultValue={searchParams.startDate || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
-            <input aria-label="تاریخ خروج" min={searchParams.startDate || minDate} type="date" name="endDate" defaultValue={searchParams.endDate || ''} className="border border-gray-200 rounded-xl px-3 py-2 text-sm" />
-            <button type="submit" className="bg-brand-500 hover:bg-brand-600 text-white rounded-xl px-4 py-2 text-sm font-medium">نمایش خانه‌های آزاد</button>
-          </form>
+          <ReservationSearchForm
+            countries={COUNTRIES}
+            cities={CITIES}
+            initialCountry={searchParams.country || ''}
+            initialCity={searchParams.city || ''}
+            initialStartDate={searchParams.startDate || ''}
+            initialEndDate={searchParams.endDate || ''}
+          />
         </div>
 
         {!hasDates ? (
