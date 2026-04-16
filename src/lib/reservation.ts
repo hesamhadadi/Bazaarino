@@ -4,8 +4,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function getTodayLocalDateOnly(): string {
   const now = new Date();
-  const timezoneOffsetMs = now.getTimezoneOffset() * 60 * 1000;
-  return new Date(now.getTime() - timezoneOffsetMs).toISOString().slice(0, 10);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function parseDateOnlyInput(value: string | null | undefined): Date | null {

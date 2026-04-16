@@ -125,7 +125,7 @@ export default function ReservationDateRangePicker({
             locale={config.locale}
             minDate={toDateObject(minStartDate, calendarMode)}
             format="YYYY/MM/DD"
-            calendarPosition="bottom-right"
+            calendarPosition="auto"
             numberOfMonths={2}
             editable={false}
             inputClass="w-full h-12 border border-indigo-200 rounded-2xl px-4 text-sm font-semibold bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300"
@@ -142,7 +142,7 @@ export default function ReservationDateRangePicker({
             locale={config.locale}
             minDate={toDateObject(minEndDate, calendarMode)}
             format="YYYY/MM/DD"
-            calendarPosition="bottom-right"
+            calendarPosition="auto"
             numberOfMonths={2}
             editable={false}
             inputClass="w-full h-12 border border-indigo-200 rounded-2xl px-4 text-sm font-semibold bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300"

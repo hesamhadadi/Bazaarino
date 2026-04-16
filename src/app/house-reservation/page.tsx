@@ -28,6 +28,21 @@ type SearchParams = {
   sort?: string;
 };
 
+const RESERVATION_SORT_MAP: Record<string, Record<string, 1 | -1>> = {
+  newest: { isFeatured: -1, bumpedAt: -1, createdAt: -1 },
+  priceAsc: { price: 1, createdAt: -1 },
+  priceDesc: { price: -1, createdAt: -1 },
+};
+
+function parseNonNegativeNumber(value?: string): number | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+}
+
 async function getAvailableHomes(params: SearchParams) {
   const startDate = parseDateOnlyInput(params.startDate);
   const endDate = parseDateOnlyInput(params.endDate);
@@ -48,8 +63,10 @@ async function getAvailableHomes(params: SearchParams) {
   if (params.city) baseQuery.city = params.city;
   if (params.minPrice || params.maxPrice) {
     baseQuery.price = {};
-    if (params.minPrice && Number(params.minPrice) >= 0) baseQuery.price.$gte = Number(params.minPrice);
-    if (params.maxPrice && Number(params.maxPrice) >= 0) baseQuery.price.$lte = Number(params.maxPrice);
+    const minPrice = parseNonNegativeNumber(params.minPrice);
+    const maxPrice = parseNonNegativeNumber(params.maxPrice);
+    if (minPrice !== null) baseQuery.price.$gte = minPrice;
+    if (maxPrice !== null) baseQuery.price.$lte = maxPrice;
     if (Object.keys(baseQuery.price).length === 0) delete baseQuery.price;
   }
 
@@ -65,12 +82,7 @@ async function getAvailableHomes(params: SearchParams) {
     baseQuery._id = { $nin: blockedAdIds };
   }
 
-  const sortMap: Record<string, Record<string, 1 | -1>> = {
-    newest: { isFeatured: -1, bumpedAt: -1, createdAt: -1 },
-    priceAsc: { price: 1, createdAt: -1 },
-    priceDesc: { price: -1, createdAt: -1 },
-  };
-  const sortOption = sortMap[params.sort || 'newest'] || sortMap.newest;
+  const sortOption = RESERVATION_SORT_MAP[params.sort || 'newest'] || RESERVATION_SORT_MAP.newest;
 
   const ads = await Ad.find(baseQuery)
     .populate('userId', 'name avatar role')
