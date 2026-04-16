@@ -2,6 +2,12 @@ export const RENTAL_REAL_ESTATE_SUBCATEGORIES = ['apartment-rent', 'house-rent',
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export function getTodayLocalDateOnly(): string {
+  const now = new Date();
+  const timezoneOffsetMs = now.getTimezoneOffset() * 60 * 1000;
+  return new Date(now.getTime() - timezoneOffsetMs).toISOString().slice(0, 10);
+}
+
 export function parseDateOnlyInput(value: string | null | undefined): Date | null {
   if (!value) return null;
   const normalized = String(value).trim();

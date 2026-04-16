@@ -23,6 +23,9 @@ type SearchParams = {
   city?: string;
   startDate?: string;
   endDate?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  sort?: string;
 };
 
 async function getAvailableHomes(params: SearchParams) {
@@ -43,6 +46,12 @@ async function getAvailableHomes(params: SearchParams) {
   };
   if (params.country) baseQuery.country = params.country;
   if (params.city) baseQuery.city = params.city;
+  if (params.minPrice || params.maxPrice) {
+    baseQuery.price = {};
+    if (params.minPrice && Number(params.minPrice) >= 0) baseQuery.price.$gte = Number(params.minPrice);
+    if (params.maxPrice && Number(params.maxPrice) >= 0) baseQuery.price.$lte = Number(params.maxPrice);
+    if (Object.keys(baseQuery.price).length === 0) delete baseQuery.price;
+  }
 
   const overlapping = await Reservation.find({
     status: 'approved',
@@ -56,9 +65,16 @@ async function getAvailableHomes(params: SearchParams) {
     baseQuery._id = { $nin: blockedAdIds };
   }
 
+  const sortMap: Record<string, Record<string, 1 | -1>> = {
+    newest: { isFeatured: -1, bumpedAt: -1, createdAt: -1 },
+    priceAsc: { price: 1, createdAt: -1 },
+    priceDesc: { price: -1, createdAt: -1 },
+  };
+  const sortOption = sortMap[params.sort || 'newest'] || sortMap.newest;
+
   const ads = await Ad.find(baseQuery)
     .populate('userId', 'name avatar role')
-    .sort({ isFeatured: -1, bumpedAt: -1, createdAt: -1 })
+    .sort(sortOption)
     .limit(60)
     .lean();
 
@@ -94,6 +110,10 @@ export default async function HouseReservationPage({ searchParams }: { searchPar
             initialCity={searchParams.city || ''}
             initialStartDate={searchParams.startDate || ''}
             initialEndDate={searchParams.endDate || ''}
+            initialMinPrice={searchParams.minPrice || ''}
+            initialMaxPrice={searchParams.maxPrice || ''}
+            initialSort={searchParams.sort || 'newest'}
+            showAdvancedFilters
           />
         </div>
 

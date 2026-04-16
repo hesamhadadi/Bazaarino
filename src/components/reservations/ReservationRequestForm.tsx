@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { usePathname, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
-import { calculateNights, parseDateOnlyInput } from '@/lib/reservation';
+import { calculateNights, getTodayLocalDateOnly, parseDateOnlyInput } from '@/lib/reservation';
 import ReservationDateRangePicker from '@/components/reservations/ReservationDateRangePicker';
 
 type Props = {
@@ -23,7 +23,7 @@ export default function ReservationRequestForm({ adId, nightlyPrice = 0, isReser
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const today = useMemo(() => getTodayLocalDateOnly(), []);
 
   const nights = useMemo(() => {
     if (!startDate || !endDate) return 0;
