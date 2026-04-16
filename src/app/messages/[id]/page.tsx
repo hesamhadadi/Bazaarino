@@ -30,6 +30,23 @@ type MessageItem = {
   createdAt?: string;
 };
 
+type ReservationItem = {
+  _id: string;
+  buyerId: string;
+  sellerId: string;
+  startDate: string;
+  endDate: string;
+  nights: number;
+  nightlyPrice: number;
+  totalPrice: number;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+};
+
+function extractReservationId(content?: string) {
+  const match = String(content || '').match(/\[reservation:([a-fA-F0-9]{24})\]/);
+  return match?.[1] || null;
+}
+
 function formatTime(value?: string) {
   if (!value) return '';
   return new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
@@ -47,6 +64,8 @@ export default function ConversationPage({ params }: { params: { id: string } })
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [content, setContent] = useState('');
   const [typing, setTyping] = useState(false);
+  const [reservationMap, setReservationMap] = useState<Record<string, ReservationItem>>({});
+  const [reservationLoadingMap, setReservationLoadingMap] = useState<Record<string, boolean>>({});
   const socketRef = useRef<Socket | null>(null);
   const typingTimerRef = useRef<any>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -162,6 +181,48 @@ export default function ConversationPage({ params }: { params: { id: string } })
     if (!listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages]);
+
+  useEffect(() => {
+    const ids = Array.from(
+      new Set(messages.map((message) => extractReservationId(message.content)).filter(Boolean))
+    ) as string[];
+
+    ids.forEach(async (id) => {
+      if (reservationMap[id] || reservationLoadingMap[id]) return;
+      setReservationLoadingMap((prev) => ({ ...prev, [id]: true }));
+      try {
+        const res = await fetch(`/api/reservations/${id}`, { cache: 'no-store' });
+        const data = await res.json();
+        if (res.ok && data?.reservation) {
+          setReservationMap((prev) => ({ ...prev, [id]: data.reservation }));
+        }
+      } finally {
+        setReservationLoadingMap((prev) => ({ ...prev, [id]: false }));
+      }
+    });
+  }, [messages, reservationMap, reservationLoadingMap]);
+
+  const updateReservationStatus = async (reservationId: string, status: 'approved' | 'rejected') => {
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'خطا در تغییر وضعیت رزرو');
+      toast.success(data?.message || 'وضعیت رزرو بروزرسانی شد');
+
+      const detailRes = await fetch(`/api/reservations/${reservationId}`, { cache: 'no-store' });
+      const detailData = await detailRes.json();
+      if (detailRes.ok && detailData?.reservation) {
+        setReservationMap((prev) => ({ ...prev, [reservationId]: detailData.reservation }));
+      }
+      await fetchMessages();
+    } catch (error: any) {
+      toast.error(error?.message || 'خطا در تغییر وضعیت رزرو');
+    }
+  };
 
   const onSend = async (e: FormEvent) => {
     e.preventDefault();
@@ -289,6 +350,40 @@ export default function ConversationPage({ params }: { params: { id: string } })
                       </a>
                     ) : (
                       <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    )}
+                    {extractReservationId(message.content) && (
+                      <div className={`mt-2 rounded-xl px-2.5 py-2 text-xs ${mine ? 'bg-white/20 text-white' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                        {(() => {
+                          const reservationId = extractReservationId(message.content)!;
+                          const reservation = reservationMap[reservationId];
+                          if (!reservation) return <p>در حال دریافت اطلاعات رزرو...</p>;
+                          const canManage = currentUserId && reservation.sellerId === currentUserId && reservation.status === 'pending';
+                          return (
+                            <div className="space-y-1.5">
+                              <p>تاریخ: {reservation.startDate?.slice(0, 10)} تا {reservation.endDate?.slice(0, 10)}</p>
+                              <p>مدت: {reservation.nights} شب</p>
+                              <p>مجموع: €{reservation.totalPrice}</p>
+                              <p>وضعیت: {reservation.status === 'pending' ? 'در انتظار تایید' : reservation.status === 'approved' ? 'تایید شده' : 'رد شده'}</p>
+                              {canManage && (
+                                <div className="flex gap-2 pt-1">
+                                  <button
+                                    onClick={() => updateReservationStatus(reservationId, 'approved')}
+                                    className="px-2 py-1 rounded-md bg-emerald-600 text-white"
+                                  >
+                                    تایید
+                                  </button>
+                                  <button
+                                    onClick={() => updateReservationStatus(reservationId, 'rejected')}
+                                    className="px-2 py-1 rounded-md bg-red-600 text-white"
+                                  >
+                                    رد
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     )}
                     <p className={`text-[11px] mt-1 ${mine ? 'text-white/80' : 'text-gray-400'}`}>{formatTime(message.createdAt)}</p>
                   </div>

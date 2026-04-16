@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Home, Search, Plus, User, Newspaper, MessageCircle } from 'lucide-react';
+import { Home, Search, Plus, User, MessageCircle, House } from 'lucide-react';
 import { useChat } from '@/components/providers/ChatProvider';
 import { toFaDigits } from '@/lib/locale';
 
@@ -13,7 +13,7 @@ const navItems = [
   { href: '/search', icon: Search, label: 'جستجو' },
   { href: '/ads/new', icon: Plus, label: 'افزودن آگهی', special: true },
   { href: '/messages', icon: MessageCircle, label: 'گفتگوها' },
-  { href: '/news', icon: Newspaper, label: 'اخبار' },
+  { href: '/house-reservation', icon: House, label: 'رزرو' },
   { href: '/profile', icon: User, label: '' },
 ];
 
