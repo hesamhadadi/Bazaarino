@@ -34,12 +34,15 @@ const CALENDAR_CONFIG: Record<CalendarMode, { calendar: Calendar; locale: Locale
 
 function toDateObject(value: string, mode: CalendarMode) {
   if (!value) return undefined;
-  return new DateObject({
+  // Parse the value as a Gregorian date string first
+  const gregorianDate = new DateObject({
     date: value,
     format: 'YYYY-MM-DD',
     calendar: gregorian,
     locale: gregorian_en,
-  }).convert(CALENDAR_CONFIG[mode].calendar, CALENDAR_CONFIG[mode].locale);
+  });
+  // Then convert to the desired calendar mode
+  return gregorianDate.convert(CALENDAR_CONFIG[mode].calendar, CALENDAR_CONFIG[mode].locale);
 }
 
 function resolveDateObject(value: ChangedValue<false, false>): DateObject | null {
@@ -48,15 +51,48 @@ function resolveDateObject(value: ChangedValue<false, false>): DateObject | null
   const candidate = Array.isArray(value) ? value[0] : value;
   if (!candidate) return null;
 
-  if (candidate instanceof DateObject) return candidate;
-
-  if (typeof candidate === 'string') {
-    const parsed = new DateObject({ date: candidate });
-    return Number.isNaN(parsed.toDate().getTime()) ? null : parsed;
+  // If it's already a DateObject instance
+  if (candidate instanceof DateObject) {
+    return candidate;
   }
 
-  if (typeof (candidate as DateObject).convert === 'function') {
-    return candidate as DateObject;
+  // Handle DateObject-like objects from react-multi-date-picker
+  // These may have _isAMomentObject or _isDateObject flags
+  if (typeof candidate === 'object') {
+    // Try to create a new DateObject from the candidate's internal date value
+    const anyCandidate = candidate as any;
+    
+    // Check for year/month/day properties that DateObject might have
+    if (anyCandidate.year !== undefined && anyCandidate.month !== undefined && anyCandidate.day !== undefined) {
+      try {
+        const reconstructed = new DateObject({
+          year: anyCandidate.year,
+          month: anyCandidate.month,
+          day: anyCandidate.day,
+          calendar: anyCandidate.calendar || gregorian,
+          locale: anyCandidate.locale || gregorian_en,
+        });
+        return reconstructed;
+      } catch (e) {
+        // Fall through to other checks
+      }
+    }
+    
+    // Check if it has convert method (DateObject-like duck typing)
+    if (typeof anyCandidate.convert === 'function') {
+      return candidate as DateObject;
+    }
+  }
+
+  // Handle string dates - parse as Gregorian
+  if (typeof candidate === 'string') {
+    const parsed = new DateObject({ 
+      date: candidate,
+      calendar: gregorian,
+      locale: gregorian_en,
+      format: 'YYYY-MM-DD'
+    });
+    return Number.isNaN(parsed.toDate().getTime()) ? null : parsed;
   }
 
   return null;
@@ -65,7 +101,20 @@ function resolveDateObject(value: ChangedValue<false, false>): DateObject | null
 function toGregorianIso(value: ChangedValue<false, false>): string {
   const date = resolveDateObject(value);
   if (!date) return '';
-  return date.convert(gregorian, gregorian_en).format('YYYY-MM-DD');
+  
+  try {
+    // Convert to Gregorian calendar and format as ISO date string
+    const gregorianDate = date.convert(gregorian, gregorian_en);
+    const formatted = gregorianDate.format('YYYY-MM-DD');
+    // Validate the result
+    if (!formatted || formatted === 'Invalid Date' || !/^\d{4}-\d{2}-\d{2}$/.test(formatted)) {
+      return '';
+    }
+    return formatted;
+  } catch (error) {
+    console.error('Date conversion error:', error);
+    return '';
+  }
 }
 
 export default function ReservationDateRangePicker({
