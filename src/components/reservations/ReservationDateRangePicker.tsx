@@ -197,7 +197,7 @@ export default function ReservationDateRangePicker({
             placeholder="تاریخ ورود"
           />
         </label>
-        <div className="hidden md:flex items-center justify-center text-xs text-gray-400">—</div>
+        <div aria-hidden="true" className="hidden md:flex items-center justify-center text-xs text-gray-400">—</div>
         <label className="space-y-1 rounded-2xl px-3 py-2 hover:bg-gray-50">
           <span className="text-[11px] font-semibold text-gray-500">خروج</span>
           <DatePicker
