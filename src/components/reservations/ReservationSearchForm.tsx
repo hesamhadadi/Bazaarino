@@ -61,7 +61,7 @@ export default function ReservationSearchForm({
     if (!city) return;
     const hasSelectedCity = filteredCities.some((cityOption) => cityOption.value === city);
     if (!hasSelectedCity) setCity('');
-  }, [city, filteredCities]);
+  }, [city, filteredCities, setCity]);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

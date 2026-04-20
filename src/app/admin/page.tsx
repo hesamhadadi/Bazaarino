@@ -945,9 +945,8 @@ export default function AdminDashboard() {
                             className="object-cover w-full h-full"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <div className="w-full h-full flex items-center justify-center text-gray-400" aria-label="بدون تصویر">
                             <ImagePlus size={18} />
-                            <span className="sr-only">بدون تصویر</span>
                           </div>
                         )}
                       </div>
@@ -1000,9 +999,8 @@ export default function AdminDashboard() {
                       className="object-cover w-full h-full"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <div className="w-full h-full flex items-center justify-center text-gray-400" aria-label="بدون تصویر">
                       <ImagePlus size={14} />
-                      <span className="sr-only">بدون تصویر</span>
                     </div>
                   )}
                 </div>
