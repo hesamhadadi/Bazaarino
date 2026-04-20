@@ -190,7 +190,7 @@ export default function AdminDashboard() {
       });
 
       if (res.ok) {
-        toast.success(status === 'approved' ? '✅ آگهی تأیید شد' : '❌ آگهی رد شد');
+        toast.success(status === 'approved' ? 'آگهی تأیید شد' : 'آگهی رد شد');
         setPendingAds((prev) => prev.filter((a) => a._id !== id));
         fetchStats();
       }
@@ -927,7 +927,7 @@ export default function AdminDashboard() {
           <div>
             {pendingAds.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                <p className="text-4xl mb-3">✅</p>
+                <p className="text-4xl mb-3 text-emerald-600 inline-flex"><CheckCircle size={32} /></p>
                 <p className="text-gray-500">همه آگهی‌ها بررسی شده‌اند!</p>
               </div>
             ) : (
@@ -936,7 +936,7 @@ export default function AdminDashboard() {
                   <div key={ad._id} className="bg-white rounded-2xl border border-gray-100 p-4">
                     <div className="flex gap-4">
                       <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                        {ad.images?.[0] ? <Image src={ad.images[0]} alt="" width={96} height={96} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>}
+                        {ad.images?.[0] ? <Image src={ad.images[0]} alt="" width={96} height={96} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">بدون تصویر</div>}
                       </div>
 
                       <div className="flex-1">
@@ -954,11 +954,11 @@ export default function AdminDashboard() {
                             }}
                             className="text-xs text-brand-600"
                           >
-                            👤 {ad.userId?.name}
+                            کاربر: {ad.userId?.name}
                           </button>
-                          <span>📧 {ad.userId?.email}</span>
-                          <span>🏙️ {ad.city}</span>
-                          <span>🗓️ {new Date(ad.createdAt).toLocaleDateString('fa-IR')}</span>
+                          <span>ایمیل: {ad.userId?.email}</span>
+                          <span>شهر: {ad.city}</span>
+                          <span>تاریخ: {new Date(ad.createdAt).toLocaleDateString('fa-IR')}</span>
                         </div>
                         <div className="flex gap-2 mt-3">
                           <button onClick={() => updateAdStatus(ad._id, 'approved')} className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><CheckCircle size={14} /> تأیید</button>
@@ -978,7 +978,7 @@ export default function AdminDashboard() {
             {allAds.map((ad: any) => (
               <div key={ad._id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-4">
                 <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                  {ad.images?.[0] ? <Image src={ad.images[0]} alt="" width={56} height={56} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center">📦</div>}
+                  {ad.images?.[0] ? <Image src={ad.images[0]} alt="" width={56} height={56} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">بدون تصویر</div>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <Link href={`/ads/${ad._id}`} target="_blank" className="font-medium text-gray-800 hover:text-brand-600 text-sm line-clamp-1">{ad.title}</Link>
@@ -1217,7 +1217,7 @@ export default function AdminDashboard() {
                   {bannerUploading ? 'در حال آپلود...' : 'آپلود تصویر بنر'}
                   <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} disabled={bannerUploading} />
                 </label>
-                {bannerForm.imageUrl && <span className="text-xs text-emerald-600">تصویر آماده است ✅</span>}
+                {bannerForm.imageUrl && <span className="text-xs text-emerald-600">تصویر آماده است</span>}
                 <button onClick={createBanner} disabled={bannerSubmitting} className="ms-auto bg-brand-500 text-white px-4 py-2 rounded-xl text-sm">ثبت بنر</button>
               </div>
             </div>
@@ -1264,7 +1264,7 @@ export default function AdminDashboard() {
                 </label>
               </div>
               <div className="mt-3 flex items-center gap-3">
-                {cityImageForm.imageUrl && <span className="text-xs text-emerald-600">تصویر شهر آماده است ✅</span>}
+                {cityImageForm.imageUrl && <span className="text-xs text-emerald-600">تصویر شهر آماده است</span>}
                 <button onClick={saveCityImage} disabled={cityImageSubmitting} className="ms-auto bg-brand-500 text-white px-4 py-2 rounded-xl text-sm">
                   ذخیره عکس شهر
                 </button>

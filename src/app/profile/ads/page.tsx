@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Clock, CheckCircle, XCircle, AlertCircle, ClipboardList, Package, ArrowUp } from 'lucide-react';
 
 const STATUS_MAP = {
   pending: { label: 'در انتظار تأیید', icon: Clock, className: 'status-pending' },
@@ -98,7 +98,9 @@ export default function MyAdsPage() {
 
         {ads.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <p className="text-5xl mb-4">📋</p>
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+              <ClipboardList size={26} />
+            </div>
             <p className="text-gray-500 mb-4">هنوز آگهی‌ای ثبت نکرده‌اید</p>
             <Link href="/ads/new" className="bg-brand-500 text-white px-6 py-2.5 rounded-xl text-sm font-medium">
               ثبت اولین آگهی
@@ -118,7 +120,7 @@ export default function MyAdsPage() {
                       {ad.images?.[0] ? (
                         <Image src={ad.images[0]} alt={ad.title} width={80} height={80} className="object-cover w-full h-full" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
+                        <div className="w-full h-full flex items-center justify-center text-gray-400"><Package size={24} /></div>
                       )}
                     </div>
 
@@ -167,7 +169,7 @@ export default function MyAdsPage() {
                       onClick={() => bumpAd(ad._id)}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors border-r border-gray-50"
                     >
-                      ⬆️ نردبان
+                      <ArrowUp size={14} /> نردبان
                     </button>
                     <button
                       onClick={() => deleteAd(ad._id)}

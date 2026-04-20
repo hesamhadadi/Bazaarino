@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { BILLS_INFO_OPTIONS, CATEGORIES, CITIES, LISTING_MODES } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
 import dynamic from 'next/dynamic';
-import { Upload, X, ChevronLeft } from 'lucide-react';
+import { Upload, X, ChevronLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { LatLng } from '@/lib/map-data';
@@ -216,7 +216,7 @@ export default function EditAdPage() {
             <select {...register('category')} onChange={(e) => { setValue('category', e.target.value); setValue('subcategory', ''); }}
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-3">
               <option value="">انتخاب دسته‌بندی</option>
-              {CATEGORIES.map(cat => <option key={cat.id} value={cat.id}>{cat.icon} {cat.label}</option>)}
+              {CATEGORIES.map(cat => <option key={cat.id} value={cat.id}>{cat.label}</option>)}
             </select>
             {currentCategory && (
               <select {...register('subcategory')} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300">
@@ -355,7 +355,7 @@ export default function EditAdPage() {
           </div>
 
           <button type="submit" disabled={submitting} className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white py-3.5 rounded-2xl font-bold text-base transition-colors flex items-center justify-center gap-2">
-            {submitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : '💾 ذخیره تغییرات'}
+            {submitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save size={16} /> ذخیره تغییرات</>}
           </button>
         </form>
       </div>

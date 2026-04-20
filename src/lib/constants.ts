@@ -35,7 +35,7 @@ export const CATEGORIES = [
   {
     id: 'real-estate',
     label: 'مسکن و ملک',
-    icon: '🏠',
+    icon: '',
     color: 'bg-blue-100 text-blue-700',
     subcategories: [
       { value: 'apartment-rent', label: 'اجاره آپارتمان' },
@@ -49,7 +49,7 @@ export const CATEGORIES = [
   {
     id: 'vehicles',
     label: 'خودرو و وسایل نقلیه',
-    icon: '🚗',
+    icon: '',
     color: 'bg-red-100 text-red-700',
     subcategories: [
       { value: 'car-sale', label: 'فروش ماشین' },
@@ -62,7 +62,7 @@ export const CATEGORIES = [
   {
     id: 'electronics',
     label: 'موبایل و الکترونیک',
-    icon: '📱',
+    icon: '',
     color: 'bg-purple-100 text-purple-700',
     subcategories: [
       { value: 'mobile', label: 'موبایل و تبلت' },
@@ -75,7 +75,7 @@ export const CATEGORIES = [
   {
     id: 'home-appliances',
     label: 'لوازم خانه و آشپزخانه',
-    icon: '🛋️',
+    icon: '',
     color: 'bg-yellow-100 text-yellow-700',
     subcategories: [
       { value: 'furniture', label: 'مبلمان' },
@@ -87,7 +87,7 @@ export const CATEGORIES = [
   {
     id: 'jobs',
     label: 'کار و استخدام',
-    icon: '💼',
+    icon: '',
     color: 'bg-green-100 text-green-700',
     subcategories: [
       { value: 'job-offer', label: 'آگهی استخدام' },
@@ -98,7 +98,7 @@ export const CATEGORIES = [
   {
     id: 'services',
     label: 'خدمات',
-    icon: '🔧',
+    icon: '',
     color: 'bg-orange-100 text-orange-700',
     subcategories: [
       { value: 'repairs', label: 'تعمیرات' },
@@ -113,7 +113,7 @@ export const CATEGORIES = [
   {
     id: 'clothing',
     label: 'پوشاک و مد',
-    icon: '👗',
+    icon: '',
     color: 'bg-pink-100 text-pink-700',
     subcategories: [
       { value: 'women-clothing', label: 'پوشاک زنانه' },
@@ -125,7 +125,7 @@ export const CATEGORIES = [
   {
     id: 'food',
     label: 'خوراکی و مواد غذایی',
-    icon: '🍎',
+    icon: '',
     color: 'bg-emerald-100 text-emerald-700',
     subcategories: [
       { value: 'iranian-food', label: 'مواد غذایی ایرانی' },
@@ -136,7 +136,7 @@ export const CATEGORIES = [
   {
     id: 'kids',
     label: 'کودک و نوجوان',
-    icon: '🧸',
+    icon: '',
     color: 'bg-cyan-100 text-cyan-700',
     subcategories: [
       { value: 'kids-toys', label: 'اسباب‌بازی' },
@@ -147,7 +147,7 @@ export const CATEGORIES = [
   {
     id: 'requests',
     label: 'متقاضی و درخواست',
-    icon: '📝',
+    icon: '',
     color: 'bg-indigo-100 text-indigo-700',
     subcategories: [
       { value: 'roommate-request', label: 'هم‌خانه / هم‌اتاقی' },
@@ -162,7 +162,7 @@ export const CATEGORIES = [
   {
     id: 'other',
     label: 'متفرقه',
-    icon: '📦',
+    icon: '',
     color: 'bg-gray-100 text-gray-700',
     subcategories: [
       { value: 'books', label: 'کتاب و مجله' },

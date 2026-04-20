@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, MapPin, Search, SlidersHorizontal } from 'lucide-react';
 import ReservationDateRangePicker from '@/components/reservations/ReservationDateRangePicker';
@@ -9,6 +9,7 @@ import { getTodayLocalDateOnly } from '@/lib/reservation';
 type Option = {
   value: string;
   label: string;
+  country?: string;
 };
 
 type Props = {
@@ -48,6 +49,16 @@ export default function ReservationSearchForm({
   const [sort, setSort] = useState(initialSort);
 
   const minDate = useMemo(() => getTodayLocalDateOnly(), []);
+  const filteredCities = useMemo(() => {
+    if (!country) return cities;
+    return cities.filter((cityOption) => cityOption.country === country || cityOption.country === 'other');
+  }, [cities, country]);
+
+  useEffect(() => {
+    if (!city) return;
+    const hasSelectedCity = filteredCities.some((cityOption) => cityOption.value === city);
+    if (!hasSelectedCity) setCity('');
+  }, [city, filteredCities]);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,17 +78,17 @@ export default function ReservationSearchForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <div className="rounded-[28px] border border-gray-200 bg-white p-2.5 md:p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
-          <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white px-3 py-2 hover:border-gray-300 transition">
-            <label className="block text-[11px] text-gray-500 font-semibold mb-1">کشور</label>
+      <div className="rounded-[32px] border border-gray-200 bg-white p-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1.8fr_auto] gap-2">
+          <div className="rounded-3xl border border-transparent bg-gray-50 px-3 py-2 transition hover:border-gray-200 hover:bg-white">
+            <label className="mb-1 block text-[11px] font-semibold text-gray-500">کجا</label>
             <div className="flex items-center gap-2">
-              <MapPin size={16} className="text-gray-400 shrink-0" />
+              <MapPin size={16} className="shrink-0 text-gray-400" />
               <select
                 name="country"
                 value={country}
                 onChange={(event) => setCountry(event.target.value)}
-                className="h-7 w-full border-0 p-0 text-sm bg-transparent focus:outline-none focus:ring-0"
+                className="h-7 w-full border-0 bg-transparent p-0 text-sm focus:outline-none focus:ring-0"
               >
                 <option value="">همه کشورها</option>
                 {countries.map((countryOption) => (
@@ -87,25 +98,25 @@ export default function ReservationSearchForm({
             </div>
           </div>
 
-          <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white px-3 py-2 hover:border-gray-300 transition">
-            <label className="block text-[11px] text-gray-500 font-semibold mb-1">شهر</label>
+          <div className="rounded-3xl border border-transparent bg-gray-50 px-3 py-2 transition hover:border-gray-200 hover:bg-white">
+            <label className="mb-1 block text-[11px] font-semibold text-gray-500">شهر</label>
             <div className="flex items-center gap-2">
-              <Building2 size={16} className="text-gray-400 shrink-0" />
+              <Building2 size={16} className="shrink-0 text-gray-400" />
               <select
                 name="city"
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
-                className="h-7 w-full border-0 p-0 text-sm bg-transparent focus:outline-none focus:ring-0"
+                className="h-7 w-full border-0 bg-transparent p-0 text-sm focus:outline-none focus:ring-0"
               >
                 <option value="">همه شهرها</option>
-                {cities.map((cityOption) => (
+                {filteredCities.map((cityOption) => (
                   <option key={cityOption.value} value={cityOption.value}>{cityOption.label}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="lg:col-span-6 rounded-2xl border border-gray-200 bg-white p-2">
+          <div className="rounded-3xl border border-transparent bg-gray-50 p-2 transition hover:border-gray-200 hover:bg-white">
             <ReservationDateRangePicker
               startDate={startDate}
               endDate={endDate}
@@ -118,10 +129,12 @@ export default function ReservationSearchForm({
 
           <button
             type="submit"
-            className="lg:col-span-2 h-12 lg:h-auto min-h-12 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl px-4 text-sm font-semibold flex items-center justify-center gap-2"
+            className="h-12 min-h-12 rounded-3xl bg-brand-500 px-5 text-sm font-semibold text-white transition hover:bg-brand-600 lg:h-auto"
           >
-            <Search size={16} />
-            {submitLabel}
+            <span className="inline-flex items-center justify-center gap-2">
+              <Search size={16} />
+              {submitLabel}
+            </span>
           </button>
         </div>
       </div>

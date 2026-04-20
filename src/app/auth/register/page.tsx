@@ -62,7 +62,7 @@ export default function RegisterPage() {
         return;
       }
 
-      toast.success('ثبت‌نام موفق! حالا وارد شوید 🎉');
+      toast.success('ثبت‌نام موفق! حالا وارد شوید');
       router.push('/auth/login');
     } catch {
       toast.error('خطای شبکه');

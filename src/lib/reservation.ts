@@ -41,7 +41,7 @@ export function formatReservationRequestContent(input: {
 }) {
   const start = input.startDate.toISOString().slice(0, 10);
   const end = input.endDate.toISOString().slice(0, 10);
-  return `🏠 درخواست رزرو\nاز ${start} تا ${end}\nتعداد شب: ${input.nights}\nقیمت هر شب: €${input.nightlyPrice}\nمجموع: €${input.totalPrice}\n\n[reservation:${input.reservationId}]`;
+  return `درخواست رزرو\nاز ${start} تا ${end}\nتعداد شب: ${input.nights}\nقیمت هر شب: €${input.nightlyPrice}\nمجموع: €${input.totalPrice}\n\n[reservation:${input.reservationId}]`;
 }
 
 export function parseReservationToken(content?: string | null): string | null {

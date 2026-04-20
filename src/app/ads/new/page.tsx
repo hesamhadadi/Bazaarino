@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { BILLS_INFO_OPTIONS, CATEGORIES, CITIES, COUNTRIES, LISTING_MODES, getCitiesByCountry, getCountryByCity } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
 import dynamic from 'next/dynamic';
-import { Upload, X, ChevronLeft } from 'lucide-react';
+import { CheckCircle2, Upload, X, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { LatLng } from '@/lib/map-data';
@@ -171,7 +171,7 @@ export default function NewAdPage() {
       const result = await res.json();
 
       if (res.ok) {
-        toast.success('آگهی ثبت شد و در انتظار تأیید است ✅');
+        toast.success('آگهی ثبت شد و در انتظار تأیید است');
         router.push('/profile/ads');
       } else {
         toast.error(result.message);
@@ -589,7 +589,7 @@ export default function NewAdPage() {
             {submitting ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              '✅ ثبت آگهی رایگان'
+              <span className="inline-flex items-center gap-2"><CheckCircle2 size={16} /> ثبت آگهی رایگان</span>
             )}
           </button>
         </form>

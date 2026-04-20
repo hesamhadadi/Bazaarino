@@ -50,7 +50,7 @@ export default function LoginPage() {
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success('خوش اومدی! 👋');
+        toast.success('خوش اومدی!');
         router.push('/');
         router.refresh();
       }

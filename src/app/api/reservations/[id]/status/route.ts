@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     await reservation.save();
 
-    const statusLabel = reservation.status === 'approved' ? '✅ تایید شد' : '❌ رد شد';
+    const statusLabel = reservation.status === 'approved' ? 'تایید شد' : 'رد شد';
     await Message.create({
       conversationId: reservation.conversationId,
       adId: reservation.adId,

@@ -35,15 +35,18 @@ const CALENDAR_CONFIG: Record<CalendarMode, { calendar: Calendar; locale: Locale
 
 function toDateObject(value: string, mode: CalendarMode) {
   if (!value) return undefined;
-  // Parse the value as a Gregorian date string first
-  const gregorianDate = new DateObject({
-    date: value,
-    format: 'YYYY-MM-DD',
-    calendar: gregorian,
-    locale: gregorian_en,
-  });
-  // Then convert to the desired calendar mode
-  return gregorianDate.convert(CALENDAR_CONFIG[mode].calendar, CALENDAR_CONFIG[mode].locale);
+  try {
+    const gregorianDate = new DateObject({
+      date: value,
+      format: 'YYYY-MM-DD',
+      calendar: gregorian,
+      locale: gregorian_en,
+    });
+    if (Number.isNaN(gregorianDate.toDate().getTime())) return undefined;
+    return gregorianDate.convert(CALENDAR_CONFIG[mode].calendar, CALENDAR_CONFIG[mode].locale);
+  } catch {
+    return undefined;
+  }
 }
 
 function resolveDateObject(value: ChangedValue<false, false>): DateObject | null {
@@ -104,10 +107,8 @@ function toGregorianIso(value: ChangedValue<false, false>): string {
   if (!date) return '';
   
   try {
-    // Convert to Gregorian calendar and format as ISO date string
-    const gregorianDate = date.convert(gregorian, gregorian_en);
+    const gregorianDate = new DateObject(date).convert(gregorian, gregorian_en);
     const formatted = gregorianDate.format('YYYY-MM-DD');
-    // Validate the result
     if (!formatted || formatted === 'Invalid Date' || !/^\d{4}-\d{2}-\d{2}$/.test(formatted)) {
       return '';
     }

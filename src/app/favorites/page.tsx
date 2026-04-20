@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
-import { Heart, Trash2 } from 'lucide-react';
+import { Heart, HeartCrack, Package, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function FavoritesPage() {
@@ -60,7 +60,9 @@ export default function FavoritesPage() {
 
         {ads.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <p className="text-5xl mb-3">💔</p>
+            <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+              <HeartCrack size={26} />
+            </div>
             <p className="text-gray-500">هنوز آگهی‌ای به علاقه‌مندی اضافه نکرده‌ای</p>
           </div>
         ) : (
@@ -71,7 +73,7 @@ export default function FavoritesPage() {
                   {ad.images?.[0] ? (
                     <Image src={ad.images[0]} alt={ad.title} width={80} height={80} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-400"><Package size={22} /></div>
                   )}
                 </Link>
                 <div className="flex-1 min-w-0">
