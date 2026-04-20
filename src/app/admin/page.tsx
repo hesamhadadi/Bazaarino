@@ -927,7 +927,7 @@ export default function AdminDashboard() {
           <div>
             {pendingAds.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                <p className="text-4xl mb-3 text-emerald-600 inline-flex"><CheckCircle size={32} /></p>
+                <div className="text-4xl mb-3 text-emerald-600 inline-flex"><CheckCircle size={32} /></div>
                 <p className="text-gray-500">همه آگهی‌ها بررسی شده‌اند!</p>
               </div>
             ) : (
@@ -936,7 +936,7 @@ export default function AdminDashboard() {
                   <div key={ad._id} className="bg-white rounded-2xl border border-gray-100 p-4">
                     <div className="flex gap-4">
                       <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                        {ad.images?.[0] ? <Image src={ad.images[0]} alt="" width={96} height={96} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">بدون تصویر</div>}
+                        {ad.images?.[0] ? <Image src={ad.images[0]} alt={ad.title || 'تصویر آگهی'} width={96} height={96} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">بدون تصویر</div>}
                       </div>
 
                       <div className="flex-1">
@@ -978,7 +978,7 @@ export default function AdminDashboard() {
             {allAds.map((ad: any) => (
               <div key={ad._id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-4">
                 <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                  {ad.images?.[0] ? <Image src={ad.images[0]} alt="" width={56} height={56} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">بدون تصویر</div>}
+                  {ad.images?.[0] ? <Image src={ad.images[0]} alt={ad.title || 'تصویر آگهی'} width={56} height={56} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">بدون تصویر</div>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <Link href={`/ads/${ad._id}`} target="_blank" className="font-medium text-gray-800 hover:text-brand-600 text-sm line-clamp-1">{ad.title}</Link>
