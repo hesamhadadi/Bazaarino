@@ -136,7 +136,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     await Conversation.findByIdAndUpdate(conversation._id, {
       $set: {
-        lastMessage: type === 'image' ? '📷 تصویر' : content,
+        lastMessage: type === 'image' ? 'تصویر' : content,
         lastMessageAt: new Date(),
       },
     });

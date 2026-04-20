@@ -17,7 +17,7 @@ import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
 import ReservationRequestForm from '@/components/reservations/ReservationRequestForm';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel, getCountryLabel, getCountryByCity } from '@/lib/constants';
-import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle } from 'lucide-react';
+import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle, Sparkles, Siren, ArrowUp, FileText, Landmark, Shield } from 'lucide-react';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
 import nextDynamic from 'next/dynamic';
 import mongoose from 'mongoose';
@@ -154,17 +154,17 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   <h1 className="text-xl font-bold text-gray-900 leading-snug">{ad.title}</h1>
                   {isFeaturedActive && (
                     <div className="inline-flex mt-2 items-center gap-1 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-xs px-2.5 py-1 rounded-full">
-                      ✨ آگهی ویژه
+                      <Sparkles size={12} /> آگهی ویژه
                     </div>
                   )}
                   {isUrgentActive && (
                     <div className="inline-flex mt-2 me-2 items-center gap-1 bg-red-600 text-white text-xs px-2.5 py-1 rounded-full">
-                      🚨 فوری
+                      <Siren size={12} /> فوری
                     </div>
                   )}
                   {(ad.bumpCount || 0) > 0 && (
                     <div className="inline-flex mt-2 items-center gap-1 bg-blue-600 text-white text-xs px-2.5 py-1 rounded-full">
-                      ⬆️ نردبان‌شده
+                      <ArrowUp size={12} /> نردبان‌شده
                     </div>
                   )}
                 </div>
@@ -190,7 +190,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 )}
                 {ad.listingMode === 'request' && (
                   <span className="flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs px-3 py-1.5 rounded-full font-semibold">
-                    📝 متقاضی
+                    <FileText size={12} /> متقاضی
                   </span>
                 )}
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
@@ -201,7 +201,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 </span>
                 {ad.category === 'real-estate' && ad.housing?.residenceEligible && (
                   <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 text-xs px-3 py-1.5 rounded-full font-semibold">
-                    🏛️ رزیدنسا دارد
+                    <Landmark size={12} /> رزیدنسا دارد
                   </span>
                 )}
                 {ad.fraudReportCount > 0 && (
@@ -414,7 +414,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
               </div>
             </div>
             <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
-              <h3 className="font-medium text-amber-800 text-sm mb-2">🛡️ نکات ایمنی</h3>
+              <h3 className="font-medium text-amber-800 text-sm mb-2 inline-flex items-center gap-1"><Shield size={14} /> نکات ایمنی</h3>
               <ul className="text-xs text-amber-700 space-y-1">
                 <li>• قبل از پرداخت، کالا را ببینید</li>
                 <li>• از واریز پیش‌پرداخت خودداری کنید</li>

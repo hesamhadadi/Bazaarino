@@ -151,7 +151,9 @@ export default function NotificationsPage() {
 
         {notifications.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <p className="text-5xl mb-3">🔔</p>
+            <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+              <Bell size={26} />
+            </div>
             <p className="text-gray-500">هنوز اعلانی ندارید</p>
           </div>
         ) : (

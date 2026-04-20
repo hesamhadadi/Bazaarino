@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
-import { MessageCircle, ChevronLeft } from 'lucide-react';
+import { MessageCircle, Package, ChevronLeft } from 'lucide-react';
 import { toFaDigits } from '@/lib/locale';
 import toast from 'react-hot-toast';
 import { io, Socket } from 'socket.io-client';
@@ -156,7 +156,9 @@ export default function MessagesPage() {
 
         {conversations.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <p className="text-5xl mb-3">💬</p>
+            <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+              <MessageCircle size={26} />
+            </div>
             <p className="text-gray-500">هنوز گفتگویی شروع نشده است</p>
           </div>
         ) : (
@@ -167,7 +169,7 @@ export default function MessagesPage() {
                   {conversation.ad?.images?.[0] ? (
                     <Image src={conversation.ad.images[0]} alt={conversation.ad?.title || 'ad'} width={56} height={56} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xl">📦</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-400"><Package size={20} /></div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">

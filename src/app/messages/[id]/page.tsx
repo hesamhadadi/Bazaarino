@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
-import { ChevronRight, SendHorizontal } from 'lucide-react';
+import { Camera, ChevronRight, SendHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parseReservationToken } from '@/lib/reservation';
 import { io, Socket } from 'socket.io-client';
@@ -424,7 +424,7 @@ export default function ConversationPage({ params }: { params: { id: string } })
             <SendHorizontal size={16} />
           </button>
           <label className="text-xs text-gray-500 cursor-pointer px-2">
-            {uploadingImage ? 'در حال آپلود...' : '📷'}
+            {uploadingImage ? 'در حال آپلود...' : <Camera size={16} className="text-gray-500" />}
             <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onUploadImage} disabled={uploadingImage || sending} />
           </label>
           <input

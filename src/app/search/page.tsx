@@ -8,7 +8,7 @@ import Banner from '@/models/Banner';
 import HousingCityImage from '@/models/HousingCityImage';
 import { attachMarketPriceToAds } from '@/lib/market-price';
 import Link from 'next/link';
-import { SlidersHorizontal } from 'lucide-react';
+import { SearchX, SlidersHorizontal } from 'lucide-react';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import CityIcon from '@/components/ui/CityIcon';
 
@@ -390,7 +390,10 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           </p>
         {selectedCategory && (
           <span className={`text-xs px-2 py-1 rounded-full ${selectedCategory.color}`}>
-            {selectedCategory.icon} {selectedCategory.label}
+            <span className="inline-flex items-center gap-1">
+              <CategoryIcon categoryId={selectedCategory.id} size={12} />
+              {selectedCategory.label}
+            </span>
           </span>
         )}
       </div>
@@ -458,7 +461,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           </>
         ) : (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <p className="text-5xl mb-4">🔍</p>
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 text-brand-500">
+              <SearchX size={28} />
+            </div>
             <p className="text-gray-600 font-medium mb-2">نتیجه‌ای یافت نشد</p>
             <p className="text-gray-400 text-sm mb-4">فیلترهای خود را تغییر دهید</p>
             <Link href="/search" className="text-brand-500 text-sm underline">پاک کردن فیلترها</Link>

@@ -7,6 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdCard from '@/components/ads/AdCard';
 import { StarRating } from '@/components/ui/StarRating';
+import { Store } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,7 +66,7 @@ export default async function UserPage({ params }: { params: { id: string } }) {
               {user.businessName && (
                 <div className="mt-2 text-xs">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100">
-                    🏪 بیزینس: {user.businessName}
+                    <Store size={12} /> بیزینس: {user.businessName}
                   </span>
                   {user.businessCategory && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-100 ms-1">

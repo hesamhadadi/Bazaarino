@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import Image from 'next/image';
-import { Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper, MessageCircle, Bell } from 'lucide-react';
+import { Home, Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper, MessageCircle, Bell } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useChat } from '@/components/providers/ChatProvider';
 import { toFaDigits } from '@/lib/locale';
@@ -202,7 +202,7 @@ export default function Navbar() {
                   <Newspaper size={16} /> اخبار و مقالات
                 </Link>
                 <Link href="/house-reservation" className="flex items-center gap-2 text-gray-700 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
-                  🏠 رزرو خونه
+                  <Home size={16} /> رزرو خونه
                 </Link>
                 {session.user.role === 'admin' && (
                   <Link href="/admin" className="flex items-center gap-2 text-orange-600 px-2 py-2.5" onClick={() => setMenuOpen(false)}>
