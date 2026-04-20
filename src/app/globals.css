@@ -304,15 +304,30 @@ select {
 }
 
 .rmdp-wrapper {
-  border: 1px solid #e0e7ff !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14) !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.16) !important;
+  padding: 0.35rem !important;
+  background: #fff !important;
 }
 
 .rmdp-day {
   width: 2.2rem !important;
   height: 2.2rem !important;
   font-size: 0.9rem !important;
+}
+
+.rmdp-day span {
+  border-radius: 9999px !important;
+}
+
+.rmdp-day.rmdp-today span {
+  background-color: #fff7ed !important;
+  color: #9a3412 !important;
+}
+
+.rmdp-day.rmdp-selected span {
+  background-color: #f97316 !important;
 }
 
 .rmdp-week-day {
