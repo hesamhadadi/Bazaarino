@@ -9,9 +9,11 @@ import { getTodayLocalDateOnly } from '@/lib/reservation';
 type Option = {
   value: string;
   label: string;
-  // Optional country key for city options to support country-based filtering.
+  // For city options, this should match a country.value from countries list or "other" for fallback cities.
   country?: string;
 };
+
+const OTHER_COUNTRY_VALUE = 'other';
 
 type Props = {
   countries: Option[];
@@ -52,7 +54,7 @@ export default function ReservationSearchForm({
   const minDate = useMemo(() => getTodayLocalDateOnly(), []);
   const filteredCities = useMemo(() => {
     if (!country) return cities;
-    return cities.filter((cityOption) => cityOption.country === country || cityOption.country === 'other');
+    return cities.filter((cityOption) => cityOption.country === country || cityOption.country === OTHER_COUNTRY_VALUE);
   }, [cities, country]);
 
   useEffect(() => {

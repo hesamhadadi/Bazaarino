@@ -936,7 +936,20 @@ export default function AdminDashboard() {
                   <div key={ad._id} className="bg-white rounded-2xl border border-gray-100 p-4">
                     <div className="flex gap-4">
                       <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                        {ad.images?.[0] ? <Image src={ad.images[0]} alt={ad.title || 'تصویر آگهی'} width={96} height={96} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><ImagePlus size={18} /><span className="sr-only">بدون تصویر</span></div>}
+                        {ad.images?.[0] ? (
+                          <Image
+                            src={ad.images[0]}
+                            alt={ad.title || 'تصویر آگهی'}
+                            width={96}
+                            height={96}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <ImagePlus size={18} />
+                            <span className="sr-only">بدون تصویر</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex-1">
@@ -978,7 +991,20 @@ export default function AdminDashboard() {
             {allAds.map((ad: any) => (
               <div key={ad._id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-4">
                 <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                  {ad.images?.[0] ? <Image src={ad.images[0]} alt={ad.title || 'تصویر آگهی'} width={56} height={56} className="object-cover w-full h-full" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><ImagePlus size={14} /><span className="sr-only">بدون تصویر</span></div>}
+                  {ad.images?.[0] ? (
+                    <Image
+                      src={ad.images[0]}
+                      alt={ad.title || 'تصویر آگهی'}
+                      width={56}
+                      height={56}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <ImagePlus size={14} />
+                      <span className="sr-only">بدون تصویر</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <Link href={`/ads/${ad._id}`} target="_blank" className="font-medium text-gray-800 hover:text-brand-600 text-sm line-clamp-1">{ad.title}</Link>
