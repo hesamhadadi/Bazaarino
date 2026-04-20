@@ -9,6 +9,7 @@ import { getTodayLocalDateOnly } from '@/lib/reservation';
 type Option = {
   value: string;
   label: string;
+  // Optional country key for city options to support country-based filtering.
   country?: string;
 };
 
