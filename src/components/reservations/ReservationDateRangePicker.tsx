@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import DateObject, { type Calendar, type Locale } from 'react-date-object';
 import DatePicker, { type ChangedValue } from 'react-multi-date-picker';
 import gregorian from 'react-date-object/calendars/gregorian';
@@ -127,6 +127,13 @@ export default function ReservationDateRangePicker({
 }: Props) {
   const [calendarMode, setCalendarMode] = useState<CalendarMode>('gregorian');
   const config = CALENDAR_CONFIG[calendarMode];
+  const nights = useMemo(() => {
+    if (!startDate || !endDate) return 0;
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    const diff = Math.floor((end.getTime() - start.getTime()) / 86400000);
+    return Number.isFinite(diff) && diff > 0 ? diff : 0;
+  }, [startDate, endDate]);
 
   const handleStartDateChange = (value: ChangedValue<false, false>) => {
     const nextStart = toGregorianIso(value);
@@ -148,24 +155,31 @@ export default function ReservationDateRangePicker({
 
   return (
     <div className="space-y-3">
-      <div className="inline-flex rounded-2xl bg-indigo-100 p-1.5 text-sm">
-        {(Object.keys(CALENDAR_CONFIG) as CalendarMode[]).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => setCalendarMode(mode)}
-            className={`rounded-xl px-4 py-2 transition ${
-              calendarMode === mode ? 'bg-white text-indigo-700 shadow-sm font-semibold' : 'text-indigo-700/80'
-            }`}
-          >
-            {CALENDAR_CONFIG[mode].label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-sm">
+          {(Object.keys(CALENDAR_CONFIG) as CalendarMode[]).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setCalendarMode(mode)}
+              className={`rounded-full px-4 py-1.5 transition ${
+                calendarMode === mode ? 'bg-white text-gray-900 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {CALENDAR_CONFIG[mode].label}
+            </button>
+          ))}
+        </div>
+        {nights > 0 ? (
+          <span className="inline-flex items-center rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-700">
+            {nights} شب
+          </span>
+        ) : null}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label className="space-y-1">
-          <span className="text-xs font-medium text-slate-600">ورود</span>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-2 md:gap-0 rounded-3xl border border-gray-200 bg-white p-2">
+        <label className="space-y-1 rounded-2xl px-3 py-2 hover:bg-gray-50">
+          <span className="text-[11px] font-semibold text-gray-500">ورود</span>
           <DatePicker
             aria-label="تاریخ ورود"
             value={toDateObject(startDate, calendarMode)}
@@ -177,12 +191,14 @@ export default function ReservationDateRangePicker({
             calendarPosition="auto"
             numberOfMonths={2}
             editable={false}
-            inputClass="w-full h-12 border border-indigo-200 rounded-2xl px-4 text-sm font-semibold bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300"
-            placeholder="تاریخ ورود را انتخاب کنید"
+            inputClass="w-full h-6 border-0 px-0 text-sm font-semibold bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            containerClassName="w-full"
+            placeholder="تاریخ ورود"
           />
         </label>
-        <label className="space-y-1">
-          <span className="text-xs font-medium text-slate-600">خروج</span>
+        <div className="hidden md:flex items-center justify-center text-xs text-gray-400">—</div>
+        <label className="space-y-1 rounded-2xl px-3 py-2 hover:bg-gray-50">
+          <span className="text-[11px] font-semibold text-gray-500">خروج</span>
           <DatePicker
             aria-label="تاریخ خروج"
             value={toDateObject(endDate, calendarMode)}
@@ -194,11 +210,26 @@ export default function ReservationDateRangePicker({
             calendarPosition="auto"
             numberOfMonths={2}
             editable={false}
-            inputClass="w-full h-12 border border-indigo-200 rounded-2xl px-4 text-sm font-semibold bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300"
-            placeholder="تاریخ خروج را انتخاب کنید"
+            inputClass="w-full h-6 border-0 px-0 text-sm font-semibold bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            containerClassName="w-full"
+            placeholder="تاریخ خروج"
           />
         </label>
       </div>
+      {(startDate || endDate) ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              onStartDateChange('');
+              onEndDateChange('');
+            }}
+            className="text-xs font-medium text-gray-500 hover:text-gray-700 underline-offset-2 hover:underline"
+          >
+            پاک کردن تاریخ‌ها
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
