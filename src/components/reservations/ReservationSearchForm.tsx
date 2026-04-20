@@ -77,7 +77,7 @@ export default function ReservationSearchForm({
                 name="country"
                 value={country}
                 onChange={(event) => setCountry(event.target.value)}
-                className="h-7 w-full border-0 p-0 pr-0 pl-8 text-sm bg-transparent focus:outline-none focus:ring-0"
+                className="h-7 w-full border-0 p-0 pl-8 text-sm bg-transparent focus:outline-none focus:ring-0"
               >
                 <option value="">همه کشورها</option>
                 {countries.map((countryOption) => (
@@ -95,7 +95,7 @@ export default function ReservationSearchForm({
                 name="city"
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
-                className="h-7 w-full border-0 p-0 pr-0 pl-8 text-sm bg-transparent focus:outline-none focus:ring-0"
+                className="h-7 w-full border-0 p-0 pl-8 text-sm bg-transparent focus:outline-none focus:ring-0"
               >
                 <option value="">همه شهرها</option>
                 {cities.map((cityOption) => (

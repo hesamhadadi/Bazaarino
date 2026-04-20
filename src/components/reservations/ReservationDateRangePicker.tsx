@@ -7,6 +7,7 @@ import gregorian from 'react-date-object/calendars/gregorian';
 import persian from 'react-date-object/calendars/persian';
 import gregorian_en from 'react-date-object/locales/gregorian_en';
 import persian_fa from 'react-date-object/locales/persian_fa';
+import { calculateNights, parseDateOnlyInput } from '@/lib/reservation';
 
 type CalendarMode = 'gregorian' | 'persian';
 
@@ -129,10 +130,10 @@ export default function ReservationDateRangePicker({
   const config = CALENDAR_CONFIG[calendarMode];
   const nights = useMemo(() => {
     if (!startDate || !endDate) return 0;
-    const start = new Date(`${startDate}T00:00:00`);
-    const end = new Date(`${endDate}T00:00:00`);
-    const diff = Math.floor((end.getTime() - start.getTime()) / 86400000);
-    return Number.isFinite(diff) && diff > 0 ? diff : 0;
+    const start = parseDateOnlyInput(startDate);
+    const end = parseDateOnlyInput(endDate);
+    if (!start || !end) return 0;
+    return calculateNights(start, end);
   }, [startDate, endDate]);
 
   const handleStartDateChange = (value: ChangedValue<false, false>) => {
