@@ -128,6 +128,14 @@ export default function ReservationDateRangePicker({
 }: Props) {
   const [calendarMode, setCalendarMode] = useState<CalendarMode>('gregorian');
   const config = CALENDAR_CONFIG[calendarMode];
+  const rangeValue = useMemo(() => {
+    const start = toDateObject(startDate, calendarMode);
+    const end = toDateObject(endDate, calendarMode);
+
+    if (start && end) return [start, end];
+    if (start) return [start];
+    return [];
+  }, [startDate, endDate, calendarMode]);
   const nights = useMemo(() => {
     if (!startDate || !endDate) return 0;
     const start = parseDateOnlyInput(startDate);
@@ -136,21 +144,23 @@ export default function ReservationDateRangePicker({
     return calculateNights(start, end);
   }, [startDate, endDate]);
 
-  const handleStartDateChange = (value: ChangedValue<false, false>) => {
-    const nextStart = toGregorianIso(value);
-    onStartDateChange(nextStart);
-
-    if (endDate && nextStart && endDate < nextStart) {
-      onEndDateChange('');
-    }
-  };
-
-  const handleEndDateChange = (value: ChangedValue<false, false>) => {
-    const nextEnd = toGregorianIso(value);
-    if (nextEnd && startDate && nextEnd <= startDate) {
+  const handleRangeChange = (value: ChangedValue<true, false>) => {
+    if (!value) {
+      onStartDateChange('');
       onEndDateChange('');
       return;
     }
+
+    const nextValue = Array.isArray(value) ? value : [value];
+    const nextStart = toGregorianIso(nextValue[0] as ChangedValue<false, false>);
+    const nextEnd = nextValue[1] ? toGregorianIso(nextValue[1] as ChangedValue<false, false>) : '';
+
+    onStartDateChange(nextStart);
+    if (!nextEnd || !nextStart || nextEnd <= nextStart || (minEndDate && nextEnd < minEndDate)) {
+      onEndDateChange('');
+      return;
+    }
+
     onEndDateChange(nextEnd);
   };
 
@@ -178,13 +188,13 @@ export default function ReservationDateRangePicker({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-2 md:gap-0 rounded-3xl border border-gray-200 bg-white p-2">
-        <label className="space-y-1 rounded-2xl px-3 py-2 hover:bg-gray-50">
-          <span className="text-[11px] font-semibold text-gray-500">ورود</span>
+      <div className="space-y-3 rounded-3xl border border-gray-200 bg-white p-3 md:p-4">
+        <label className="block space-y-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 transition hover:border-gray-300">
+          <span className="text-xs font-semibold text-gray-600">بازه اقامت</span>
           <DatePicker
-            aria-label="تاریخ ورود"
-            value={toDateObject(startDate, calendarMode)}
-            onChange={handleStartDateChange}
+            aria-label="بازه تاریخ رزرو"
+            value={rangeValue}
+            onChange={handleRangeChange}
             calendar={config.calendar}
             locale={config.locale}
             minDate={toDateObject(minStartDate, calendarMode)}
@@ -192,30 +202,26 @@ export default function ReservationDateRangePicker({
             calendarPosition="auto"
             numberOfMonths={2}
             editable={false}
-            inputClass="w-full h-6 border-0 px-0 text-sm font-semibold bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            range
+            rangeHover
+            inputClass="w-full h-11 border-0 px-0 text-base font-bold bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
             containerClassName="w-full"
-            placeholder="تاریخ ورود"
+            placeholder="تاریخ ورود و خروج را انتخاب کنید"
           />
         </label>
-        <div aria-hidden="true" className="hidden md:flex items-center justify-center text-xs text-gray-400">—</div>
-        <label className="space-y-1 rounded-2xl px-3 py-2 hover:bg-gray-50">
-          <span className="text-[11px] font-semibold text-gray-500">خروج</span>
-          <DatePicker
-            aria-label="تاریخ خروج"
-            value={toDateObject(endDate, calendarMode)}
-            onChange={handleEndDateChange}
-            calendar={config.calendar}
-            locale={config.locale}
-            minDate={toDateObject(minEndDate, calendarMode)}
-            format="YYYY/MM/DD"
-            calendarPosition="auto"
-            numberOfMonths={2}
-            editable={false}
-            inputClass="w-full h-6 border-0 px-0 text-sm font-semibold bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
-            containerClassName="w-full"
-            placeholder="تاریخ خروج"
-          />
-        </label>
+        <div className="grid grid-cols-2 gap-2 text-xs md:text-sm">
+          <div className="rounded-2xl border border-gray-200 bg-white px-3 py-2">
+            <p className="font-semibold text-gray-500">ورود</p>
+            <p className="mt-1 font-bold text-gray-900">{startDate ? startDate : 'انتخاب نشده'}</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white px-3 py-2">
+            <p className="font-semibold text-gray-500">خروج</p>
+            <p className="mt-1 font-bold text-gray-900">{endDate ? endDate : 'انتخاب نشده'}</p>
+          </div>
+        </div>
+        {!endDate && startDate ? (
+          <p className="text-xs font-medium text-amber-700">تاریخ ورود انتخاب شد؛ حالا تاریخ خروج را انتخاب کنید.</p>
+        ) : null}
       </div>
       {(startDate || endDate) ? (
         <div className="flex justify-end">

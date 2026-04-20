@@ -305,16 +305,16 @@ select {
 
 .rmdp-wrapper {
   border: 1px solid #e5e7eb !important;
-  border-radius: 1.25rem !important;
-  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.16) !important;
-  padding: 0.35rem !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 26px 55px rgba(15, 23, 42, 0.18) !important;
+  padding: 0.6rem !important;
   background: #fff !important;
 }
 
 .rmdp-day {
-  width: 2.2rem !important;
-  height: 2.2rem !important;
-  font-size: 0.9rem !important;
+  width: 2.7rem !important;
+  height: 2.7rem !important;
+  font-size: 1rem !important;
 }
 
 .rmdp-day span {
@@ -330,7 +330,23 @@ select {
   background-color: #f97316 !important;
 }
 
+.rmdp-day.rmdp-range span {
+  background-color: #ffedd5 !important;
+  color: #9a3412 !important;
+}
+
+.rmdp-day.rmdp-range-start span,
+.rmdp-day.rmdp-range-end span {
+  background-color: #f97316 !important;
+  color: #fff !important;
+}
+
 .rmdp-week-day {
-  font-size: 0.78rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+}
+
+.rmdp-header-values {
+  font-size: 1rem !important;
   font-weight: 700 !important;
 }
