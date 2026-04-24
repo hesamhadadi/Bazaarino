@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import connectDB from '@/lib/mongodb';
@@ -6,8 +7,10 @@ import Rating from '@/models/Rating';
 import '@/models/User';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
+import Footer from '@/components/layout/Footer';
 import AdImageGallery from '@/components/ads/AdImageGallery';
 import FavoriteButton from '@/components/ads/FavoriteButton';
+import ShareButton from '@/components/ads/ShareButton';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { StarRating } from '@/components/ui/StarRating';
 import RateUser from '@/components/ads/RateUser';
@@ -17,12 +20,13 @@ import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
 import ReservationRequestForm from '@/components/reservations/ReservationRequestForm';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel, getCountryLabel, getCountryByCity } from '@/lib/constants';
-import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Share2, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle, Sparkles, Siren, ArrowUp, FileText, Landmark, Shield } from 'lucide-react';
+import { MapPin, Clock, Eye, Phone, Mail, Tag, ChevronRight, Users, BadgeCheck, ShoppingCart, GraduationCap, Train, Bus, Send, MessageCircle, Sparkles, Siren, ArrowUp, FileText, Landmark, Shield } from 'lucide-react';
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
 import nextDynamic from 'next/dynamic';
 import mongoose from 'mongoose';
 import { getMarketPriceSnapshot } from '@/lib/market-price';
 import { RENTAL_REAL_ESTATE_SUBCATEGORIES } from '@/lib/reservation';
+import { getAppUrl } from '@/lib/app-url';
 
 const HousingLocationPreview = nextDynamic(() => import('@/components/maps/HousingLocationPreview'), { ssr: false });
 
@@ -97,6 +101,45 @@ function formatDateFa(date?: string | Date): string {
   return value.toLocaleDateString('fa-IR');
 }
 
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  try {
+    await connectDB();
+    const ad: any = await Ad.findById(params.id).lean();
+    if (!ad) return { title: 'آگهی یافت نشد' };
+
+    const cityLabel = getCityLabel(ad.city) || ad.city;
+    const countryLabel = getCountryLabel(ad.country || getCountryByCity(ad.city)) || '';
+    const title = `${ad.title} — ${cityLabel}`;
+    const description = (ad.description || '').slice(0, 160);
+    const image = Array.isArray(ad.images) && ad.images[0] ? ad.images[0] : '/og-default.svg';
+    const base = getAppUrl();
+    const url = `${base}/ads/${ad._id}`;
+
+    return {
+      title,
+      description,
+      alternates: { canonical: `/ads/${ad._id}` },
+      openGraph: {
+        title,
+        description,
+        url,
+        type: 'article',
+        locale: 'fa_IR',
+        images: [{ url: image.startsWith('http') ? image : `${base}${image}` }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [image.startsWith('http') ? image : `${base}${image}`],
+      },
+      other: countryLabel ? { 'geo.region': countryLabel } : undefined,
+    };
+  } catch {
+    return { title: 'آگهی' };
+  }
+}
+
 export default async function AdDetailPage({ params }: { params: { id: string } }) {
   const ad = await getAd(params.id);
   if (!ad) notFound();
@@ -121,8 +164,46 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
     RENTAL_REAL_ESTATE_SUBCATEGORIES.includes(ad.subcategory as any) &&
     (ad.listingMode || 'offer') === 'offer';
 
+  const appUrl = getAppUrl();
+  const adUrl = `${appUrl}/ads/${ad._id}`;
+  const isRealEstate = ad.category === 'real-estate';
+  const productLd: any = {
+    '@context': 'https://schema.org',
+    '@type': isRealEstate ? 'Apartment' : 'Product',
+    name: ad.title,
+    description: ad.description,
+    url: adUrl,
+    image: Array.isArray(ad.images) && ad.images.length ? ad.images.map((i: string) => (i.startsWith('http') ? i : `${appUrl}${i}`)) : undefined,
+    address: ad.city ? {
+      '@type': 'PostalAddress',
+      addressLocality: getCityLabel(ad.city),
+      addressCountry: countryLabel,
+    } : undefined,
+  };
+  if (ad.price && ad.priceType === 'fixed') {
+    productLd.offers = {
+      '@type': 'Offer',
+      price: ad.price,
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+      url: adUrl,
+    };
+  }
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'خانه', item: appUrl },
+      { '@type': 'ListItem', position: 2, name: category?.label || 'دسته', item: `${appUrl}/search?category=${ad.category}` },
+      { '@type': 'ListItem', position: 3, name: ad.title, item: adUrl },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-4 pb-24 md:pb-10">
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
@@ -170,7 +251,11 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 </div>
                 <div className="flex items-center gap-2">
                   <FavoriteButton adId={ad._id} className="w-9 h-9 border border-gray-200" />
-                  <Share2 size={18} className="text-gray-400 flex-shrink-0 mt-1" />
+                  <ShareButton
+                    title={ad.title}
+                    text={`${ad.title} — ${getCityLabel(ad.city)}`}
+                    url={`${getAppUrl()}/ads/${ad._id}`}
+                  />
                 </div>
               </div>
               <div className="text-2xl font-bold text-orange-600 mb-4">{formatPrice(ad.price, ad.priceType)}</div>
@@ -425,6 +510,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
           </div>
         </div>
       </div>
+      <Footer />
       <BottomNav />
     </div>
   );

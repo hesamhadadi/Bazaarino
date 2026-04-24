@@ -1,7 +1,9 @@
+import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
+import Footer from '@/components/layout/Footer';
 import AdCard from '@/components/ads/AdCard';
-import { CATEGORIES, CITIES, COUNTRIES, getCitiesByCountry, getCountryByCity, getCountryLabel } from '@/lib/constants';
+import { CATEGORIES, CITIES, COUNTRIES, getCitiesByCountry, getCountryByCity, getCountryLabel, getCityLabel } from '@/lib/constants';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import Banner from '@/models/Banner';
@@ -11,6 +13,7 @@ import Link from 'next/link';
 import { SearchX, SlidersHorizontal } from 'lucide-react';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import CityIcon from '@/components/ui/CityIcon';
+import SaveSearchButton from '@/components/search/SaveSearchButton';
 
 interface SearchParams {
   q?: string;
@@ -156,6 +159,25 @@ async function getHousingCityImage(city?: string, category?: string) {
   }
 }
 
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const parts: string[] = [];
+  if (searchParams.q) parts.push(`«${searchParams.q}»`);
+  const catLabel = CATEGORIES.find((c) => c.id === searchParams.category)?.label;
+  if (catLabel) parts.push(catLabel);
+  const cityLabel = searchParams.city ? getCityLabel(searchParams.city) : '';
+  if (cityLabel) parts.push(cityLabel);
+  const countryLabel = getCountryLabel(searchParams.country);
+  if (countryLabel && !cityLabel) parts.push(countryLabel);
+  const titleBase = parts.length ? `جست‌وجو: ${parts.join(' · ')}` : 'جست‌وجو ایرانیان اروپا';
+  const description = `نتایج جست‌وجوی آگهی در بازارینو${parts.length ? `: ${parts.join(' - ')}` : ''}.`;
+  return {
+    title: titleBase,
+    description,
+    alternates: { canonical: '/search' },
+    openGraph: { title: titleBase, description, type: 'website', locale: 'fa_IR' },
+  };
+}
+
 export default async function SearchPage({ searchParams }: { searchParams: SearchParams }) {
   const [{ ads, total, page, totalPages }, categoryBanners, housingCityImage] = await Promise.all([
     searchAds(searchParams),
@@ -211,6 +233,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 
         {/* Search header */}
         <div className="mb-4">
+          <div className="flex items-center justify-end mb-2">
+            <SaveSearchButton
+              query={new URLSearchParams(Object.entries(searchParams).filter(([, v]) => v) as any).toString()}
+              suggestedName={[searchParams.q, searchParams.city ? getCityLabel(searchParams.city) : undefined, CATEGORIES.find((c) => c.id === searchParams.category)?.label].filter(Boolean).join(' · ') || 'جست‌وجوی من'}
+            />
+          </div>
           <form method="GET" className="flex gap-2 mb-4">
             <input
               type="text"
@@ -471,6 +499,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         )}
       </div>
 
+      <Footer />
       <BottomNav />
     </div>
   );

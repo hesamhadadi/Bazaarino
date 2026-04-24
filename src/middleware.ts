@@ -24,6 +24,7 @@ export default withAuth(
           pathname.startsWith('/profile') ||
           pathname.startsWith('/favorites') ||
           pathname.startsWith('/messages') ||
+          pathname.startsWith('/saved-searches') ||
           pathname === '/ads/new' ||
           pathname.startsWith('/news/new')
         ) {
@@ -36,5 +37,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*', '/favorites/:path*', '/messages/:path*', '/ads/new', '/news/new'],
+  matcher: ['/admin/:path*', '/profile/:path*', '/favorites/:path*', '/messages/:path*', '/saved-searches/:path*', '/ads/new', '/news/new'],
 };
