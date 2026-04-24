@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from 'next';
+import { Vazirmatn } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 import 'leaflet/dist/leaflet.css';
 import { Toaster } from 'react-hot-toast';
@@ -9,6 +12,13 @@ import ChatProvider from '@/components/providers/ChatProvider';
 import PushNotificationProvider from '@/components/providers/PushNotificationProvider';
 import CookieBanner from '@/components/layout/CookieBanner';
 import { getAppUrl } from '@/lib/app-url';
+
+const vazir = Vazirmatn({
+  subsets: ['arabic', 'latin'],
+  display: 'swap',
+  variable: '--font-vazir',
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+});
 
 const appUrl = getAppUrl();
 
@@ -94,13 +104,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="fa" dir="rtl">
+    <html lang="fa-IR" dir="rtl" className={vazir.variable}>
       <head>
-        <link
-          href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css"
-          rel="stylesheet"
-          type="text/css"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }}
@@ -110,7 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteLd) }}
         />
       </head>
-      <body className="font-vazir bg-gray-50 min-h-screen">
+      <body className={`${vazir.className} font-vazir bg-gray-50 min-h-screen`}>
         <AuthProvider>
           <BrandColorProvider />
           <ChatProvider>
@@ -123,13 +128,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               toastOptions={{
                 duration: 3000,
                 style: {
-                  fontFamily: 'Vazirmatn, sans-serif',
+                  fontFamily: 'var(--font-vazir), Vazirmatn, sans-serif',
                   direction: 'rtl',
                 },
               }}
             />
           </ChatProvider>
         </AuthProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
