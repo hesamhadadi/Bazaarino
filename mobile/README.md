@@ -53,7 +53,7 @@ npx eas-cli build:configure
 npx eas-cli build --platform android --profile preview
 ```
 
-پروفایل `preview` در [`eas.json`](/Users/hesamhadadinick/Desktop/My%20Projects/Bazaarino/bazaarino-final/bazaarino_work/mobile/eas.json) روی `apk` تنظیم شده است.
+پروفایل `preview` در [`eas.json`](./eas.json) روی `apk` تنظیم شده است.
 
 ## محدودیت فعلی
 
