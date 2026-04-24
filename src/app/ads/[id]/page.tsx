@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const countryLabel = getCountryLabel(ad.country || getCountryByCity(ad.city)) || '';
     const title = `${ad.title} — ${cityLabel}`;
     const description = (ad.description || '').slice(0, 160);
-    const image = Array.isArray(ad.images) && ad.images[0] ? ad.images[0] : '/og-default.svg';
+    const image = Array.isArray(ad.images) && ad.images[0] ? ad.images[0] : '/og-default.png';
     const base = getAppUrl();
     const url = `${base}/ads/${ad._id}`;
 

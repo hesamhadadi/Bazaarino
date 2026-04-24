@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
+import Footer from '@/components/layout/Footer';
 import AdCard from '@/components/ads/AdCard';
 import LatestAdsSection from '@/components/home/LatestAdsSection';
 import ReservationSearchForm from '@/components/reservations/ReservationSearchForm';
@@ -514,6 +515,7 @@ export default async function HomePage() {
         </section>
       </div>
 
+      <Footer />
       <BottomNav />
     </div>
   );

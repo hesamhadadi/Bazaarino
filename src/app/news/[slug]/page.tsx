@@ -1,11 +1,14 @@
-import Image from 'next/image';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import connectDB from '@/lib/mongodb';
 import Article from '@/models/Article';
+import '@/models/User';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
+import Footer from '@/components/layout/Footer';
 import { toFaDigits } from '@/lib/locale';
 import { notFound } from 'next/navigation';
+import { getAppUrl } from '@/lib/app-url';
 
 export const dynamic = 'force-dynamic';
 const estimateReadMinutes = (text: string) => Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
@@ -41,19 +44,36 @@ async function getRelatedArticles(slug: string, tags: string[] = []) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const article = await getArticle(params.slug);
   if (!article) {
-    return { title: 'خبر یافت نشد | بازارینو' };
+    return { title: 'خبر یافت نشد' };
   }
+  const base = getAppUrl();
+  const canonicalPath = `/news/${encodeURIComponent(article.slug)}`;
+  const image = article.coverImage || '/og-default.png';
 
   return {
-    title: `${article.title} | بازارینو`,
+    title: article.title,
     description: article.excerpt,
+    alternates: { canonical: canonicalPath },
     openGraph: {
       title: article.title,
       description: article.excerpt,
-      images: article.coverImage ? [article.coverImage] : [],
+      url: `${base}${canonicalPath}`,
+      type: 'article',
+      locale: 'fa_IR',
+      images: [{ url: image.startsWith('http') ? image : `${base}${image}` }],
+      publishedTime: article.createdAt ? new Date(article.createdAt).toISOString() : undefined,
+      modifiedTime: article.updatedAt ? new Date(article.updatedAt).toISOString() : undefined,
+      authors: article.authorId?.name ? [article.authorId.name] : undefined,
+      tags: Array.isArray(article.tags) ? article.tags : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.excerpt,
+      images: [image.startsWith('http') ? image : `${base}${image}`],
     },
   };
 }
@@ -66,8 +86,42 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   const readMinutes = estimateReadMinutes(article.content || '');
   const relatedArticles = await getRelatedArticles(article.slug, Array.isArray(article.tags) ? article.tags : []);
 
+  const base = getAppUrl();
+  const articleUrl = `${base}/news/${encodeURIComponent(article.slug)}`;
+  const articleLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.excerpt,
+    image: article.coverImage ? [article.coverImage] : [`${base}/og-default.svg`],
+    datePublished: new Date(article.createdAt).toISOString(),
+    dateModified: new Date(article.updatedAt || article.createdAt).toISOString(),
+    author: {
+      '@type': 'Person',
+      name: article.authorId?.name || 'تحریریه بازارینو',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'بازارینو',
+      logo: { '@type': 'ImageObject', url: `${base}/logo-eu.svg` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
+    keywords: Array.isArray(article.tags) ? article.tags.join(', ') : undefined,
+  };
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'خانه', item: base },
+      { '@type': 'ListItem', position: 2, name: 'اخبار', item: `${base}/news` },
+      { '@type': 'ListItem', position: 3, name: article.title, item: articleUrl },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <Navbar />
       <article className="max-w-3xl mx-auto px-4 py-8 pb-24 md:pb-10">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -88,8 +142,9 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         )}
 
         {article.coverImage && (
-          <div className="relative aspect-[16/9] rounded-3xl overflow-hidden border border-gray-100 mb-6">
-            <Image src={article.coverImage} alt={article.title} fill className="object-cover" />
+          <div className="relative aspect-[16/9] rounded-3xl overflow-hidden border border-gray-100 mb-6 bg-gray-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={article.coverImage} alt={article.title} className="absolute inset-0 w-full h-full object-cover" />
           </div>
         )}
 
@@ -101,7 +156,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
         <div className="mt-10 border-t border-gray-100 pt-4 flex items-center gap-3">
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
-            <Image src={article.authorId?.avatar || '/default-avatar.svg'} alt={article.authorId?.name || 'author'} width={48} height={48} className="w-full h-full object-cover" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={article.authorId?.avatar || '/default-avatar.svg'} alt={article.authorId?.name || 'author'} width={48} height={48} className="w-full h-full object-cover" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">{article.authorId?.name || 'نویسنده بازارینو'}</p>
@@ -123,6 +179,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           </section>
         )}
       </article>
+      <Footer />
       <BottomNav />
     </div>
   );

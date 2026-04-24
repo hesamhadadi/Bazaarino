@@ -79,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     articleRoutes = articles.map((a: any) => ({
-      url: `${base}/news/${a.slug}`,
+      url: `${base}/news/${encodeURIComponent(a.slug)}`,
       lastModified: a.updatedAt || a.createdAt || now,
       changeFrequency: 'weekly' as const,
       priority: 0.6,
