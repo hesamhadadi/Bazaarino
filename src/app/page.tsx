@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
+import Footer from '@/components/layout/Footer';
 import AdCard from '@/components/ads/AdCard';
 import LatestAdsSection from '@/components/home/LatestAdsSection';
 import ReservationSearchForm from '@/components/reservations/ReservationSearchForm';
@@ -17,6 +18,7 @@ import CategoryIcon from '@/components/ui/CategoryIcon';
 import CityIcon from '@/components/ui/CityIcon';
 import { attachMarketPriceToAds } from '@/lib/market-price';
 import { toFaDigits } from '@/lib/locale';
+import { getAppUrl } from '@/lib/app-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,8 +102,20 @@ export default async function HomePage() {
     { icon: ShieldCheck, title: 'مدیریت و گزارش', text: 'پنل نظارت و گزارش تخلف برای تجربه امن‌تر' },
   ];
 
+  const itemListLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: [...featuredAds, ...latestAds].slice(0, 10).map((ad: any, idx: number) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      url: `${getAppUrl()}/ads/${ad._id}`,
+      name: ad.title,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#fff7ed_0%,#fffdf8_18%,#f8fafc_44%,#f8fafc_100%)]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
       <Navbar />
 
       <div className="hero-cinematic text-white" style={{ backgroundImage: "url('/hero-europe.svg')" }}>
@@ -514,6 +528,7 @@ export default async function HomePage() {
         </section>
       </div>
 
+      <Footer />
       <BottomNav />
     </div>
   );

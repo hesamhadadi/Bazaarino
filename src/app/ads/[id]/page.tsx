@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const countryLabel = getCountryLabel(ad.country || getCountryByCity(ad.city)) || '';
     const title = `${ad.title} — ${cityLabel}`;
     const description = (ad.description || '').slice(0, 160);
-    const image = Array.isArray(ad.images) && ad.images[0] ? ad.images[0] : '/og-default.svg';
+    const image = Array.isArray(ad.images) && ad.images[0] ? ad.images[0] : '/og-default.png';
     const base = getAppUrl();
     const url = `${base}/ads/${ad._id}`;
 
@@ -167,26 +167,94 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
   const appUrl = getAppUrl();
   const adUrl = `${appUrl}/ads/${ad._id}`;
   const isRealEstate = ad.category === 'real-estate';
-  const productLd: any = {
-    '@context': 'https://schema.org',
-    '@type': isRealEstate ? 'Apartment' : 'Product',
-    name: ad.title,
-    description: ad.description,
-    url: adUrl,
-    image: Array.isArray(ad.images) && ad.images.length ? ad.images.map((i: string) => (i.startsWith('http') ? i : `${appUrl}${i}`)) : undefined,
-    address: ad.city ? {
-      '@type': 'PostalAddress',
-      addressLocality: getCityLabel(ad.city),
-      addressCountry: countryLabel,
-    } : undefined,
-  };
-  if (ad.price && ad.priceType === 'fixed') {
-    productLd.offers = {
-      '@type': 'Offer',
-      price: ad.price,
-      priceCurrency: 'EUR',
-      availability: 'https://schema.org/InStock',
+  const isJob = ad.category === 'jobs';
+  const adImages = Array.isArray(ad.images) && ad.images.length
+    ? ad.images.map((i: string) => (i.startsWith('http') ? i : `${appUrl}${i}`))
+    : undefined;
+
+  let productLd: any;
+
+  if (isRealEstate) {
+    productLd = {
+      '@context': 'https://schema.org',
+      '@type': 'RealEstateListing',
+      name: ad.title,
+      description: ad.description,
       url: adUrl,
+      image: adImages,
+      datePosted: new Date(ad.createdAt).toISOString(),
+      address: ad.city ? {
+        '@type': 'PostalAddress',
+        addressLocality: getCityLabel(ad.city),
+        addressCountry: countryLabel,
+      } : undefined,
+      ...(ad.price && ad.priceType === 'fixed' ? {
+        offers: {
+          '@type': 'Offer',
+          price: ad.price,
+          priceCurrency: 'EUR',
+          availability: 'https://schema.org/InStock',
+          url: adUrl,
+        },
+      } : {}),
+    };
+  } else if (isJob) {
+    productLd = {
+      '@context': 'https://schema.org',
+      '@type': 'JobPosting',
+      title: ad.title,
+      description: ad.description,
+      datePosted: new Date(ad.createdAt).toISOString(),
+      validThrough: ad.featuredUntil ? new Date(ad.featuredUntil).toISOString() : undefined,
+      url: adUrl,
+      employmentType: 'OTHER',
+      hiringOrganization: {
+        '@type': 'Organization',
+        name: ad.userId?.name || 'بازارینو',
+      },
+      jobLocation: ad.city ? {
+        '@type': 'Place',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: getCityLabel(ad.city),
+          addressCountry: countryLabel,
+        },
+      } : undefined,
+      ...(ad.price ? {
+        baseSalary: {
+          '@type': 'MonetaryAmount',
+          currency: 'EUR',
+          value: { '@type': 'QuantitativeValue', value: ad.price, unitText: 'MONTH' },
+        },
+      } : {}),
+    };
+  } else {
+    productLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: ad.title,
+      description: ad.description,
+      url: adUrl,
+      image: adImages,
+      ...(ad.price && ad.priceType === 'fixed' ? {
+        offers: {
+          '@type': 'Offer',
+          price: ad.price,
+          priceCurrency: 'EUR',
+          availability: 'https://schema.org/InStock',
+          url: adUrl,
+        },
+      } : {}),
+    };
+  }
+
+  if (ratingSummary?.count && ratingSummary.count > 0) {
+    productLd.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: ratingSummary.avg.toFixed(1),
+      reviewCount: ratingSummary.count,
+      bestRating: 5,
+      worstRating: 1,
     };
   }
 

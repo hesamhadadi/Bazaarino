@@ -1,17 +1,19 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import connectDB from '@/lib/mongodb';
 import Article from '@/models/Article';
+import '@/models/User';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
+import Footer from '@/components/layout/Footer';
 import { toFaDigits } from '@/lib/locale';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
-  title: 'اخبار و مقالات | بازارینو',
-  description: 'آخرین اخبار و مقالات بازارینو برای ایرانیان ایتالیا',
+  title: 'اخبار و مقالات',
+  description: 'آخرین اخبار، آموزش‌ها و تحلیل بازار برای ایرانیان اروپا در بازارینو.',
+  alternates: { canonical: '/news' },
 };
 
 const estimateReadMinutes = (text: string) => Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
@@ -88,8 +90,9 @@ export default async function NewsPage({ searchParams }: { searchParams?: { q?: 
           {articles.map((a: any) => (
             <Link key={a._id} href={`/news/${a.slug}`} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col">
               {a.coverImage && (
-                <div className="relative aspect-[16/9]">
-                  <Image src={a.coverImage} alt={a.title} fill className="object-cover" />
+                <div className="relative aspect-[16/9] bg-gray-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.coverImage} alt={a.title} className="absolute inset-0 w-full h-full object-cover" />
                 </div>
               )}
               <div className="p-4 flex-1 flex flex-col">
@@ -109,7 +112,8 @@ export default async function NewsPage({ searchParams }: { searchParams?: { q?: 
                 )}
                 <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
                   <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100">
-                    <Image src={a.authorId?.avatar || '/default-avatar.svg'} alt={a.authorId?.name || 'author'} width={24} height={24} className="w-full h-full object-cover" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={a.authorId?.avatar || '/default-avatar.svg'} alt={a.authorId?.name || 'author'} width={24} height={24} className="w-full h-full object-cover" />
                   </div>
                   <span>{a.authorId?.name || 'نویسنده بازارینو'}</span>
                 </div>
@@ -118,6 +122,7 @@ export default async function NewsPage({ searchParams }: { searchParams?: { q?: 
           ))}
         </div>
       </div>
+      <Footer />
       <BottomNav />
     </div>
   );

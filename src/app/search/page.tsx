@@ -14,6 +14,7 @@ import { SearchX, SlidersHorizontal } from 'lucide-react';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import CityIcon from '@/components/ui/CityIcon';
 import SaveSearchButton from '@/components/search/SaveSearchButton';
+import { getAppUrl } from '@/lib/app-url';
 
 interface SearchParams {
   q?: string;
@@ -190,8 +191,23 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const selectedCountry = searchParams.country || selectedCity?.country || getCountryByCity(searchParams.city);
   const citiesForCountry = getCitiesByCountry(selectedCountry);
 
+  const itemListLd = ads.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    numberOfItems: total,
+    itemListElement: ads.slice(0, 10).map((ad: any, idx: number) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      url: `${getAppUrl()}/ads/${ad._id}`,
+      name: ad.title,
+    })),
+  } : null;
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {itemListLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
+      )}
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-4 pb-24 md:pb-10">
