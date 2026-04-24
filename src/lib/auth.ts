@@ -5,6 +5,8 @@ import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import mongoose from 'mongoose';
+import { normalizePhone } from '@/lib/phone';
+import { verifyOtp } from '@/lib/otp';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -43,6 +45,51 @@ export const authOptions: NextAuthOptions = {
 
         if (!isPasswordValid) {
           throw new Error('ایمیل یا رمز عبور اشتباه است');
+        }
+
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          image: user.avatar || '/default-avatar.svg',
+        };
+      },
+    }),
+    CredentialsProvider({
+      id: 'phone-otp',
+      name: 'Phone OTP',
+      credentials: {
+        phone: { label: 'Phone', type: 'text' },
+        code: { label: 'Code', type: 'text' },
+      },
+      async authorize(credentials) {
+        const phone = normalizePhone(credentials?.phone || '');
+        const code = (credentials?.code || '').trim();
+        if (!phone || !/^\d{6}$/.test(code)) {
+          throw new Error('شماره یا کد نامعتبر');
+        }
+
+        const result = await verifyOtp(phone, code);
+        if (!result.ok) {
+          throw new Error(result.error || 'کد نامعتبر');
+        }
+
+        await connectDB();
+        let user = await User.findOne({ phone });
+        if (!user) {
+          // Auto-create user on first phone login
+          const placeholderEmail = `phone_${phone.replace('+', '')}@phone.bazaarino.local`;
+          user = await User.create({
+            name: `کاربر ${phone.slice(-4)}`,
+            email: placeholderEmail,
+            phone,
+            role: 'user',
+            isActive: true,
+          });
+        }
+        if (!user.isActive) {
+          throw new Error('حساب غیرفعال است');
         }
 
         return {

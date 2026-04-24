@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper, MessageCircle, Bell } from 'lucide-react';
+import { Home, Menu, X, Plus, User, LogOut, Settings, FileText, ChevronDown, Heart, Newspaper, MessageCircle, Bell, Bookmark } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useChat } from '@/components/providers/ChatProvider';
 import { toFaDigits } from '@/lib/locale';
@@ -112,6 +112,14 @@ export default function Navbar() {
                       >
                         <Heart size={14} />
                         علاقه‌مندی‌ها
+                      </Link>
+                      <Link
+                        href="/saved-searches"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Bookmark size={14} />
+                        جست‌وجوهای ذخیره شده
                       </Link>
                       <Link
                         href="/news"

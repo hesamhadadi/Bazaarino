@@ -102,6 +102,13 @@ export default function LoginPage() {
             ورود با حساب گوگل
           </button>
 
+          <Link
+            href="/auth/phone-login"
+            className="w-full flex items-center justify-center gap-3 border border-brand-200 bg-brand-50 hover:bg-brand-100 text-brand-700 py-3 rounded-xl font-medium text-sm mb-4"
+          >
+            📱 ورود با شماره موبایل
+          </Link>
+
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-gray-100"></div>
             <span className="text-xs text-gray-400">یا با ایمیل</span>
