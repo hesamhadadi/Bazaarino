@@ -3,9 +3,18 @@ import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { sendTelegramMessage } from '@/lib/telegram';
+import { getAppSettings } from '@/lib/settings';
 
 export async function POST(request: NextRequest) {
   try {
+    const settings = await getAppSettings();
+    if (!settings.registrationEnabled) {
+      return NextResponse.json(
+        { message: 'ثبت‌نام در سایت موقتاً غیرفعال است.' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { name, email, password, phone, city } = body;
 

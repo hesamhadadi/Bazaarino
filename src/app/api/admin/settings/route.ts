@@ -6,6 +6,7 @@ import Setting from '@/models/Setting';
 import { getAppUrl } from '@/lib/app-url';
 import crypto from 'crypto';
 import { DEFAULT_BRAND_PRIMARY, normalizeBrandPrimary } from '@/lib/brand-color';
+import { invalidateSettingsCache } from '@/lib/settings';
 
 async function ensureAdmin() {
   const session = await getServerSession(authOptions);
@@ -98,6 +99,7 @@ export async function PATCH(request: NextRequest) {
       },
       { new: true, upsert: true }
     );
+    invalidateSettingsCache();
     return NextResponse.json({ settings });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });

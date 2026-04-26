@@ -11,13 +11,17 @@ export default withAuth(
       return NextResponse.redirect(new URL('/', req.url));
     }
 
-    return NextResponse.next();
+    // Forward the current pathname so server components can render
+    // maintenance + announcement banners conditionally.
+    const res = NextResponse.next();
+    res.headers.set('x-pathname', pathname);
+    return res;
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
         const pathname = req.nextUrl.pathname;
-        
+
         // Admin/profile/favorites/new-ad require auth
         if (
           pathname.startsWith('/admin') ||
@@ -37,5 +41,8 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*', '/favorites/:path*', '/messages/:path*', '/saved-searches/:path*', '/ads/new', '/news/new'],
+  matcher: [
+    // Run on every page except static assets / Next internals / API.
+    '/((?!api|_next/static|_next/image|favicon|icons|manifest|robots|sitemap|feed|.*\\.(?:png|jpg|jpeg|svg|webp|ico|css|js|txt|xml|json|woff|woff2)$).*)',
+  ],
 };

@@ -8,6 +8,7 @@ import { computeHousingNearby } from '@/lib/map-data';
 import { sendTelegramMessage, sendTelegramPhoto } from '@/lib/telegram';
 import { getAppUrl } from '@/lib/app-url';
 import Setting from '@/models/Setting';
+import { getAppSettings } from '@/lib/settings';
 import { getCityLabel, getCategoryById, getCountryByCity } from '@/lib/constants';
 import { attachMarketPriceToAds } from '@/lib/market-price';
 
@@ -148,6 +149,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'کاربر معتبر یافت نشد، لطفاً دوباره وارد شوید' }, { status: 401 });
     }
 
+    // Per-user ad-count limit (admins/editors are exempt)
+    const appSettings = await getAppSettings();
+    const isPrivileged = session.user.role === 'admin' || session.user.role === 'editor';
+    if (!isPrivileged && appSettings.maxAdsPerUser > 0) {
+      const userAdCount = await Ad.countDocuments({
+        userId,
+        status: { $in: ['pending', 'approved'] },
+      });
+      if (userAdCount >= appSettings.maxAdsPerUser) {
+        return NextResponse.json(
+          {
+            message: `سقف تعداد آگهی فعال شما (${appSettings.maxAdsPerUser} آگهی) پر است. ابتدا یک آگهی قدیمی را حذف یا به‌فروش‌رفته علامت بزنید.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const preferredAgeMinNum = housing?.preferredAgeMin !== undefined && housing?.preferredAgeMin !== null && housing?.preferredAgeMin !== ''
       ? Number(housing.preferredAgeMin)
       : undefined;
@@ -209,7 +228,7 @@ export async function POST(request: NextRequest) {
       bumpedAt: new Date(),
       housing: housingPayload ? { ...housingPayload, nearby } : undefined,
       userId,
-      status: 'pending',
+      status: appSettings.adAutoApprove || isPrivileged ? 'approved' : 'pending',
     });
 
     try {
@@ -237,7 +256,10 @@ export async function POST(request: NextRequest) {
       }
     } catch {}
 
-    return NextResponse.json({ message: 'آگهی با موفقیت ثبت شد و در انتظار تأیید است', ad }, { status: 201 });
+    const successMessage = appSettings.adAutoApprove || isPrivileged
+      ? 'آگهی با موفقیت ثبت و منتشر شد'
+      : 'آگهی با موفقیت ثبت شد و در انتظار تأیید است';
+    return NextResponse.json({ message: successMessage, ad }, { status: 201 });
   } catch (error: any) {
     console.error('Create ad error:', error);
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });

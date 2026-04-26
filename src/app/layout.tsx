@@ -11,6 +11,8 @@ import BrandColorProvider from '@/components/providers/BrandColorProvider';
 import ChatProvider from '@/components/providers/ChatProvider';
 import PushNotificationProvider from '@/components/providers/PushNotificationProvider';
 import CookieBanner from '@/components/layout/CookieBanner';
+import AnnouncementBar from '@/components/layout/AnnouncementBar';
+import MaintenanceGate from '@/components/layout/MaintenanceGate';
 import { getAppUrl } from '@/lib/app-url';
 
 const vazir = Vazirmatn({
@@ -124,7 +126,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <BrandColorProvider />
           <ChatProvider>
-            {children}
+            <AnnouncementBar />
+            <MaintenanceGate>{children}</MaintenanceGate>
             <PWAInstallPrompt />
             <PushNotificationProvider />
             <CookieBanner />
