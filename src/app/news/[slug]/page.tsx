@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
 import ShareButton from '@/components/ads/ShareButton';
+import ArticleBody from '@/components/articles/ArticleBody';
 import { toFaDigits } from '@/lib/locale';
 import { getAppUrl } from '@/lib/app-url';
 import {
@@ -242,11 +243,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           </figure>
         )}
 
-        <div className="prose prose-base max-w-none text-gray-800 leading-9">
-          {article.content.split('\n').filter(Boolean).map((p: string, idx: number) => (
-            <p key={idx}>{p}</p>
-          ))}
-        </div>
+        <ArticleBody content={article.content || ''} />
 
         <div className="mt-8 flex items-center justify-between gap-3 border-t border-b border-gray-100 py-4">
           <ShareButton title={article.title} text={article.excerpt} />
