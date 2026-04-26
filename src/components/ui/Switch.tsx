@@ -12,9 +12,23 @@ type Props = {
   className?: string;
 };
 
+// The site is rendered RTL (<html dir="rtl">), so a positive `translate-x`
+// pushes the thumb further past the right edge of the track and clips it.
+// We use negative translates to move the thumb inward / toward the visual
+// LEFT (which is the natural "ON" position in RTL).
 const SIZE_CLS = {
-  sm: { track: 'h-5 w-9', thumb: 'h-3.5 w-3.5', on: 'translate-x-0.5', off: 'translate-x-[18px]' },
-  md: { track: 'h-6 w-11', thumb: 'h-4 w-4', on: 'translate-x-1', off: 'translate-x-6' },
+  sm: {
+    track: 'h-5 w-9',
+    thumb: 'h-3.5 w-3.5',
+    on: '-translate-x-[18px]',
+    off: '-translate-x-0.5',
+  },
+  md: {
+    track: 'h-6 w-11',
+    thumb: 'h-4 w-4',
+    on: '-translate-x-6',
+    off: '-translate-x-1',
+  },
 };
 
 export default function Switch({
