@@ -29,6 +29,12 @@ const siteDescription =
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
+  alternates: {
+    canonical: '/',
+    types: {
+      'application/rss+xml': '/feed.xml',
+    },
+  },
   title: {
     default: siteTitle,
     template: '%s | بازارینو',
@@ -42,7 +48,6 @@ export const metadata: Metadata = {
   applicationName: siteName,
   authors: [{ name: 'Bazaarino Team' }],
   manifest: '/manifest.webmanifest',
-  alternates: { canonical: '/' },
   robots: {
     index: true,
     follow: true,

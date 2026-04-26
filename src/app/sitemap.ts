@@ -55,10 +55,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let adRoutes: MetadataRoute.Sitemap = [];
   let articleRoutes: MetadataRoute.Sitemap = [];
+  let tagRoutes: MetadataRoute.Sitemap = [];
+  let authorRoutes: MetadataRoute.Sitemap = [];
 
   try {
     await connectDB();
-    const [ads, articles] = await Promise.all([
+    const [ads, articles, tagAgg, authorAgg] = await Promise.all([
       Ad.find({ status: 'approved' })
         .select('_id updatedAt createdAt')
         .sort({ updatedAt: -1 })
@@ -69,6 +71,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .sort({ updatedAt: -1 })
         .limit(MAX_ARTICLES)
         .lean(),
+      Article.aggregate([
+        { $match: { status: 'published' } },
+        { $unwind: '$tags' },
+        { $group: { _id: '$tags', lastModified: { $max: '$updatedAt' } } },
+        { $limit: 500 },
+      ]),
+      Article.aggregate([
+        { $match: { status: 'published' } },
+        { $group: { _id: '$authorId', lastModified: { $max: '$updatedAt' } } },
+        { $limit: 200 },
+      ]),
     ]);
 
     adRoutes = ads.map((ad: any) => ({
@@ -84,9 +97,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.6,
     }));
+
+    tagRoutes = (tagAgg as any[]).map((t) => ({
+      url: `${base}/news/tag/${encodeURIComponent(t._id)}`,
+      lastModified: t.lastModified || now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    }));
+
+    authorRoutes = (authorAgg as any[])
+      .filter((a) => a._id)
+      .map((a) => ({
+        url: `${base}/news/author/${a._id}`,
+        lastModified: a.lastModified || now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.4,
+      }));
   } catch (e) {
-    // DB not available – still return static parts.
+    console.error('[sitemap] DB error', e);
   }
 
-  return [...staticRoutes, ...countryCityRoutes, ...adRoutes, ...articleRoutes];
+  return [
+    ...staticRoutes,
+    ...countryCityRoutes,
+    ...adRoutes,
+    ...articleRoutes,
+    ...tagRoutes,
+    ...authorRoutes,
+  ];
 }

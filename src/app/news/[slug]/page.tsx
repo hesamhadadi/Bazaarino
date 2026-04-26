@@ -1,104 +1,118 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import connectDB from '@/lib/mongodb';
-import Article from '@/models/Article';
-import '@/models/User';
+import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
+import ShareButton from '@/components/ads/ShareButton';
 import { toFaDigits } from '@/lib/locale';
-import { notFound } from 'next/navigation';
 import { getAppUrl } from '@/lib/app-url';
+import {
+  fetchArticleBySlug,
+  fetchRelatedArticles,
+  fetchPrevNextArticles,
+  incrementArticleViews,
+} from '@/lib/articles';
+import { ArrowRight, ArrowLeft, Eye, Clock, Calendar, Tag } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
-const estimateReadMinutes = (text: string) => Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
 
-async function getArticle(slug: string) {
-  try {
-    await connectDB();
-    const item = await Article.findOne({ slug, status: 'published' })
-      .populate('authorId', 'name avatar role')
-      .lean();
-    if (!item) return null;
-    return JSON.parse(JSON.stringify(item));
-  } catch {
-    return null;
-  }
-}
+const estimateReadMinutes = (text: string) =>
+  Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
 
-async function getRelatedArticles(slug: string, tags: string[] = []) {
-  try {
-    await connectDB();
-    const items = await Article.find({
-      status: 'published',
-      slug: { $ne: slug },
-      ...(tags.length ? { tags: { $in: tags } } : {}),
-    })
-      .populate('authorId', 'name')
-      .sort({ isHot: -1, createdAt: -1 })
-      .limit(3)
-      .lean();
-    return JSON.parse(JSON.stringify(items));
-  } catch {
-    return [];
-  }
-}
-
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = await getArticle(params.slug);
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const article = await fetchArticleBySlug(params.slug);
   if (!article) {
-    return { title: 'خبر یافت نشد' };
+    return { title: 'خبر یافت نشد', robots: { index: false, follow: true } };
   }
   const base = getAppUrl();
   const canonicalPath = `/news/${encodeURIComponent(article.slug)}`;
   const image = article.coverImage || '/og-default.png';
+  const fullImage = image.startsWith('http') ? image : `${base}${image}`;
 
   return {
     title: article.title,
     description: article.excerpt,
-    alternates: { canonical: canonicalPath },
+    keywords: Array.isArray(article.tags) ? article.tags.join(', ') : undefined,
+    authors: article.authorId?.name ? [{ name: article.authorId.name }] : undefined,
+    alternates: {
+      canonical: canonicalPath,
+      types: {
+        'application/rss+xml': '/feed.xml',
+      },
+    },
     openGraph: {
       title: article.title,
       description: article.excerpt,
       url: `${base}${canonicalPath}`,
       type: 'article',
       locale: 'fa_IR',
-      images: [{ url: image.startsWith('http') ? image : `${base}${image}` }],
+      siteName: 'بازارینو',
+      images: [{ url: fullImage, width: 1200, height: 630, alt: article.title }],
       publishedTime: article.createdAt ? new Date(article.createdAt).toISOString() : undefined,
       modifiedTime: article.updatedAt ? new Date(article.updatedAt).toISOString() : undefined,
       authors: article.authorId?.name ? [article.authorId.name] : undefined,
       tags: Array.isArray(article.tags) ? article.tags : undefined,
+      section: 'اخبار',
     },
     twitter: {
       card: 'summary_large_image',
       title: article.title,
       description: article.excerpt,
-      images: [image.startsWith('http') ? image : `${base}${image}`],
+      images: [fullImage],
     },
   };
 }
 
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = await getArticle(params.slug);
+  const article = await fetchArticleBySlug(params.slug);
   if (!article) {
     notFound();
   }
+
+  // Fire-and-forget view increment (skipped for bot user-agents to keep stats clean).
+  const ua = headers().get('user-agent') || '';
+  const isBot = /bot|crawler|spider|crawling|preview|facebookexternalhit|whatsapp|telegram|slack/i.test(ua);
+  if (!isBot) {
+    incrementArticleViews(String(article._id));
+  }
+
+  const wordCount = (article.content || '').trim().split(/\s+/).length;
   const readMinutes = estimateReadMinutes(article.content || '');
-  const relatedArticles = await getRelatedArticles(article.slug, Array.isArray(article.tags) ? article.tags : []);
+  const tags = Array.isArray(article.tags) ? article.tags : [];
+
+  const [relatedArticles, { prev, next }] = await Promise.all([
+    fetchRelatedArticles(article.slug, tags),
+    fetchPrevNextArticles(new Date(article.createdAt)),
+  ]);
 
   const base = getAppUrl();
   const articleUrl = `${base}/news/${encodeURIComponent(article.slug)}`;
+  const fullImage = article.coverImage
+    ? (article.coverImage.startsWith('http') ? article.coverImage : `${base}${article.coverImage}`)
+    : `${base}/og-default.png`;
+
   const articleLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'NewsArticle',
     headline: article.title,
     description: article.excerpt,
-    image: article.coverImage ? [article.coverImage] : [`${base}/og-default.svg`],
+    image: [fullImage],
     datePublished: new Date(article.createdAt).toISOString(),
     dateModified: new Date(article.updatedAt || article.createdAt).toISOString(),
+    inLanguage: 'fa-IR',
+    articleSection: tags[0] || 'اخبار',
+    wordCount,
+    keywords: tags.join(', ') || undefined,
     author: {
       '@type': 'Person',
       name: article.authorId?.name || 'تحریریه بازارینو',
+      ...(article.authorId?._id ? { url: `${base}/news/author/${article.authorId._id}` } : {}),
     },
     publisher: {
       '@type': 'Organization',
@@ -106,15 +120,32 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       logo: { '@type': 'ImageObject', url: `${base}/logo-eu.svg` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
-    keywords: Array.isArray(article.tags) ? article.tags.join(', ') : undefined,
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['h1', '[data-speakable-summary]'],
+    },
   };
+
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'خانه', item: base },
       { '@type': 'ListItem', position: 2, name: 'اخبار', item: `${base}/news` },
-      { '@type': 'ListItem', position: 3, name: article.title, item: articleUrl },
+      ...(tags[0]
+        ? [{
+            '@type': 'ListItem',
+            position: 3,
+            name: tags[0],
+            item: `${base}/news/tag/${encodeURIComponent(tags[0])}`,
+          }]
+        : []),
+      {
+        '@type': 'ListItem',
+        position: tags[0] ? 4 : 3,
+        name: article.title,
+        item: articleUrl,
+      },
     ],
   };
 
@@ -122,55 +153,165 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     <div className="min-h-screen bg-gray-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      {prev && (
+        <link rel="prev" href={`${base}/news/${encodeURIComponent(prev.slug)}`} />
+      )}
+      {next && (
+        <link rel="next" href={`${base}/news/${encodeURIComponent(next.slug)}`} />
+      )}
       <Navbar />
+
       <article className="max-w-3xl mx-auto px-4 py-8 pb-24 md:pb-10">
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {article.isHot && (
-            <span className="text-xs px-2.5 py-1 rounded-full bg-red-500 text-white">خبر داغ</span>
+        <nav aria-label="breadcrumb" className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
+          <Link href="/" className="hover:text-brand-600">خانه</Link>
+          <span>/</span>
+          <Link href="/news" className="hover:text-brand-600">اخبار</Link>
+          {tags[0] && (
+            <>
+              <span>/</span>
+              <Link href={`/news/tag/${encodeURIComponent(tags[0])}`} className="hover:text-brand-600">
+                {tags[0]}
+              </Link>
+            </>
           )}
-          <span className="text-xs text-gray-400">{toFaDigits(new Date(article.createdAt).toLocaleDateString('fa-IR'))}</span>
-          <span className="text-xs text-gray-400">• {toFaDigits(String(readMinutes))} دقیقه مطالعه</span>
-        </div>
-        <h1 className="text-3xl font-black text-gray-900 leading-tight mb-4">{article.title}</h1>
-        <p className="text-gray-600 text-sm mb-6">{article.excerpt}</p>
-        {Array.isArray(article.tags) && article.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {article.tags.map((tag: string) => (
-              <Link key={tag} href={`/news?tag=${encodeURIComponent(tag)}`} className="text-xs px-3 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-100">#{tag}</Link>
-            ))}
+        </nav>
+
+        <header>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            {article.isHot && (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-red-500 text-white">خبر داغ</span>
+            )}
+            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+              <Calendar size={12} />
+              <time dateTime={new Date(article.createdAt).toISOString()}>
+                {toFaDigits(new Date(article.createdAt).toLocaleDateString('fa-IR'))}
+              </time>
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+              <Clock size={12} /> {toFaDigits(String(readMinutes))} دقیقه مطالعه
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+              <Eye size={12} /> {toFaDigits(String((article.views || 0) + 1))} بازدید
+            </span>
           </div>
-        )}
+          <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4">
+            {article.title}
+          </h1>
+          <p data-speakable-summary className="text-gray-600 text-base mb-6 leading-8">
+            {article.excerpt}
+          </p>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {tags.map((tag: string) => (
+                <Link
+                  key={tag}
+                  href={`/news/tag/${encodeURIComponent(tag)}`}
+                  rel="tag"
+                  className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-100 hover:bg-brand-100"
+                >
+                  <Tag size={11} />
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          )}
+        </header>
 
         {article.coverImage && (
-          <div className="relative aspect-[16/9] rounded-3xl overflow-hidden border border-gray-100 mb-6 bg-gray-100">
+          <figure className="relative aspect-[16/9] rounded-3xl overflow-hidden border border-gray-100 mb-8 bg-gray-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={article.coverImage} alt={article.title} className="absolute inset-0 w-full h-full object-cover" />
-          </div>
+            <img
+              src={article.coverImage}
+              alt={article.title}
+              loading="eager"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </figure>
         )}
 
-        <div className="prose prose-sm max-w-none text-gray-800 leading-8">
+        <div className="prose prose-base max-w-none text-gray-800 leading-9">
           {article.content.split('\n').filter(Boolean).map((p: string, idx: number) => (
             <p key={idx}>{p}</p>
           ))}
         </div>
 
-        <div className="mt-10 border-t border-gray-100 pt-4 flex items-center gap-3">
+        <div className="mt-8 flex items-center justify-between gap-3 border-t border-b border-gray-100 py-4">
+          <ShareButton title={article.title} text={article.excerpt} />
+          <Link href="/news" className="text-sm text-gray-600 hover:text-brand-600 inline-flex items-center gap-1">
+            <ArrowRight size={14} /> بازگشت به اخبار
+          </Link>
+        </div>
+
+        <address className="not-italic mt-6 flex items-center gap-3">
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={article.authorId?.avatar || '/default-avatar.svg'} alt={article.authorId?.name || 'author'} width={48} height={48} className="w-full h-full object-cover" />
+            <img
+              src={article.authorId?.avatar || '/default-avatar.svg'}
+              alt={article.authorId?.name || 'author'}
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800">{article.authorId?.name || 'نویسنده بازارینو'}</p>
+            {article.authorId?._id ? (
+              <Link
+                href={`/news/author/${article.authorId._id}`}
+                className="text-sm font-semibold text-gray-800 hover:text-brand-600"
+                rel="author"
+              >
+                {article.authorId.name || 'نویسنده بازارینو'}
+              </Link>
+            ) : (
+              <p className="text-sm font-semibold text-gray-800">نویسنده بازارینو</p>
+            )}
             <p className="text-xs text-gray-500">تحریریه بازارینو</p>
           </div>
-        </div>
+        </address>
+
+        {(prev || next) && (
+          <nav className="mt-8 grid sm:grid-cols-2 gap-3" aria-label="ناوبری مقالات">
+            {prev ? (
+              <Link
+                href={`/news/${encodeURIComponent(prev.slug)}`}
+                rel="prev"
+                className="group rounded-2xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                  <ArrowRight size={12} /> مقاله قبلی
+                </div>
+                <p className="text-sm font-semibold text-gray-800 line-clamp-2 group-hover:text-brand-600">
+                  {prev.title}
+                </p>
+              </Link>
+            ) : <span />}
+            {next ? (
+              <Link
+                href={`/news/${encodeURIComponent(next.slug)}`}
+                rel="next"
+                className="group rounded-2xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow text-left"
+              >
+                <div className="flex items-center justify-end gap-1 text-xs text-gray-400 mb-1">
+                  مقاله بعدی <ArrowLeft size={12} />
+                </div>
+                <p className="text-sm font-semibold text-gray-800 line-clamp-2 group-hover:text-brand-600">
+                  {next.title}
+                </p>
+              </Link>
+            ) : <span />}
+          </nav>
+        )}
 
         {relatedArticles.length > 0 && (
           <section className="mt-10 border-t border-gray-100 pt-6">
             <h2 className="text-lg font-bold text-gray-800 mb-4">مطالب مرتبط</h2>
             <div className="grid md:grid-cols-3 gap-3">
               {relatedArticles.map((item: any) => (
-                <Link key={item._id} href={`/news/${item.slug}`} className="rounded-2xl border border-gray-100 p-3 bg-white hover:shadow-md transition-shadow">
+                <Link
+                  key={item._id}
+                  href={`/news/${encodeURIComponent(item.slug)}`}
+                  className="rounded-2xl border border-gray-100 p-3 bg-white hover:shadow-md transition-shadow"
+                >
                   <p className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1">{item.title}</p>
                   <p className="text-xs text-gray-500 line-clamp-2">{item.excerpt}</p>
                 </Link>

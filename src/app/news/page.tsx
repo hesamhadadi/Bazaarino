@@ -77,9 +77,20 @@ export default async function NewsPage({ searchParams }: { searchParams?: { q?: 
               {currentTag && <span>برچسب: <b className="text-gray-700">{currentTag}</b></span>}
             </div>
           )}
-          {canPublish && (
-            <Link href="/news/new" className="inline-flex mt-3 text-sm text-brand-600 font-semibold">+ انتشار مقاله</Link>
-          )}
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            {canPublish && (
+              <Link href="/news/new" className="inline-flex text-sm text-brand-600 font-semibold">
+                + انتشار مقاله
+              </Link>
+            )}
+            <a
+              href="/feed.xml"
+              className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-orange-600"
+              title="فید RSS مقالات"
+            >
+              📡 RSS
+            </a>
+          </div>
         </div>
 
         {articles.length === 0 && (
@@ -88,7 +99,7 @@ export default async function NewsPage({ searchParams }: { searchParams?: { q?: 
 
         <div className="grid md:grid-cols-2 gap-4 items-stretch auto-rows-fr">
           {articles.map((a: any) => (
-            <Link key={a._id} href={`/news/${a.slug}`} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col">
+            <Link key={a._id} href={`/news/${encodeURIComponent(a.slug)}`} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col">
               {a.coverImage && (
                 <div className="relative aspect-[16/9] bg-gray-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

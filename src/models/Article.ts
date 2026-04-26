@@ -10,6 +10,7 @@ export interface IArticle extends Document {
   isHot: boolean;
   status: 'draft' | 'published';
   authorId: mongoose.Types.ObjectId;
+  views: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,11 +26,15 @@ const ArticleSchema = new Schema<IArticle>(
     isHot: { type: Boolean, default: false },
     status: { type: String, enum: ['draft', 'published'], default: 'published' },
     authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    views: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
 ArticleSchema.index({ createdAt: -1 });
+ArticleSchema.index({ tags: 1, createdAt: -1 });
+ArticleSchema.index({ authorId: 1, createdAt: -1 });
+ArticleSchema.index({ status: 1, createdAt: -1 });
 
 const Article = mongoose.models.Article || mongoose.model<IArticle>('Article', ArticleSchema);
 
