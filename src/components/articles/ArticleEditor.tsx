@@ -318,7 +318,7 @@ export default function ArticleEditor({
       {/* SIDEBAR */}
       <aside className="space-y-4">
         {/* Action card */}
-        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-4 space-y-3 lg:sticky lg:top-20">
+        <div className="relative z-20 rounded-2xl border border-gray-100 bg-white shadow-sm p-4 space-y-3 lg:sticky lg:top-20">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-900">
             <Sparkles size={14} className="text-orange-500" />
             انتشار
