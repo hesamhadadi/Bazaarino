@@ -225,19 +225,39 @@ export default async function AuthorPage({ params }: { params: { id: string } })
           <span className="text-gray-700 truncate max-w-[40ch]">{author.name}</span>
         </nav>
 
-        {/* Hero card with banner + avatar overlap */}
+        {/* Hero card with banner + avatar overlap. The banner uses a "blurred
+            fill" technique (à la Spotify / Apple Music): the source image
+            is rendered twice — once as a heavy-blur background that always
+            fills the box edge-to-edge, and once on top with object-contain
+            so the entire image is visible without any cropping. This works
+            beautifully with any aspect ratio (portrait, landscape, square)
+            and keeps a consistent box height across the site. */}
         <header className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-          {/* Banner — short, magazine-style strip. Fixed mobile height keeps phones tight,
-              desktop uses an aspect ratio with a hard max-height so wide screens don't blow it up */}
-          <div className="relative w-full h-32 md:h-auto md:aspect-[6/1] md:max-h-[200px] overflow-hidden bg-gradient-to-br from-orange-400 via-amber-400 to-rose-400">
+          <div className="relative w-full h-44 md:h-64 overflow-hidden bg-gradient-to-br from-orange-400 via-amber-400 to-rose-400">
             {author.banner ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={author.banner}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover object-center"
-                loading="eager"
-              />
+              <>
+                {/* Blurred fill — covers the whole strip even if source is portrait */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 scale-110"
+                  style={{
+                    backgroundImage: `url(${author.banner})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    filter: 'blur(28px) saturate(1.1)',
+                  }}
+                />
+                {/* Subtle darkening so foreground image pops */}
+                <div className="absolute inset-0 bg-black/20" />
+                {/* Foreground image — entire photo always visible */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={author.banner}
+                  alt=""
+                  className="relative z-10 h-full w-full object-contain"
+                  loading="eager"
+                />
+              </>
             ) : (
               // Decorative dot pattern when no custom banner
               <div
@@ -251,13 +271,14 @@ export default async function AuthorPage({ params }: { params: { id: string } })
               />
             )}
             {/* Bottom fade for legibility regardless of cover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent z-20 pointer-events-none" />
           </div>
 
           {/* Avatar overlaps the cover; ALL text sits below the cover so it's
-              never rendered on top of a busy banner image */}
+              never rendered on top of a busy banner image. z-30 keeps the
+              avatar above the banner's bottom-fade overlay. */}
           <div className="px-5 md:px-7 pb-5 md:pb-6">
-            <div className="-mt-12 md:-mt-16 mb-3 flex">
+            <div className="-mt-14 md:-mt-20 mb-3 flex relative z-30">
               <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-white ring-4 ring-white shadow-lg flex-shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
