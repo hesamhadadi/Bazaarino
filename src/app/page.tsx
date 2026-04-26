@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import AdCard from '@/components/ads/AdCard';
 import LatestAdsSection from '@/components/home/LatestAdsSection';
 import HomeSearchPanel from '@/components/home/HomeSearchPanel';
+import HomeArticlesSection from '@/components/home/HomeArticlesSection';
 import CityIcon from '@/components/ui/CityIcon';
 import { CATEGORIES, CITIES } from '@/lib/constants';
 import { getCategoryImage } from '@/lib/category-images';
@@ -41,6 +42,23 @@ async function getLatestAds() {
   }
 }
 
+async function getHomeArticles() {
+  try {
+    const Article = (await import('@/models/Article')).default;
+    await import('@/models/User');
+    await connectDB();
+    const items = await Article.find({ status: 'published' })
+      .select('title slug excerpt coverImage tags isHot views createdAt publishedAt')
+      .sort({ isHot: -1, publishedAt: -1, createdAt: -1 })
+      .limit(5)
+      .lean();
+    return JSON.parse(JSON.stringify(items));
+  } catch (err) {
+    console.error('[home/articles] failed', err);
+    return [];
+  }
+}
+
 async function getFeaturedAds() {
   try {
     await connectDB();
@@ -68,7 +86,11 @@ const TRENDING_QUERIES = [
 ];
 
 export default async function HomePage() {
-  const [latestData, featuredAds] = await Promise.all([getLatestAds(), getFeaturedAds()]);
+  const [latestData, featuredAds, homeArticles] = await Promise.all([
+    getLatestAds(),
+    getFeaturedAds(),
+    getHomeArticles(),
+  ]);
   const latestAds = latestData.ads;
 
   // Top 8 cities for the city pill row
@@ -289,6 +311,9 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+
+      {/* MAGAZINE / ARTICLES */}
+      <HomeArticlesSection articles={homeArticles} />
 
       <Footer />
       <BottomNav />

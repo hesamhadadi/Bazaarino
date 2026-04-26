@@ -54,6 +54,7 @@ export default async function EditArticlePage({ params }: { params: { slug: stri
           tags: article.tags,
           isHot: article.isHot,
           status: article.status,
+          scheduledFor: article.scheduledFor || null,
         }}
         redirectTo="/admin/articles"
         allowDelete={isAdmin}

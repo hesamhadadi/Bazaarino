@@ -8,7 +8,9 @@ export interface IArticle extends Document {
   coverImage?: string;
   tags?: string[];
   isHot: boolean;
-  status: 'draft' | 'published';
+  status: 'draft' | 'scheduled' | 'published';
+  scheduledFor?: Date;
+  publishedAt?: Date;
   authorId: mongoose.Types.ObjectId;
   views: number;
   createdAt: Date;
@@ -24,7 +26,13 @@ const ArticleSchema = new Schema<IArticle>(
     coverImage: { type: String },
     tags: [{ type: String }],
     isHot: { type: Boolean, default: false },
-    status: { type: String, enum: ['draft', 'published'], default: 'published' },
+    status: {
+      type: String,
+      enum: ['draft', 'scheduled', 'published'],
+      default: 'published',
+    },
+    scheduledFor: { type: Date },
+    publishedAt: { type: Date },
     authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     views: { type: Number, default: 0 },
   },
@@ -35,6 +43,8 @@ ArticleSchema.index({ createdAt: -1 });
 ArticleSchema.index({ tags: 1, createdAt: -1 });
 ArticleSchema.index({ authorId: 1, createdAt: -1 });
 ArticleSchema.index({ status: 1, createdAt: -1 });
+ArticleSchema.index({ status: 1, scheduledFor: 1 });
+ArticleSchema.index({ publishedAt: -1 });
 
 const Article = mongoose.models.Article || mongoose.model<IArticle>('Article', ArticleSchema);
 

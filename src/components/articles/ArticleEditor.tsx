@@ -12,6 +12,8 @@ import {
   Sparkles,
   Eye,
   X,
+  Clock,
+  CalendarClock,
 } from 'lucide-react';
 import SmartSelect from '@/components/ui/SmartSelect';
 import Switch from '@/components/ui/Switch';
@@ -24,7 +26,8 @@ export type ArticleEditorInitial = {
   coverImage?: string;
   tags?: string[];
   isHot?: boolean;
-  status?: 'draft' | 'published';
+  status?: 'draft' | 'scheduled' | 'published';
+  scheduledFor?: string | Date | null;
 };
 
 type Props = {
@@ -36,9 +39,27 @@ type Props = {
 };
 
 const STATUS_OPTIONS = [
-  { value: 'published', label: 'منتشر شده' },
+  { value: 'published', label: 'منتشر کن همین الان' },
+  { value: 'scheduled', label: 'انتشار زمان‌بندی شده' },
   { value: 'draft', label: 'پیش‌نویس' },
 ];
+
+/** Convert a Date or ISO string into "YYYY-MM-DDTHH:mm" for <input type="datetime-local">. */
+const toLocalInput = (d: Date | string | null | undefined): string => {
+  if (!d) return '';
+  const date = typeof d === 'string' ? new Date(d) : d;
+  if (Number.isNaN(date.getTime())) return '';
+  const tz = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - tz).toISOString().slice(0, 16);
+};
+
+/** Default suggestion: tomorrow 09:00 local. */
+const defaultScheduleSuggestion = (): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9, 0, 0, 0);
+  return toLocalInput(d);
+};
 
 const estimateReadMinutes = (text: string) =>
   Math.max(1, Math.ceil((text || '').trim().split(/\s+/).filter(Boolean).length / 220));
@@ -58,7 +79,12 @@ export default function ArticleEditor({
   const [coverImage, setCoverImage] = useState(initial?.coverImage || '');
   const [tags, setTags] = useState((initial?.tags || []).join(', '));
   const [isHot, setIsHot] = useState(Boolean(initial?.isHot));
-  const [status, setStatus] = useState<'draft' | 'published'>(initial?.status || 'published');
+  const [status, setStatus] = useState<'draft' | 'scheduled' | 'published'>(
+    initial?.status || 'published',
+  );
+  const [scheduledFor, setScheduledFor] = useState<string>(
+    toLocalInput(initial?.scheduledFor) || '',
+  );
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -93,6 +119,17 @@ export default function ArticleEditor({
       toast.error('عنوان، خلاصه و متن الزامی است');
       return;
     }
+    if (status === 'scheduled') {
+      if (!scheduledFor) {
+        toast.error('برای انتشار زمان‌بندی شده تاریخ و ساعت تعیین کن');
+        return;
+      }
+      const dt = new Date(scheduledFor);
+      if (Number.isNaN(dt.getTime()) || dt.getTime() <= Date.now()) {
+        toast.error('تاریخ انتشار باید در آینده باشد');
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const payload = {
@@ -103,6 +140,10 @@ export default function ArticleEditor({
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
         isHot,
         status,
+        scheduledFor:
+          status === 'scheduled' && scheduledFor
+            ? new Date(scheduledFor).toISOString()
+            : null,
       };
       const url = isEdit ? `/api/articles/${initial!.slug}` : '/api/articles';
       const method = isEdit ? 'PATCH' : 'POST';
@@ -116,7 +157,15 @@ export default function ArticleEditor({
         toast.error(data.message || 'خطا در ذخیره');
         return;
       }
-      toast.success(isEdit ? 'مقاله ذخیره شد' : 'مقاله منتشر شد');
+      toast.success(
+        status === 'scheduled'
+          ? 'مقاله برای انتشار زمان‌بندی شد'
+          : status === 'draft'
+            ? 'پیش‌نویس ذخیره شد'
+            : isEdit
+              ? 'مقاله ذخیره شد'
+              : 'مقاله منتشر شد',
+      );
       router.push(redirectTo);
       router.refresh();
     } catch {
@@ -279,12 +328,38 @@ export default function ArticleEditor({
             <label className="block text-[11px] font-semibold text-gray-500 mb-1.5">وضعیت</label>
             <SmartSelect
               value={status}
-              onChange={(v) => setStatus(v as 'draft' | 'published')}
+              onChange={(v) => {
+                const next = v as 'draft' | 'scheduled' | 'published';
+                setStatus(next);
+                if (next === 'scheduled' && !scheduledFor) {
+                  setScheduledFor(defaultScheduleSuggestion());
+                }
+              }}
               options={STATUS_OPTIONS}
               placeholder="انتخاب وضعیت"
               clearable={false}
             />
           </div>
+
+          {status === 'scheduled' && (
+            <div className="rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50/70 to-amber-50/40 px-3 py-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-orange-700">
+                <CalendarClock size={13} />
+                زمان انتشار خودکار
+              </div>
+              <input
+                type="datetime-local"
+                value={scheduledFor}
+                onChange={(e) => setScheduledFor(e.target.value)}
+                min={toLocalInput(new Date())}
+                className="w-full bg-white border border-orange-200 hover:border-orange-300 focus:border-orange-400 rounded-lg px-3 py-2 text-sm outline-none transition"
+              />
+              <p className="text-[10px] text-gray-600 leading-5 flex items-start gap-1">
+                <Clock size={10} className="mt-0.5 shrink-0" />
+                مقاله در زمان تعیین شده (یا اولین چک ساعتی بعدش) به‌صورت خودکار منتشر می‌شود.
+              </p>
+            </div>
+          )}
 
           <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
             <Switch
@@ -311,7 +386,13 @@ export default function ArticleEditor({
               ) : (
                 <Save size={16} />
               )}
-              {isEdit ? 'ذخیره تغییرات' : 'انتشار مقاله'}
+              {isEdit
+                ? 'ذخیره تغییرات'
+                : status === 'scheduled'
+                  ? 'زمان‌بندی انتشار'
+                  : status === 'draft'
+                    ? 'ذخیره پیش‌نویس'
+                    : 'انتشار مقاله'}
             </button>
 
             {isEdit && initial?.slug && (

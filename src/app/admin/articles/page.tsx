@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Calendar, Eye, Plus, Edit3, ArrowUpRight, Flame, FileText } from 'lucide-react';
+import { Calendar, Eye, Plus, Edit3, ArrowUpRight, Flame, FileText, Clock } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Article from '@/models/Article';
 import '@/models/User';
@@ -16,6 +16,18 @@ async function getArticles() {
       .sort({ createdAt: -1 })
       .limit(200)
       .lean();
+    // Display order: scheduled (soonest first) → drafts → published (newest first).
+    const order = (a: any) =>
+      a.status === 'scheduled' ? 0 : a.status === 'draft' ? 1 : 2;
+    items.sort((a: any, b: any) => {
+      const oa = order(a);
+      const ob = order(b);
+      if (oa !== ob) return oa - ob;
+      if (a.status === 'scheduled' && b.status === 'scheduled') {
+        return new Date(a.scheduledFor || 0).getTime() - new Date(b.scheduledFor || 0).getTime();
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
     return JSON.parse(JSON.stringify(items));
   } catch {
     return [];
@@ -25,6 +37,7 @@ async function getArticles() {
 export default async function AdminArticlesPage() {
   const articles = await getArticles();
   const publishedCount = articles.filter((a: any) => a.status === 'published').length;
+  const scheduledCount = articles.filter((a: any) => a.status === 'scheduled').length;
   const draftCount = articles.filter((a: any) => a.status === 'draft').length;
 
   return (
@@ -47,9 +60,10 @@ export default async function AdminArticlesPage() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard label="کل مقالات" value={articles.length} icon={<FileText size={14} />} />
         <KpiCard label="منتشر شده" value={publishedCount} accent="emerald" />
+        <KpiCard label="زمان‌بندی شده" value={scheduledCount} accent="orange" icon={<Clock size={14} />} />
         <KpiCard label="پیش‌نویس" value={draftCount} accent="amber" />
       </div>
 
@@ -107,11 +121,29 @@ export default async function AdminArticlesPage() {
                       className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                         a.status === 'published'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                          : 'bg-amber-50 text-amber-700 border border-amber-100'
+                          : a.status === 'scheduled'
+                            ? 'bg-orange-50 text-orange-700 border border-orange-100 inline-flex items-center gap-1'
+                            : 'bg-amber-50 text-amber-700 border border-amber-100'
                       }`}
                     >
-                      {a.status === 'published' ? 'منتشر شده' : 'پیش‌نویس'}
+                      {a.status === 'published' && 'منتشر شده'}
+                      {a.status === 'scheduled' && (
+                        <>
+                          <Clock size={9} /> زمان‌بندی شده
+                        </>
+                      )}
+                      {a.status === 'draft' && 'پیش‌نویس'}
                     </span>
+                    {a.status === 'scheduled' && a.scheduledFor && (
+                      <span className="text-[10px] text-orange-600 font-semibold">
+                        {toFaDigits(
+                          new Date(a.scheduledFor).toLocaleString('fa-IR', {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          }),
+                        )}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500 truncate">{a.excerpt}</p>
                   <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-400">
@@ -166,14 +198,16 @@ function KpiCard({
   label: string;
   value: number;
   icon?: React.ReactNode;
-  accent?: 'gray' | 'emerald' | 'amber';
+  accent?: 'gray' | 'emerald' | 'amber' | 'orange';
 }) {
   const accentCls =
     accent === 'emerald'
       ? 'text-emerald-600'
       : accent === 'amber'
         ? 'text-amber-600'
-        : 'text-gray-900';
+        : accent === 'orange'
+          ? 'text-orange-600'
+          : 'text-gray-900';
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2 text-[11px] text-gray-500 mb-1">

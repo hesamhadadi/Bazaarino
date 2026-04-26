@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { slug: 
     if (!article) return NextResponse.json({ message: 'یافت نشد' }, { status: 404 });
 
     const body = await request.json();
-    const { title, excerpt, content, coverImage, tags, isHot, status } = body;
+    const { title, excerpt, content, coverImage, tags, isHot, status, scheduledFor } = body;
 
     if (typeof title === 'string' && title.trim()) {
       // If title changed, regenerate slug uniquely.
@@ -76,7 +76,35 @@ export async function PATCH(request: NextRequest, { params }: { params: { slug: 
       article.tags = tags.map((t) => String(t).trim()).filter(Boolean);
     }
     if (typeof isHot === 'boolean') article.isHot = isHot;
-    if (status === 'draft' || status === 'published') article.status = status;
+
+    // Status + scheduling state machine.
+    const now = new Date();
+    if (status === 'draft' || status === 'published' || status === 'scheduled') {
+      if (status === 'draft') {
+        article.status = 'draft';
+        article.scheduledFor = undefined;
+      } else if (status === 'scheduled') {
+        const dt = scheduledFor ? new Date(scheduledFor) : null;
+        if (dt && !Number.isNaN(dt.getTime()) && dt.getTime() > now.getTime()) {
+          article.status = 'scheduled';
+          article.scheduledFor = dt;
+        } else {
+          // Invalid future date → publish now.
+          article.status = 'published';
+          article.scheduledFor = undefined;
+          if (!article.publishedAt) article.publishedAt = now;
+        }
+      } else {
+        // published
+        article.status = 'published';
+        article.scheduledFor = undefined;
+        if (!article.publishedAt) article.publishedAt = now;
+      }
+    } else if (typeof scheduledFor !== 'undefined' && article.status === 'scheduled') {
+      // Caller is updating only the scheduled date.
+      const dt = scheduledFor ? new Date(scheduledFor) : null;
+      if (dt && !Number.isNaN(dt.getTime())) article.scheduledFor = dt;
+    }
 
     await article.save();
 

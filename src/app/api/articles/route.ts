@@ -22,7 +22,10 @@ export async function GET(request: NextRequest) {
     const query: any = {};
     if (isPrivileged && statusFilter === 'all') {
       // no status restriction
-    } else if (isPrivileged && (statusFilter === 'draft' || statusFilter === 'published')) {
+    } else if (
+      isPrivileged &&
+      (statusFilter === 'draft' || statusFilter === 'published' || statusFilter === 'scheduled')
+    ) {
       query.status = statusFilter;
     } else {
       query.status = 'published';
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, excerpt, content, coverImage, tags, isHot, status } = body;
+    const { title, excerpt, content, coverImage, tags, isHot, status, scheduledFor } = body;
     if (!title || !excerpt || !content) {
       return NextResponse.json({ message: 'عنوان، خلاصه و متن الزامی است' }, { status: 400 });
     }
@@ -71,6 +74,31 @@ export async function POST(request: NextRequest) {
       slug = `${slugify(title)}-${counter++}`;
     }
 
+    // Resolve final status + dates.
+    // - draft       → no publish date
+    // - scheduled   → must have future scheduledFor
+    // - published   → set publishedAt now
+    let finalStatus: 'draft' | 'scheduled' | 'published' = 'published';
+    let resolvedSchedule: Date | undefined;
+    let resolvedPublishedAt: Date | undefined;
+    const now = new Date();
+
+    if (status === 'draft') {
+      finalStatus = 'draft';
+    } else if (status === 'scheduled' && scheduledFor) {
+      const dt = new Date(scheduledFor);
+      if (!Number.isNaN(dt.getTime()) && dt.getTime() > now.getTime()) {
+        finalStatus = 'scheduled';
+        resolvedSchedule = dt;
+      } else {
+        finalStatus = 'published';
+        resolvedPublishedAt = now;
+      }
+    } else {
+      finalStatus = 'published';
+      resolvedPublishedAt = now;
+    }
+
     const article = await Article.create({
       title,
       slug,
@@ -79,7 +107,9 @@ export async function POST(request: NextRequest) {
       coverImage,
       tags: Array.isArray(tags) ? tags : [],
       isHot: Boolean(isHot),
-      status: status === 'draft' ? 'draft' : 'published',
+      status: finalStatus,
+      scheduledFor: resolvedSchedule,
+      publishedAt: resolvedPublishedAt,
       authorId,
     });
 
