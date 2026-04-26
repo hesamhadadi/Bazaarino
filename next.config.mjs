@@ -35,8 +35,7 @@ const sentryWebpackPluginOptions = {
     // eslint-disable-next-line no-console
     console.warn('[sentry] build plugin warning:', err?.message || err);
   },
-  disableLogger: true,
-  // Skip the Sentry wrapper entirely if no DSN is configured
+  // Skip Sentry's anonymous build telemetry
   telemetry: false,
 };
 

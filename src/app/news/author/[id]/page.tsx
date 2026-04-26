@@ -254,35 +254,36 @@ export default async function AuthorPage({ params }: { params: { id: string } })
             <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
           </div>
 
-          {/* Avatar + name — avatar overlaps banner on the right (RTL) for both mobile and desktop */}
+          {/* Avatar overlaps the cover; ALL text sits below the cover so it's
+              never rendered on top of a busy banner image */}
           <div className="px-5 md:px-7 pb-5 md:pb-6">
-            <div className="flex items-end gap-4 -mt-10 md:-mt-14">
-              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-white ring-4 ring-white shadow-lg flex-shrink-0">
+            <div className="-mt-12 md:-mt-16 mb-3 flex">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-white ring-4 ring-white shadow-lg flex-shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={author.avatar || '/default-avatar.svg'}
                   alt={author.name}
-                  width={112}
-                  height={112}
+                  width={128}
+                  height={128}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex-1 min-w-0 pb-1 md:pb-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl md:text-3xl font-black text-gray-900 leading-tight truncate">
-                    {author.name}
-                  </h1>
-                  <span
-                    className={`inline-flex items-center gap-1 text-[10px] md:text-[11px] font-bold px-2 py-0.5 md:px-2.5 md:py-1 rounded-full border ${role.cls}`}
-                  >
-                    <ShieldCheck size={11} />
-                    {role.label}
-                  </span>
-                </div>
-                {author.city && (
-                  <p className="text-xs text-gray-500 mt-1">📍 {author.city}</p>
-                )}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl md:text-3xl font-black text-gray-900 leading-tight">
+                  {author.name}
+                </h1>
+                <span
+                  className={`inline-flex items-center gap-1 text-[10px] md:text-[11px] font-bold px-2 py-0.5 md:px-2.5 md:py-1 rounded-full border ${role.cls}`}
+                >
+                  <ShieldCheck size={11} />
+                  {role.label}
+                </span>
               </div>
+              {author.city && (
+                <p className="text-xs text-gray-500 mt-1">📍 {author.city}</p>
+              )}
             </div>
 
             {/* Bio */}

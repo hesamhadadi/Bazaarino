@@ -3,6 +3,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IArticle extends Document {
   title: string;
   slug: string;
+  /**
+   * Historical slugs that this article used to live at. When an editor
+   * renames the canonical slug (e.g. migrating Persian → Latin for SEO),
+   * the previous value is pushed here so we can answer those URLs with a
+   * 301 redirect and never lose Google ranking.
+   */
+  previousSlugs?: string[];
   excerpt: string;
   content: string;
   coverImage?: string;
