@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Search } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdCard from '@/components/ads/AdCard';
@@ -58,6 +59,7 @@ async function getAvailableHomes(params: SearchParams) {
     category: 'real-estate',
     subcategory: { $in: RENTAL_REAL_ESTATE_SUBCATEGORIES },
     listingMode: { $ne: 'request' },
+    'housing.allowReservations': true,
   };
   if (params.country) baseQuery.country = params.country;
   if (params.city) baseQuery.city = params.city;
@@ -108,59 +110,100 @@ export default async function HouseReservationPage({ searchParams }: { searchPar
   const { ads, nights, hasDates } = await getAvailableHomes(searchParams);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-24 md:pb-10">
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 mb-4">
-          <h1 className="text-xl font-bold text-gray-800 mb-1">رزرو خونه</h1>
-          <p className="text-sm text-gray-500 mb-4">بازه تاریخی انتخاب کن تا فقط خانه‌های فعال و آزاد در همان بازه را ببینی.</p>
 
-          <ReservationSearchForm
-            countries={COUNTRIES}
-            cities={CITIES}
-            initialCountry={searchParams.country || ''}
-            initialCity={searchParams.city || ''}
-            initialStartDate={searchParams.startDate || ''}
-            initialEndDate={searchParams.endDate || ''}
-            initialMinPrice={searchParams.minPrice || ''}
-            initialMaxPrice={searchParams.maxPrice || ''}
-            initialSort={searchParams.sort || 'newest'}
-            showAdvancedFilters
-          />
+      {/* Hero */}
+      <section className="border-b border-gray-100 bg-gradient-to-b from-orange-50/50 to-white">
+        <div className="max-w-5xl mx-auto px-4 pt-8 pb-6 md:pt-12 md:pb-8">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-orange-600 mb-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+            رزرو کوتاه‌مدت
+          </div>
+          <h1 className="text-2xl md:text-4xl font-black text-gray-900 leading-tight tracking-tight">
+            خونه‌ای دنج برای روزهای بعدی پیدا کن
+          </h1>
+          <p className="mt-2 text-sm md:text-base text-gray-600 max-w-xl leading-7">
+            تاریخ ورود و خروج رو انتخاب کن تا فقط خونه‌هایی که توی همون بازه آزادن نمایش داده بشه.
+          </p>
         </div>
+      </section>
 
-        {!hasDates ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500">
-            لطفاً تاریخ ورود و خروج را انتخاب کنید.
-          </div>
-        ) : ads.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
-            <p className="text-gray-600 mb-2">در این بازه زمانی خانه آزادی پیدا نشد.</p>
-            <Link href="/search?category=real-estate" className="text-sm text-brand-600 underline">مشاهده همه آگهی‌های مسکن</Link>
-          </div>
-        ) : (
-          <>
-            <p className="text-sm text-gray-600 mb-3">
-              {toFaDigits(ads.length)} خانه آزاد برای بازه {toFaDigits(nights)} شب
-              {searchParams.city ? ` در ${getCityLabel(searchParams.city)}` : ''}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {ads.map((ad: any) => {
-                const totalPrice = Number(ad?.price || 0) * nights;
-                return (
-                  <div key={ad._id} className="space-y-2">
-                    <AdCard ad={ad} />
-                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2 text-xs text-indigo-800">
-                      مجموع برای {toFaDigits(nights)} شب:{' '}
-                      <span className="font-bold">{ad.priceType === 'fixed' && ad.price ? `€${formatFaNumber(totalPrice)}` : 'توافقی'}</span>
-                    </div>
-                  </div>
-                );
-              })}
+      <main className="max-w-5xl mx-auto px-4 py-6 pb-28 md:pb-12">
+        <ReservationSearchForm
+          countries={COUNTRIES}
+          cities={CITIES}
+          initialCountry={searchParams.country || ''}
+          initialCity={searchParams.city || ''}
+          initialStartDate={searchParams.startDate || ''}
+          initialEndDate={searchParams.endDate || ''}
+          initialMinPrice={searchParams.minPrice || ''}
+          initialMaxPrice={searchParams.maxPrice || ''}
+          initialSort={searchParams.sort || 'newest'}
+          showAdvancedFilters
+        />
+
+        <div className="mt-8">
+          {!hasDates ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-12 text-center">
+              <div className="mx-auto w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center mb-3">
+                <Search size={18} />
+              </div>
+              <p className="text-base font-semibold text-gray-800 mb-1">
+                تاریخ ورود و خروج رو انتخاب کن
+              </p>
+              <p className="text-sm text-gray-500">
+                نتایج بر اساس بازه‌ی تاریخی که انتخاب می‌کنی فیلتر می‌شن.
+              </p>
             </div>
-          </>
-        )}
-      </div>
+          ) : ads.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-12 text-center">
+              <p className="text-base font-semibold text-gray-800 mb-2">
+                توی این بازه خونه‌ی آزادی پیدا نشد
+              </p>
+              <p className="text-sm text-gray-500 mb-4">
+                با تاریخ یا شهر دیگه امتحان کن.
+              </p>
+              <Link
+                href="/search?category=real-estate"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-600 hover:text-orange-700"
+              >
+                مشاهده همه آگهی‌های مسکن
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <h2 className="text-lg md:text-xl font-black text-gray-900">
+                  {toFaDigits(ads.length)} خونه آزاد
+                </h2>
+                <span className="text-xs text-gray-500">
+                  بازه‌ی {toFaDigits(nights)} شب
+                  {searchParams.city ? ` · ${getCityLabel(searchParams.city)}` : ''}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {ads.map((ad: any) => {
+                  const totalPrice = Number(ad?.price || 0) * nights;
+                  return (
+                    <div key={ad._id} className="space-y-2">
+                      <AdCard ad={ad} />
+                      <div className="rounded-xl bg-orange-50 border border-orange-100 px-3 py-2 text-xs text-orange-800 flex items-center justify-between gap-2">
+                        <span>مجموع برای {toFaDigits(nights)} شب</span>
+                        <span className="font-bold">
+                          {ad.priceType === 'fixed' && ad.price
+                            ? `€${formatFaNumber(totalPrice)}`
+                            : 'توافقی'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </main>
       <BottomNav />
     </div>
   );

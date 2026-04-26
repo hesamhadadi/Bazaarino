@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import BottomNav from '@/components/layout/BottomNav';
+import { HelpCircle } from 'lucide-react';
+import ProsePage from '@/components/layout/ProsePage';
 
 export const metadata: Metadata = {
   title: 'سؤالات متداول',
@@ -32,29 +31,34 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-3xl mx-auto px-4 py-8 pb-24 md:pb-10">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
-        />
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">سؤالات متداول</h1>
-
-        <div className="space-y-3">
-          {FAQS.map((item, i) => (
-            <details key={i} className="bg-white rounded-2xl border border-gray-100 p-4 group">
-              <summary className="font-semibold text-gray-800 cursor-pointer list-none flex items-center justify-between">
-                <span>{item.q}</span>
-                <span className="text-gray-400 group-open:rotate-45 transition">+</span>
-              </summary>
-              <p className="text-sm text-gray-600 leading-8 mt-3 pt-3 border-t border-gray-100">{item.a}</p>
-            </details>
-          ))}
-        </div>
-      </main>
-      <Footer />
-      <BottomNav />
-    </div>
+    <ProsePage
+      eyebrow="پشتیبانی"
+      title="سؤالات متداول"
+      subtitle="جواب پرسش‌های رایج درباره ثبت آگهی، رزرو خونه، حذف حساب و GDPR."
+      icon={<HelpCircle size={20} />}
+    >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+      />
+      <div className="space-y-2.5">
+        {FAQS.map((item, i) => (
+          <details
+            key={i}
+            className="rounded-2xl border border-gray-100 bg-gray-50 hover:bg-white open:bg-white p-4 group transition"
+          >
+            <summary className="font-semibold text-gray-800 cursor-pointer list-none flex items-center justify-between gap-3">
+              <span className="flex-1">{item.q}</span>
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-orange-600 text-base font-bold group-open:rotate-45 transition">
+                +
+              </span>
+            </summary>
+            <p className="text-sm text-gray-600 leading-8 mt-3 pt-3 border-t border-gray-100">
+              {item.a}
+            </p>
+          </details>
+        ))}
+      </div>
+    </ProsePage>
   );
 }

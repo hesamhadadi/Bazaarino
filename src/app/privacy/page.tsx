@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import BottomNav from '@/components/layout/BottomNav';
+import { ShieldCheck } from 'lucide-react';
+import ProsePage from '@/components/layout/ProsePage';
 
 export const metadata: Metadata = {
   title: 'سیاست حفظ حریم خصوصی',
@@ -11,13 +10,14 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-3xl mx-auto px-4 py-8 pb-24 md:pb-10">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">سیاست حفظ حریم خصوصی</h1>
-        <p className="text-xs text-gray-500 mb-6">آخرین به‌روزرسانی: {new Date().toLocaleDateString('fa-IR')}</p>
-
-        <div className="space-y-6 text-sm text-gray-700 leading-8">
+    <ProsePage
+      eyebrow="اطلاعات حقوقی"
+      title="سیاست حفظ حریم خصوصی"
+      subtitle="منطبق با مقررات GDPR اتحادیه اروپا. می‌دونیم اعتماد چقدر مهمه — این صفحه دقیقاً می‌گه با داده‌های شما چه می‌کنیم."
+      meta={`آخرین به‌روزرسانی: ${new Date().toLocaleDateString('fa-IR')}`}
+      icon={<ShieldCheck size={20} />}
+    >
+      <div className="space-y-6 text-sm text-gray-700 leading-8">
           <section>
             <h2 className="font-bold text-gray-800 text-base mb-2">۱. داده‌هایی که جمع‌آوری می‌کنیم</h2>
             <ul className="list-disc pr-5 space-y-1">
@@ -79,10 +79,7 @@ export default function PrivacyPage() {
             <h2 className="font-bold text-gray-800 text-base mb-2">۷. کودکان</h2>
             <p>بازارینو برای افراد زیر ۱۶ سال طراحی نشده و داده‌ای از این افراد جمع‌آوری نمی‌کنیم.</p>
           </section>
-        </div>
-      </main>
-      <Footer />
-      <BottomNav />
-    </div>
+      </div>
+    </ProsePage>
   );
 }

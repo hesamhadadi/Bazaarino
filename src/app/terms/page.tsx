@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import BottomNav from '@/components/layout/BottomNav';
+import { ScrollText } from 'lucide-react';
+import ProsePage from '@/components/layout/ProsePage';
 
 export const metadata: Metadata = {
   title: 'شرایط استفاده',
@@ -11,13 +10,14 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-3xl mx-auto px-4 py-8 pb-24 md:pb-10">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">شرایط استفاده از بازارینو</h1>
-        <p className="text-xs text-gray-500 mb-6">آخرین به‌روزرسانی: {new Date().toLocaleDateString('fa-IR')}</p>
-
-        <div className="space-y-6 text-sm text-gray-700 leading-8">
+    <ProsePage
+      eyebrow="اطلاعات حقوقی"
+      title="شرایط استفاده از بازارینو"
+      subtitle="با ساخت حساب یا استفاده از خدمات بازارینو، شما با شرایط زیر موافقت می‌کنید."
+      meta={`آخرین به‌روزرسانی: ${new Date().toLocaleDateString('fa-IR')}`}
+      icon={<ScrollText size={20} />}
+    >
+      <div className="space-y-6 text-sm text-gray-700 leading-8">
           <section>
             <h2 className="font-bold text-gray-800 text-base mb-2">۱. پذیرش شرایط</h2>
             <p>با ساخت حساب یا استفاده از خدمات بازارینو، شما با این شرایط و سیاست حفظ حریم خصوصی ما موافقت می‌کنید.</p>
@@ -70,10 +70,7 @@ export default function TermsPage() {
               حساب کاربری متخلف ممکن است بدون اطلاع قبلی غیرفعال شود.
             </p>
           </section>
-        </div>
-      </main>
-      <Footer />
-      <BottomNav />
-    </div>
+      </div>
+    </ProsePage>
   );
 }

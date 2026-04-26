@@ -111,10 +111,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           match: () => isLegacyTab('banners'),
         },
         {
-          href: '/news/new',
-          label: 'انتشار مقاله',
+          href: '/admin/articles',
+          label: 'مقالات',
           icon: Newspaper,
-          match: (p) => p === '/news/new',
+          match: (p) => p.startsWith('/admin/articles'),
         },
       ],
     },

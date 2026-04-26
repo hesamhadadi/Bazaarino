@@ -13,7 +13,20 @@ export async function GET(request: NextRequest) {
     const limit = Number(searchParams.get('limit') || 12);
     const q = searchParams.get('q')?.trim();
     const tag = searchParams.get('tag')?.trim();
-    const query: any = { status: 'published' };
+    const statusFilter = searchParams.get('status'); // 'all' | 'draft' | 'published'
+
+    // Privileged users can request drafts / all.
+    const session = await getServerSession(authOptions);
+    const isPrivileged = ['admin', 'editor'].includes(session?.user?.role || '');
+
+    const query: any = {};
+    if (isPrivileged && statusFilter === 'all') {
+      // no status restriction
+    } else if (isPrivileged && (statusFilter === 'draft' || statusFilter === 'published')) {
+      query.status = statusFilter;
+    } else {
+      query.status = 'published';
+    }
     if (q) {
       query.$or = [
         { title: { $regex: q, $options: 'i' } },

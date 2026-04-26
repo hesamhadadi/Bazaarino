@@ -29,6 +29,9 @@ export interface IAd extends Document {
   housing?: {
     deposit?: number;
     residenceEligible?: boolean;
+    allowReservations?: boolean;
+    minNights?: number;
+    maxNights?: number;
     preferredGender?: 'male' | 'female' | 'any';
     preferredAgeMin?: number;
     preferredAgeMax?: number;
@@ -171,6 +174,18 @@ const AdSchema = new Schema<IAd>(
       residenceEligible: {
         type: Boolean,
         default: false,
+      },
+      allowReservations: {
+        type: Boolean,
+        default: false,
+      },
+      minNights: {
+        type: Number,
+        min: [1, 'حداقل تعداد شب نامعتبر است'],
+      },
+      maxNights: {
+        type: Number,
+        min: [1, 'حداکثر تعداد شب نامعتبر است'],
       },
       preferredGender: {
         type: String,

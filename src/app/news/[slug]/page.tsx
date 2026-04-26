@@ -150,7 +150,20 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-white">
+      {/* Decorative backdrop */}
+      <div className="absolute inset-x-0 top-0 h-[460px] bg-gradient-to-b from-orange-50/70 via-amber-50/30 to-transparent pointer-events-none" />
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[460px] pointer-events-none opacity-40"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle, rgba(249,115,22,0.18) 1px, transparent 1px)',
+          backgroundSize: '22px 22px',
+          maskImage: 'radial-gradient(ellipse at top, black 30%, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at top, black 30%, transparent 75%)',
+        }}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       {prev && (
@@ -161,7 +174,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       )}
       <Navbar />
 
-      <article className="max-w-3xl mx-auto px-4 py-8 pb-24 md:pb-10">
+      <article className="relative max-w-3xl mx-auto px-4 py-8 pb-24 md:pb-10">
         <nav aria-label="breadcrumb" className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
           <Link href="/" className="hover:text-brand-600">خانه</Link>
           <span>/</span>

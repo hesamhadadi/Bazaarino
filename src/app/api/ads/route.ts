@@ -183,6 +183,9 @@ export async function POST(request: NextRequest) {
     const housingPayload = category === 'real-estate' ? {
       deposit: housing?.deposit ? Number(housing.deposit) : undefined,
       residenceEligible: housing?.residenceEligible === true,
+      allowReservations: housing?.allowReservations === true,
+      minNights: housing?.minNights ? Math.max(1, Number(housing.minNights)) : undefined,
+      maxNights: housing?.maxNights ? Math.max(1, Number(housing.maxNights)) : undefined,
       preferredGender: housing?.preferredGender || 'any',
       preferredAgeMin: normalizedAgeRange.min,
       preferredAgeMax: normalizedAgeRange.max,

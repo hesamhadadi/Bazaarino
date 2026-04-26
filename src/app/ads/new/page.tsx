@@ -33,6 +33,9 @@ const adSchema = z.object({
   listingMode: z.enum(['offer', 'request']),
   deposit: z.string().optional(),
   residenceEligible: z.boolean().optional(),
+  allowReservations: z.boolean().optional(),
+  minNights: z.string().optional(),
+  maxNights: z.string().optional(),
   preferredGender: z.enum(['male', 'female', 'any']).optional(),
   preferredAgeMin: z.string().optional(),
   preferredAgeMax: z.string().optional(),
@@ -151,6 +154,9 @@ export default function NewAdPage() {
           housing: category === 'real-estate' ? {
             deposit: data.deposit ? Number(data.deposit) : undefined,
             residenceEligible: data.residenceEligible === true,
+            allowReservations: data.allowReservations === true,
+            minNights: data.minNights ? Number(data.minNights) : undefined,
+            maxNights: data.maxNights ? Number(data.maxNights) : undefined,
             preferredGender: data.preferredGender || 'any',
             preferredAgeMin: data.preferredAgeMin ? Number(data.preferredAgeMin) : undefined,
             preferredAgeMax: data.preferredAgeMax ? Number(data.preferredAgeMax) : undefined,
@@ -434,6 +440,56 @@ export default function NewAdPage() {
                     <input type="checkbox" {...register('residenceEligible')} className="accent-brand-500" />
                     این واحد قابلیت رزیدنسا دارد
                   </label>
+
+                  {/* Short-term reservation toggle */}
+                  <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50/70 to-amber-50/50 p-4">
+                    <label className="flex items-start justify-between gap-3 cursor-pointer">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-orange-500 text-white text-[10px]">
+                            🛏
+                          </span>
+                          رزرو کوتاه‌مدت
+                        </p>
+                        <p className="text-[11px] text-gray-600 mt-1 leading-5">
+                          اگه فعال باشه، آگهی توی صفحه «رزرو خونه» نمایش داده می‌شه و کاربرها می‌تونن بازه‌ی شب درخواست بدن.
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        {...register('allowReservations')}
+                        className="peer sr-only"
+                      />
+                      <span className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 peer-checked:bg-emerald-500 transition shrink-0 mt-0.5">
+                        <span className="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-6 peer-checked:translate-x-1" />
+                      </span>
+                    </label>
+
+                    {watch('allowReservations') && (
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">حداقل شب</label>
+                          <input
+                            {...register('minNights')}
+                            type="number"
+                            min="1"
+                            placeholder="مثلاً ۲"
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">حداکثر شب</label>
+                          <input
+                            {...register('maxNights')}
+                            type="number"
+                            min="1"
+                            placeholder="مثلاً ۳۰"
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="pt-1">
                     <label className="block text-xs text-gray-600 mb-1">آدرس دقیق روی نقشه</label>
