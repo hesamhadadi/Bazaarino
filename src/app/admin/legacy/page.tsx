@@ -11,7 +11,26 @@ import { CITIES, CATEGORIES, getCityLabel } from '@/lib/constants';
 import { applyBrandPaletteToDocument, normalizeBrandPrimary } from '@/lib/brand-color';
 
 type AdminTab = 'pending' | 'all' | 'users' | 'banners' | 'reports' | 'settings';
-type AppSettings = { telegramToken: string; telegramChatId: string; telegramSecret: string; siteUrl: string; brandPrimary: string };
+type AppSettings = {
+  telegramToken: string;
+  telegramChatId: string;
+  telegramSecret: string;
+  siteUrl: string;
+  siteName: string;
+  siteDescription: string;
+  brandPrimary: string;
+  supportEmail: string;
+  supportPhone: string;
+  maintenanceMode: boolean;
+  registrationEnabled: boolean;
+  adAutoApprove: boolean;
+  maxAdsPerUser: number;
+  featuredPrice1d: number;
+  featuredPrice7d: number;
+  featuredPrice30d: number;
+  announcementText: string;
+  announcementEnabled: boolean;
+};
 type AdFilters = {
   q: string;
   city: string;
@@ -39,7 +58,20 @@ const DEFAULT_SETTINGS: AppSettings = {
   telegramChatId: '',
   telegramSecret: '',
   siteUrl: '',
+  siteName: '',
+  siteDescription: '',
   brandPrimary: '#f97316',
+  supportEmail: '',
+  supportPhone: '',
+  maintenanceMode: false,
+  registrationEnabled: true,
+  adAutoApprove: false,
+  maxAdsPerUser: 0,
+  featuredPrice1d: 0,
+  featuredPrice7d: 0,
+  featuredPrice30d: 0,
+  announcementText: '',
+  announcementEnabled: false,
 };
 
 export default function AdminDashboard() {
@@ -246,6 +278,37 @@ export default function AdminDashboard() {
     }
   };
 
+  const deleteAd = async (adId: string, adTitle?: string) => {
+    if (!window.confirm(`آیا مطمئنی می‌خواهی این آگهی را حذف کنی؟${adTitle ? `\n«${adTitle}»` : ''}\nاین عمل قابل بازگشت نیست.`)) return;
+    const t = toast.loading('در حال حذف آگهی...');
+    try {
+      const res = await fetch(`/api/ads/${adId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      toast.success('آگهی حذف شد', { id: t });
+      // Refresh whichever list is active
+      if (activeTab === 'pending') fetchPendingAds(adFilters);
+      else if (activeTab === 'all') fetchAllAds(adFilters);
+      fetchStats();
+    } catch {
+      toast.error('حذف آگهی ناموفق بود', { id: t });
+    }
+  };
+
+  const deleteUser = async (userId: string, userName?: string) => {
+    if (!window.confirm(`آیا مطمئنی می‌خواهی این کاربر را حذف کنی؟${userName ? `\n«${userName}»` : ''}\n\nهمه آگهی‌های این کاربر هم پاک می‌شوند. این عمل قابل بازگشت نیست.`)) return;
+    const t = toast.loading('در حال حذف کاربر...');
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || 'failed');
+      toast.success(`کاربر حذف شد${data.deletedAds ? ` (${data.deletedAds} آگهی نیز پاک شد)` : ''}`, { id: t });
+      fetchUsers();
+      fetchStats();
+    } catch (err: any) {
+      toast.error(err?.message || 'حذف کاربر ناموفق بود', { id: t });
+    }
+  };
+
   const updateUserIdentityStatus = async (userId: string, status: 'none' | 'pending' | 'verified' | 'rejected') => {
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
@@ -295,12 +358,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramToken: settings.telegramToken,
-          telegramChatId: settings.telegramChatId,
-          siteUrl: settings.siteUrl,
-          brandPrimary: settings.brandPrimary,
-        }),
+        body: JSON.stringify(settings),
       });
       if (res.ok) {
         const safeColor = normalizeBrandPrimary(settings.brandPrimary);
@@ -945,6 +1003,7 @@ export default function AdminDashboard() {
                         <div className="flex gap-2 mt-3">
                           <button onClick={() => updateAdStatus(ad._id, 'approved')} className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><CheckCircle size={14} /> تأیید</button>
                           <button onClick={() => setRejectionModal({ open: true, adId: ad._id })} className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><XCircle size={14} /> رد کردن</button>
+                          <button onClick={() => deleteAd(ad._id, ad.title)} className="flex items-center gap-1.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 px-3 py-2 rounded-xl text-sm font-medium transition-colors mr-auto" title="حذف آگهی"><Trash2 size={14} /></button>
                         </div>
                       </div>
                     </div>
@@ -993,6 +1052,13 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[ad.status] || ''}`}>{STATUS_LABELS[ad.status]}</span>
+                  <button
+                    onClick={() => deleteAd(ad._id, ad.title)}
+                    title="حذف آگهی"
+                    className="p-1.5 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                   {isFeaturedActive(ad) ? (
                     <>
                       <span className="text-[11px] px-2 py-1 rounded-full bg-orange-50 text-orange-600">
@@ -1028,154 +1094,245 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'users' && (
-          <div className="space-y-3">
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
-              <div className="grid md:grid-cols-4 gap-3">
-                <input
-                  value={userFilters.q}
-                  onChange={(e) => setUserFilters((prev) => ({ ...prev, q: e.target.value }))}
-                  placeholder="جستجو نام یا ایمیل"
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
-                />
-                <select
-                  value={userFilters.role}
-                  onChange={(e) => setUserFilters((prev) => ({ ...prev, role: e.target.value }))}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
-                >
-                  <option value="all">همه نقش‌ها</option>
-                  <option value="user">کاربر</option>
-                  <option value="editor">نویسنده</option>
-                  <option value="admin">ادمین</option>
-                </select>
-                <select
-                  value={userFilters.status}
-                  onChange={(e) => setUserFilters((prev) => ({ ...prev, status: e.target.value }))}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
-                >
-                  <option value="all">همه وضعیت‌ها</option>
-                  <option value="active">فعال</option>
-                  <option value="inactive">غیرفعال</option>
-                </select>
-                <select
-                  value={userFilters.identity}
-                  onChange={(e) => setUserFilters((prev) => ({ ...prev, identity: e.target.value }))}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
-                >
-                  <option value="all">احراز هویت: همه</option>
-                  <option value="none">بدون درخواست</option>
-                  <option value="pending">در انتظار</option>
-                  <option value="verified">احراز شده</option>
-                  <option value="rejected">رد شده</option>
-                </select>
+        {activeTab === 'users' && (() => {
+          const filteredUsers = users.filter((u: any) => {
+            const q = userFilters.q.trim().toLowerCase();
+            if (q && !(`${u.name || ''} ${u.email || ''} ${u.phone || ''}`.toLowerCase().includes(q))) return false;
+            if (userFilters.role !== 'all' && u.role !== userFilters.role) return false;
+            if (userFilters.status !== 'all') {
+              if (userFilters.status === 'active' && !u.isActive) return false;
+              if (userFilters.status === 'inactive' && u.isActive) return false;
+            }
+            if (userFilters.identity !== 'all' && (u.identityStatus || 'none') !== userFilters.identity) return false;
+            return true;
+          });
+
+          const totalCount = users.length;
+          const activeCount = users.filter((u: any) => u.isActive).length;
+          const pendingIdentityCount = users.filter((u: any) => u.identityStatus === 'pending').length;
+          const adminCount = users.filter((u: any) => u.role === 'admin').length;
+
+          const roleStyles: Record<string, string> = {
+            admin: 'bg-purple-50 text-purple-700 border-purple-200',
+            editor: 'bg-sky-50 text-sky-700 border-sky-200',
+            user: 'bg-gray-50 text-gray-600 border-gray-200',
+          };
+          const identityStyles: Record<string, string> = {
+            verified: 'bg-emerald-50 text-emerald-700',
+            pending: 'bg-amber-50 text-amber-700',
+            rejected: 'bg-red-50 text-red-700',
+            none: 'bg-gray-50 text-gray-500',
+          };
+          const identityLabels: Record<string, string> = {
+            verified: 'احراز شده',
+            pending: 'در انتظار',
+            rejected: 'رد شده',
+            none: 'بدون درخواست',
+          };
+
+          return (
+            <div className="space-y-4">
+              {/* Stat strip */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: 'کل کاربران', value: totalCount, icon: Users, tone: 'text-gray-600 bg-gray-50' },
+                  { label: 'کاربران فعال', value: activeCount, icon: UserCheck, tone: 'text-emerald-700 bg-emerald-50' },
+                  { label: 'احراز در انتظار', value: pendingIdentityCount, icon: BadgeCheck, tone: 'text-amber-700 bg-amber-50' },
+                  { label: 'ادمین/نویسنده', value: adminCount + users.filter((u: any) => u.role === 'editor').length, icon: ShieldCheck, tone: 'text-indigo-700 bg-indigo-50' },
+                ].map((s) => (
+                  <div key={s.label} className="rounded-xl border border-gray-200 bg-white p-3 flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${s.tone}`}>
+                      <s.icon size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xl font-black text-gray-900 leading-none tabular-nums">{s.value}</p>
+                      <p className="text-[11px] text-gray-500 mt-1">{s.label}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            {users.filter((u: any) => {
-              const q = userFilters.q.trim().toLowerCase();
-              if (q && !(`${u.name || ''} ${u.email || ''}`.toLowerCase().includes(q))) return false;
-              if (userFilters.role !== 'all' && u.role !== userFilters.role) return false;
-              if (userFilters.status !== 'all') {
-                if (userFilters.status === 'active' && !u.isActive) return false;
-                if (userFilters.status === 'inactive' && u.isActive) return false;
-              }
-              if (userFilters.identity !== 'all' && (u.identityStatus || 'none') !== userFilters.identity) return false;
-              return true;
-            }).map((u: any) => (
-              <div key={u._id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium text-gray-800 text-sm">{u.name || '-'}</p>
-                  <p className="text-xs text-gray-500">{u.email}</p>
-                  {u.phone && <p className="text-xs text-gray-500 mt-1">شماره: {u.phone}</p>}
-                  <div className="text-xs text-gray-400 mt-1 flex gap-3">
-                    <span>آگهی‌ها: {u.adsCount}</span>
-                    <span>ثبت‌نام: {new Date(u.createdAt).toLocaleDateString('fa-IR')}</span>
-                    <span>{u.role === 'admin' ? 'ادمین' : u.role === 'editor' ? 'نویسنده' : 'کاربر'}</span>
-                    <span>احراز: {u.identityStatus || 'none'}</span>
+
+              {/* Filters */}
+              <div className="rounded-xl border border-gray-200 bg-white p-3">
+                <div className="grid md:grid-cols-[2fr_1fr_1fr_1fr] gap-2">
+                  <div className="relative">
+                    <Eye size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hidden" />
+                    <input
+                      value={userFilters.q}
+                      onChange={(e) => setUserFilters((prev) => ({ ...prev, q: e.target.value }))}
+                      placeholder="جست‌وجو در نام، ایمیل یا شماره..."
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400 transition"
+                    />
                   </div>
-                  <div className="mt-2">
-                    <Link href={`/u/${u._id}`} target="_blank" className="text-xs text-brand-600">مشاهده صفحه کاربر</Link>
-                    <span className="text-xs text-gray-300 mx-2">|</span>
-                    <Link href={`/admin/users/${u._id}`} className="text-xs text-indigo-600">مدیریت کاربر</Link>
-                  </div>
-                  <div className="mt-3 grid md:grid-cols-3 gap-2 text-xs">
-                    <div className="rounded-xl border border-gray-100 p-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <span>کد فیسکاله</span>
-                        <span className="text-gray-400">{u.fiscalCodeStatus || 'none'}</span>
-                      </div>
-                      <p className="text-gray-600 break-all">{u.fiscalCode || 'ثبت نشده'}</p>
-                      <div className="flex gap-2 mt-2">
-                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'fiscalCodeStatus', 'approved')} className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">تأیید</button>
-                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'fiscalCodeStatus', 'rejected')} className="px-2 py-1 rounded-lg bg-red-50 text-red-600">رد</button>
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-gray-100 p-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <span>پاسپورت</span>
-                        <span className="text-gray-400">{u.passportStatus || 'none'}</span>
-                      </div>
-                      {u.passportImage ? (
-                        <a href={u.passportImage} target="_blank" rel="noreferrer" className="block w-16 h-16 rounded-lg overflow-hidden border border-gray-100">
-                          <img src={u.passportImage} alt="passport" className="w-full h-full object-cover" />
-                        </a>
-                      ) : (
-                        <p className="text-gray-500">ثبت نشده</p>
-                      )}
-                      <div className="flex gap-2 mt-2">
-                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'passportStatus', 'approved')} className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">تأیید</button>
-                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'passportStatus', 'rejected')} className="px-2 py-1 rounded-lg bg-red-50 text-red-600">رد</button>
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-gray-100 p-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <span>سلفی</span>
-                        <span className="text-gray-400">{u.selfieStatus || 'none'}</span>
-                      </div>
-                      {u.selfieImage ? (
-                        <a href={u.selfieImage} target="_blank" rel="noreferrer" className="block w-16 h-16 rounded-lg overflow-hidden border border-gray-100">
-                          <img src={u.selfieImage} alt="selfie" className="w-full h-full object-cover" />
-                        </a>
-                      ) : (
-                        <p className="text-gray-500">ثبت نشده</p>
-                      )}
-                      <div className="flex gap-2 mt-2">
-                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'selfieStatus', 'approved')} className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">تأیید</button>
-                        <button onClick={() => updateUserIdentityDocStatus(u._id, 'selfieStatus', 'rejected')} className="px-2 py-1 rounded-lg bg-red-50 text-red-600">رد</button>
-                      </div>
-                    </div>
-                  </div>
+                  <select
+                    value={userFilters.role}
+                    onChange={(e) => setUserFilters((prev) => ({ ...prev, role: e.target.value }))}
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
+                  >
+                    <option value="all">همه نقش‌ها</option>
+                    <option value="user">کاربر</option>
+                    <option value="editor">نویسنده</option>
+                    <option value="admin">ادمین</option>
+                  </select>
+                  <select
+                    value={userFilters.status}
+                    onChange={(e) => setUserFilters((prev) => ({ ...prev, status: e.target.value }))}
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
+                  >
+                    <option value="all">همه وضعیت‌ها</option>
+                    <option value="active">فعال</option>
+                    <option value="inactive">غیرفعال</option>
+                  </select>
+                  <select
+                    value={userFilters.identity}
+                    onChange={(e) => setUserFilters((prev) => ({ ...prev, identity: e.target.value }))}
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
+                  >
+                    <option value="all">احراز: همه</option>
+                    <option value="none">بدون درخواست</option>
+                    <option value="pending">در انتظار</option>
+                    <option value="verified">احراز شده</option>
+                    <option value="rejected">رد شده</option>
+                  </select>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {filteredUsers.length} از {totalCount} کاربر
+                </p>
+              </div>
+
+              {/* Users table */}
+              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                {/* Header */}
+                <div className="hidden md:grid grid-cols-[1.8fr_0.8fr_0.7fr_0.9fr_0.7fr_auto] gap-3 px-4 py-2.5 border-b border-gray-100 bg-gray-50/50 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <div>کاربر</div>
+                  <div>نقش</div>
+                  <div>وضعیت</div>
+                  <div>احراز هویت</div>
+                  <div>آگهی‌ها</div>
+                  <div className="text-left">عملیات</div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-indigo-50 text-indigo-700">
-                    <ShieldCheck size={13} />
-                    <select
-                      value={u.role}
-                      onChange={(e) => updateUserRole(u._id, e.target.value as any)}
-                      className="bg-transparent text-xs outline-none"
-                    >
-                      <option value="user">کاربر</option>
-                      <option value="editor">نویسنده</option>
-                      <option value="admin">ادمین</option>
-                    </select>
+                {filteredUsers.length === 0 && (
+                  <div className="p-12 text-center text-sm text-gray-400">
+                    کاربری یافت نشد.
                   </div>
-                  <button
-                    onClick={() => updateUserIdentityStatus(u._id, u.identityStatus === 'verified' ? 'pending' : 'verified')}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium ${u.identityStatus === 'verified' ? 'bg-gray-100 text-gray-600' : 'bg-emerald-50 text-emerald-600'}`}
-                  >
-                    {u.identityStatus === 'verified' ? 'لغو احراز' : 'احراز کن'}
-                  </button>
-                  <button
-                    onClick={() => toggleUserActive(u._id, u.isActive)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium ${u.isActive ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}
-                  >
-                    {u.isActive ? 'غیرفعال کن' : 'فعال کن'}
-                  </button>
-                </div>
+                )}
+
+                <ul className="divide-y divide-gray-100">
+                  {filteredUsers.map((u: any) => {
+                    const role = u.role || 'user';
+                    const idStatus = u.identityStatus || 'none';
+                    const isSelf = (session?.user as any)?.id && String((session?.user as any).id) === String(u._id);
+                    return (
+                      <li
+                        key={u._id}
+                        className="grid grid-cols-[1fr_auto] md:grid-cols-[1.8fr_0.8fr_0.7fr_0.9fr_0.7fr_auto] gap-3 px-4 py-3 hover:bg-gray-50/60 transition"
+                      >
+                        {/* User cell */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                            {(u.name || u.email || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {u.name || '—'}
+                              {isSelf && <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 align-middle">شما</span>}
+                            </p>
+                            <p className="text-[11px] text-gray-500 truncate">
+                              {u.email}
+                              {u.phone && <span className="text-gray-300 mx-1">·</span>}
+                              {u.phone && <span dir="ltr">{u.phone}</span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Role */}
+                        <div className="hidden md:flex items-center">
+                          <select
+                            value={role}
+                            onChange={(e) => updateUserRole(u._id, e.target.value as any)}
+                            disabled={isSelf}
+                            className={`text-[11px] font-semibold border rounded-md px-2 py-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${roleStyles[role] || roleStyles.user}`}
+                          >
+                            <option value="user">کاربر</option>
+                            <option value="editor">نویسنده</option>
+                            <option value="admin">ادمین</option>
+                          </select>
+                        </div>
+
+                        {/* Status */}
+                        <div className="hidden md:flex items-center">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                              u.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                            {u.isActive ? 'فعال' : 'غیرفعال'}
+                          </span>
+                        </div>
+
+                        {/* Identity */}
+                        <div className="hidden md:flex items-center">
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${identityStyles[idStatus] || identityStyles.none}`}>
+                            {identityLabels[idStatus]}
+                          </span>
+                        </div>
+
+                        {/* Ads count */}
+                        <div className="hidden md:flex items-center text-xs text-gray-600 tabular-nums">
+                          {u.adsCount || 0}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 md:gap-1.5 self-center">
+                          <button
+                            onClick={() => updateUserIdentityStatus(u._id, idStatus === 'verified' ? 'pending' : 'verified')}
+                            title={idStatus === 'verified' ? 'لغو احراز' : 'احراز کن'}
+                            className={`p-1.5 rounded-lg transition ${idStatus === 'verified' ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-gray-500 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                          >
+                            <BadgeCheck size={14} />
+                          </button>
+                          <button
+                            onClick={() => toggleUserActive(u._id, u.isActive)}
+                            disabled={isSelf}
+                            title={u.isActive ? 'غیرفعال کن' : 'فعال کن'}
+                            className={`p-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed ${u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
+                          >
+                            {u.isActive ? <XCircle size={14} /> : <CheckCircle size={14} />}
+                          </button>
+                          <Link
+                            href={`/admin/users/${u._id}`}
+                            title="مدیریت کامل"
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                          >
+                            <ShieldCheck size={14} />
+                          </Link>
+                          <Link
+                            href={`/u/${u._id}`}
+                            target="_blank"
+                            title="مشاهده پروفایل"
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition"
+                          >
+                            <Eye size={14} />
+                          </Link>
+                          <button
+                            onClick={() => deleteUser(u._id, u.name || u.email)}
+                            disabled={isSelf || role === 'admin'}
+                            title={role === 'admin' ? 'برای حذف ادمین، نقش او را تغییر دهید' : 'حذف کاربر'}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          );
+        })()}
 
         {activeTab === 'banners' && (
           <div className="space-y-4">
@@ -1335,61 +1492,217 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'settings' && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">تنظیمات تلگرام</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <input
-                  value={settings?.telegramToken || ''}
-                  onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), telegramToken: e.target.value }))}
-                  placeholder="توکن ربات تلگرام"
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
-                />
-                <input
-                  value={settings?.telegramChatId || ''}
-                  onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), telegramChatId: e.target.value }))}
-                  placeholder="Telegram User ID / Chat ID ادمین"
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
-                />
-                <input
-                  value={settings?.siteUrl || ''}
-                  onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), siteUrl: e.target.value }))}
-                  placeholder="آدرس سایت (مثلاً https://bazaarinowork.vercel.app)"
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm md:col-span-2"
-                />
-                <div className="md:col-span-2">
-                  <label className="block text-xs text-gray-500 mb-1">رنگ اصلی سایت</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={settings?.brandPrimary || '#f97316'}
-                      onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), brandPrimary: e.target.value }))}
-                      className="h-10 w-14 border border-gray-200 rounded-lg bg-white p-1 cursor-pointer"
+        {activeTab === 'settings' && (() => {
+          const cur = settings || DEFAULT_SETTINGS;
+          const setField = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
+            setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), [key]: value }));
+
+          const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400 transition';
+          const labelCls = 'block text-xs font-semibold text-gray-700 mb-1.5';
+          const sectionCls = 'rounded-xl border border-gray-200 bg-white p-5';
+          const sectionTitleCls = 'text-sm font-bold text-gray-900 mb-1';
+          const sectionDescCls = 'text-xs text-gray-500 mb-4';
+
+          const Toggle = ({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) => (
+            <label className="flex items-start justify-between gap-3 py-3 cursor-pointer">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">{label}</p>
+                {hint && <p className="text-[11px] text-gray-500 mt-0.5">{hint}</p>}
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={checked}
+                onClick={() => onChange(!checked)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition shrink-0 ${checked ? 'bg-emerald-500' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${checked ? 'translate-x-1' : 'translate-x-6'}`} />
+              </button>
+            </label>
+          );
+
+          return (
+            <div className="space-y-4 max-w-4xl">
+              {/* Site identity */}
+              <section className={sectionCls}>
+                <h3 className={sectionTitleCls}>هویت سایت</h3>
+                <p className={sectionDescCls}>این اطلاعات در متاتگ‌ها و سرتاسر سایت نمایش داده می‌شود.</p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>نام سایت</label>
+                    <input value={cur.siteName} onChange={(e) => setField('siteName', e.target.value)} placeholder="بازارینو" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>آدرس سایت</label>
+                    <input value={cur.siteUrl} onChange={(e) => setField('siteUrl', e.target.value)} placeholder="https://bazaarino.online" dir="ltr" className={`${inputCls} text-left`} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>توضیحات کوتاه</label>
+                    <textarea
+                      value={cur.siteDescription}
+                      onChange={(e) => setField('siteDescription', e.target.value)}
+                      placeholder="نیازمندی‌های ایرانیان اروپا..."
+                      rows={2}
+                      className={`${inputCls} resize-none`}
                     />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>رنگ اصلی</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={cur.brandPrimary || '#f97316'}
+                        onChange={(e) => setField('brandPrimary', e.target.value)}
+                        className="h-10 w-14 border border-gray-200 rounded-lg bg-white p-1 cursor-pointer"
+                      />
+                      <input
+                        value={cur.brandPrimary}
+                        onChange={(e) => setField('brandPrimary', e.target.value)}
+                        placeholder="#f97316"
+                        className={`${inputCls} flex-1 text-left`}
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Feature flags */}
+              <section className={sectionCls}>
+                <h3 className={sectionTitleCls}>کنترل‌های سایت</h3>
+                <p className={sectionDescCls}>سوئیچ‌هایی که رفتار کلی سایت را تغییر می‌دهند.</p>
+                <div className="divide-y divide-gray-100">
+                  <Toggle
+                    checked={cur.maintenanceMode}
+                    onChange={(v) => setField('maintenanceMode', v)}
+                    label="حالت نگه‌داری"
+                    hint="وقتی فعال است، کاربران عادی پیام نگه‌داری می‌بینند. ادمین‌ها همچنان دسترسی دارند."
+                  />
+                  <Toggle
+                    checked={cur.registrationEnabled}
+                    onChange={(v) => setField('registrationEnabled', v)}
+                    label="ثبت‌نام کاربر جدید"
+                    hint="غیرفعال کردن این گزینه جلوی ساخت حساب جدید را می‌گیرد."
+                  />
+                  <Toggle
+                    checked={cur.adAutoApprove}
+                    onChange={(v) => setField('adAutoApprove', v)}
+                    label="تأیید خودکار آگهی"
+                    hint="آگهی‌های جدید بدون نیاز به بررسی ادمین، فوراً منتشر می‌شوند."
+                  />
+                  <Toggle
+                    checked={cur.announcementEnabled}
+                    onChange={(v) => setField('announcementEnabled', v)}
+                    label="نمایش پیام اطلاع‌رسانی"
+                    hint="پیام پایین در نواری در بالای سایت برای همه کاربران نمایش داده می‌شود."
+                  />
+                </div>
+                <div className="mt-3">
+                  <label className={labelCls}>متن پیام اطلاع‌رسانی</label>
+                  <input
+                    value={cur.announcementText}
+                    onChange={(e) => setField('announcementText', e.target.value)}
+                    placeholder="مثلاً: تخفیف ویژه ثبت‌نام آگهی تا پایان هفته"
+                    className={inputCls}
+                    disabled={!cur.announcementEnabled}
+                  />
+                </div>
+              </section>
+
+              {/* Limits */}
+              <section className={sectionCls}>
+                <h3 className={sectionTitleCls}>محدودیت‌ها</h3>
+                <p className={sectionDescCls}>محدودیت‌های امنیتی و تجاری.</p>
+                <div className="grid md:grid-cols-3 gap-3">
+                  <div>
+                    <label className={labelCls}>حداکثر آگهی هر کاربر</label>
                     <input
-                      value={settings?.brandPrimary || '#f97316'}
-                      onChange={(e) => setSettings((prev) => ({ ...(prev || DEFAULT_SETTINGS), brandPrimary: e.target.value }))}
-                      placeholder="#f97316"
-                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm flex-1 ltr text-left"
+                      type="number"
+                      min={0}
+                      value={cur.maxAdsPerUser}
+                      onChange={(e) => setField('maxAdsPerUser', Number(e.target.value))}
+                      placeholder="۰ = نامحدود"
+                      className={inputCls}
                     />
                   </div>
                 </div>
-              </div>
-              <div className="mt-3 flex items-center gap-3">
-                <button onClick={saveSettings} disabled={settingsSaving} className="bg-brand-500 text-white px-4 py-2 rounded-xl text-sm">
-                  ذخیره تنظیمات
+              </section>
+
+              {/* Featured pricing */}
+              <section className={sectionCls}>
+                <h3 className={sectionTitleCls}>قیمت آگهی ویژه</h3>
+                <p className={sectionDescCls}>قیمت‌های نمایشی برای ویژه‌سازی آگهی (به یورو).</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className={labelCls}>۱ روز</label>
+                    <input type="number" min={0} value={cur.featuredPrice1d} onChange={(e) => setField('featuredPrice1d', Number(e.target.value))} className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>۷ روز</label>
+                    <input type="number" min={0} value={cur.featuredPrice7d} onChange={(e) => setField('featuredPrice7d', Number(e.target.value))} className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>۳۰ روز</label>
+                    <input type="number" min={0} value={cur.featuredPrice30d} onChange={(e) => setField('featuredPrice30d', Number(e.target.value))} className={inputCls} />
+                  </div>
+                </div>
+              </section>
+
+              {/* Contact */}
+              <section className={sectionCls}>
+                <h3 className={sectionTitleCls}>اطلاعات تماس</h3>
+                <p className={sectionDescCls}>این مقادیر در فوتر و صفحه «تماس با ما» نشان داده می‌شوند.</p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>ایمیل پشتیبانی</label>
+                    <input value={cur.supportEmail} onChange={(e) => setField('supportEmail', e.target.value)} placeholder="support@bazaarino.online" dir="ltr" className={`${inputCls} text-left`} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>شماره پشتیبانی</label>
+                    <input value={cur.supportPhone} onChange={(e) => setField('supportPhone', e.target.value)} placeholder="+39..." dir="ltr" className={`${inputCls} text-left`} />
+                  </div>
+                </div>
+              </section>
+
+              {/* Telegram integration */}
+              <section className={sectionCls}>
+                <h3 className={sectionTitleCls}>یکپارچه‌سازی تلگرام</h3>
+                <p className={sectionDescCls}>اطلاع‌رسانی به ادمین در ربات تلگرام.</p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>توکن ربات</label>
+                    <input value={cur.telegramToken} onChange={(e) => setField('telegramToken', e.target.value)} placeholder="123456:AAA..." dir="ltr" className={`${inputCls} text-left`} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Chat ID ادمین</label>
+                    <input value={cur.telegramChatId} onChange={(e) => setField('telegramChatId', e.target.value)} placeholder="مثلاً 123456789" dir="ltr" className={`${inputCls} text-left`} />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-3 flex-wrap">
+                  <button onClick={setWebhook} disabled={webhookSaving} className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50">
+                    ثبت وبهوک تلگرام
+                  </button>
+                  {cur.telegramSecret && (
+                    <span className="text-[11px] text-gray-400 font-mono">Secret: {cur.telegramSecret.slice(0, 8)}…</span>
+                  )}
+                </div>
+              </section>
+
+              {/* Save bar (sticky) */}
+              <div className="sticky bottom-3 mt-2 rounded-xl border border-gray-200 bg-white shadow-md p-3 flex items-center justify-between gap-3">
+                <p className="text-xs text-gray-500">پس از تغییر، حتماً ذخیره کنید.</p>
+                <button
+                  onClick={saveSettings}
+                  disabled={settingsSaving}
+                  className="inline-flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition"
+                >
+                  <CheckCircle size={14} />
+                  {settingsSaving ? 'در حال ذخیره...' : 'ذخیره تنظیمات'}
                 </button>
-                <button onClick={setWebhook} disabled={webhookSaving} className="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm">
-                  ثبت وبهوک تلگرام
-                </button>
-                {settings?.telegramSecret && (
-                  <span className="text-xs text-gray-400">Secret: {settings.telegramSecret}</span>
-                )}
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {rejectionModal.open && (

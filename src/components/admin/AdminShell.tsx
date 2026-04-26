@@ -151,7 +151,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky lg:top-0 inset-y-0 right-0 z-40 w-64 bg-white border-l border-gray-200 transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed inset-y-0 right-0 z-40 w-64 bg-white border-l border-gray-200 transition-transform duration-200 lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
         } h-screen flex flex-col`}
       >

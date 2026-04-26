@@ -25,7 +25,20 @@ export async function GET() {
         telegramChatId: settings?.telegramChatId || '',
         telegramSecret: settings?.telegramSecret || '',
         siteUrl: settings?.siteUrl || '',
+        siteName: settings?.siteName || '',
+        siteDescription: settings?.siteDescription || '',
         brandPrimary: settings?.brandPrimary || DEFAULT_BRAND_PRIMARY,
+        supportEmail: settings?.supportEmail || '',
+        supportPhone: settings?.supportPhone || '',
+        maintenanceMode: !!settings?.maintenanceMode,
+        registrationEnabled: settings?.registrationEnabled !== false,
+        adAutoApprove: !!settings?.adAutoApprove,
+        maxAdsPerUser: settings?.maxAdsPerUser || 0,
+        featuredPrice1d: settings?.featuredPrice1d || 0,
+        featuredPrice7d: settings?.featuredPrice7d || 0,
+        featuredPrice30d: settings?.featuredPrice30d || 0,
+        announcementText: settings?.announcementText || '',
+        announcementEnabled: !!settings?.announcementEnabled,
       },
     });
   } catch {
@@ -42,7 +55,20 @@ export async function PATCH(request: NextRequest) {
     const telegramToken = String(body?.telegramToken || '').trim();
     const telegramChatId = String(body?.telegramChatId || '').trim();
     const siteUrl = String(body?.siteUrl || '').trim();
+    const siteName = String(body?.siteName || '').trim();
+    const siteDescription = String(body?.siteDescription || '').trim();
     const brandPrimary = normalizeBrandPrimary(body?.brandPrimary);
+    const supportEmail = String(body?.supportEmail || '').trim();
+    const supportPhone = String(body?.supportPhone || '').trim();
+    const maintenanceMode = Boolean(body?.maintenanceMode);
+    const registrationEnabled = body?.registrationEnabled !== false;
+    const adAutoApprove = Boolean(body?.adAutoApprove);
+    const maxAdsPerUser = Math.max(0, Number(body?.maxAdsPerUser) || 0);
+    const featuredPrice1d = Math.max(0, Number(body?.featuredPrice1d) || 0);
+    const featuredPrice7d = Math.max(0, Number(body?.featuredPrice7d) || 0);
+    const featuredPrice30d = Math.max(0, Number(body?.featuredPrice30d) || 0);
+    const announcementText = String(body?.announcementText || '').trim();
+    const announcementEnabled = Boolean(body?.announcementEnabled);
 
     await connectDB();
     const existing = (await Setting.findOne({ key: 'global' })) as any;
@@ -50,7 +76,26 @@ export async function PATCH(request: NextRequest) {
 
     const settings = await Setting.findOneAndUpdate(
       { key: 'global' },
-      { telegramToken, telegramChatId, telegramSecret, siteUrl, brandPrimary },
+      {
+        telegramToken,
+        telegramChatId,
+        telegramSecret,
+        siteUrl,
+        siteName,
+        siteDescription,
+        brandPrimary,
+        supportEmail,
+        supportPhone,
+        maintenanceMode,
+        registrationEnabled,
+        adAutoApprove,
+        maxAdsPerUser,
+        featuredPrice1d,
+        featuredPrice7d,
+        featuredPrice30d,
+        announcementText,
+        announcementEnabled,
+      },
       { new: true, upsert: true }
     );
     return NextResponse.json({ settings });
