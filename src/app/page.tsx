@@ -273,6 +273,10 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* MAGAZINE / ARTICLES — placed before the infinite-scroll ads list so it's
+          reachable without paging through every recent ad */}
+      <HomeArticlesSection articles={homeArticles} />
+
       {/* LATEST */}
       <section>
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -311,9 +315,6 @@ export default async function HomePage() {
           )}
         </div>
       </section>
-
-      {/* MAGAZINE / ARTICLES */}
-      <HomeArticlesSection articles={homeArticles} />
 
       <Footer />
       <BottomNav />
