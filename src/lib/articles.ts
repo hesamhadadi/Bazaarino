@@ -12,7 +12,18 @@ import '@/models/User'; // ensure User schema registered for populate('authorId'
  *
  *  Errors are logged with context to make Vercel logs actionable.
  */
-export async function fetchArticleBySlug(rawSlug: string) {
+/**
+ * Robustly fetch an article by slug (or fallback ObjectId).
+ *
+ * @param rawSlug   the slug param from the URL
+ * @param options.includeUnpublished  when true, draft & scheduled articles are
+ *   also returned (intended for admin/editor preview). When false (default),
+ *   only `status: 'published'` is returned to the public.
+ */
+export async function fetchArticleBySlug(
+  rawSlug: string,
+  options: { includeUnpublished?: boolean } = {},
+) {
   if (!rawSlug) return null;
   try {
     await connectDB();
@@ -30,16 +41,26 @@ export async function fetchArticleBySlug(rawSlug: string) {
 
     const slugList = Array.from(candidates).filter(Boolean);
 
+    const statusFilter = options.includeUnpublished
+      ? {}
+      : { status: 'published' };
+
     let item: any = await Article.findOne({
       slug: { $in: slugList },
-      status: 'published',
+      ...statusFilter,
     })
-      .populate('authorId', 'name avatar role')
+      .populate(
+        'authorId',
+        'name avatar role bio socialLinks ratingAvg ratingCount',
+      )
       .lean();
 
     if (!item && mongoose.Types.ObjectId.isValid(rawSlug)) {
-      item = await Article.findOne({ _id: rawSlug, status: 'published' })
-        .populate('authorId', 'name avatar role')
+      item = await Article.findOne({ _id: rawSlug, ...statusFilter })
+        .populate(
+          'authorId',
+          'name avatar role bio socialLinks ratingAvg ratingCount',
+        )
         .lean();
     }
 

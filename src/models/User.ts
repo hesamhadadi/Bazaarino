@@ -14,6 +14,15 @@ export interface IUser extends Document {
   telegram?: string;
   bio?: string;
   banner?: string;
+  socialLinks?: {
+    instagram?: string;
+    twitter?: string;
+    linkedin?: string;
+    github?: string;
+    youtube?: string;
+    website?: string;
+    facebook?: string;
+  };
   fiscalCode?: string;
   passportImage?: string;
   selfieImage?: string;
@@ -83,10 +92,19 @@ const UserSchema = new Schema<IUser>(
     },
     bio: {
       type: String,
-      maxlength: 500,
+      maxlength: 1000,
     },
     banner: {
       type: String,
+    },
+    socialLinks: {
+      instagram: { type: String, trim: true, maxlength: 200 },
+      twitter: { type: String, trim: true, maxlength: 200 },
+      linkedin: { type: String, trim: true, maxlength: 300 },
+      github: { type: String, trim: true, maxlength: 200 },
+      youtube: { type: String, trim: true, maxlength: 300 },
+      website: { type: String, trim: true, maxlength: 300 },
+      facebook: { type: String, trim: true, maxlength: 300 },
     },
     fiscalCode: {
       type: String,

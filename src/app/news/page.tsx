@@ -63,10 +63,10 @@ export const metadata: Metadata = {
 const estimateReadMinutes = (text: string) =>
   Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
 
-async function getArticles(q?: string, tag?: string) {
+async function getArticles(q?: string, tag?: string, includeUnpublished = false) {
   try {
     await connectDB();
-    const query: any = { status: 'published' };
+    const query: any = includeUnpublished ? {} : { status: 'published' };
     if (q?.trim()) {
       query.$or = [
         { title: { $regex: q.trim(), $options: 'i' } },

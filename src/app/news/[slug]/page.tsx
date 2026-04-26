@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { EyeOff } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
@@ -22,25 +25,43 @@ export const dynamic = 'force-dynamic';
 const estimateReadMinutes = (text: string) =>
   Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 220));
 
+async function isPrivilegedViewer() {
+  try {
+    const session = await getServerSession(authOptions);
+    const role = session?.user?.role;
+    return role === 'admin' || role === 'editor';
+  } catch {
+    return false;
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const article = await fetchArticleBySlug(params.slug);
+  const canPreview = await isPrivilegedViewer();
+  const article = await fetchArticleBySlug(params.slug, {
+    includeUnpublished: canPreview,
+  });
   if (!article) {
     return { title: 'خبر یافت نشد', robots: { index: false, follow: true } };
   }
+  // Hide unpublished previews from search engines and crawlers no matter what.
+  const isPublished = article.status === 'published';
   const base = getAppUrl();
   const canonicalPath = `/news/${encodeURIComponent(article.slug)}`;
   const image = article.coverImage || '/og-default.png';
   const fullImage = image.startsWith('http') ? image : `${base}${image}`;
 
   return {
-    title: article.title,
+    title: isPublished ? article.title : `[پیش‌نمایش] ${article.title}`,
     description: article.excerpt,
     keywords: Array.isArray(article.tags) ? article.tags.join(', ') : undefined,
     authors: article.authorId?.name ? [{ name: article.authorId.name }] : undefined,
+    robots: isPublished
+      ? undefined
+      : { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
     alternates: {
       canonical: canonicalPath,
       types: {
@@ -71,15 +92,22 @@ export async function generateMetadata({
 }
 
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = await fetchArticleBySlug(params.slug);
+  const canPreview = await isPrivilegedViewer();
+  const article = await fetchArticleBySlug(params.slug, {
+    includeUnpublished: canPreview,
+  });
   if (!article) {
     notFound();
   }
 
-  // Fire-and-forget view increment (skipped for bot user-agents to keep stats clean).
+  const isPublished = article.status === 'published';
+  const isPreview = !isPublished; // implies viewer is privileged (otherwise fetch returned null)
+
+  // Only count views for the public, published version. Previews and bots do
+  // not pollute the stats.
   const ua = headers().get('user-agent') || '';
   const isBot = /bot|crawler|spider|crawling|preview|facebookexternalhit|whatsapp|telegram|slack/i.test(ua);
-  if (!isBot) {
+  if (!isBot && isPublished) {
     incrementArticleViews(String(article._id));
   }
 
@@ -175,6 +203,25 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       )}
       <Navbar />
 
+      {isPreview && (
+        <div className="sticky top-0 z-30 bg-amber-500 text-white shadow-md">
+          <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-2 font-bold">
+              <EyeOff size={14} />
+              <span>
+                حالت پیش‌نمایش — وضعیت:{' '}
+                <span className="underline">
+                  {article.status === 'scheduled' ? 'زمان‌بندی شده' : 'پیش‌نویس'}
+                </span>
+              </span>
+            </div>
+            <span className="text-xs opacity-90 hidden sm:block">
+              فقط ادمین‌ها/ویراستارها این صفحه رو می‌بینن. گوگل ایندکس نمی‌کنه.
+            </span>
+          </div>
+        </div>
+      )}
+
       <article className="relative max-w-3xl mx-auto px-4 py-8 pb-24 md:pb-10">
         <nav aria-label="breadcrumb" className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
           <Link href="/" className="hover:text-brand-600">خانه</Link>
@@ -252,30 +299,60 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           </Link>
         </div>
 
-        <address className="not-italic mt-6 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={article.authorId?.avatar || '/default-avatar.svg'}
-              alt={article.authorId?.name || 'author'}
-              width={48}
-              height={48}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div>
-            {article.authorId?._id ? (
-              <Link
-                href={`/news/author/${article.authorId._id}`}
-                className="text-sm font-semibold text-gray-800 hover:text-brand-600"
-                rel="author"
-              >
-                {article.authorId.name || 'نویسنده بازارینو'}
-              </Link>
-            ) : (
-              <p className="text-sm font-semibold text-gray-800">نویسنده بازارینو</p>
-            )}
-            <p className="text-xs text-gray-500">تحریریه بازارینو</p>
+        {/* Author bio card — links to full author page when available */}
+        <address className="not-italic mt-8 rounded-3xl bg-gradient-to-l from-orange-50 to-amber-50/40 ring-1 ring-orange-100 p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-white ring-2 ring-white shadow-md flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={article.authorId?.avatar || '/default-avatar.svg'}
+                alt={article.authorId?.name || 'author'}
+                width={56}
+                height={56}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                {article.authorId?._id ? (
+                  <Link
+                    href={`/news/author/${article.authorId._id}`}
+                    className="text-base font-bold text-gray-900 hover:text-orange-600"
+                    rel="author"
+                  >
+                    {article.authorId.name || 'نویسنده بازارینو'}
+                  </Link>
+                ) : (
+                  <p className="text-base font-bold text-gray-900">نویسنده بازارینو</p>
+                )}
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white text-gray-700 ring-1 ring-gray-200">
+                  {article.authorId?.role === 'admin'
+                    ? 'ادمین'
+                    : article.authorId?.role === 'editor'
+                      ? 'دبیر'
+                      : 'نویسنده'}{' '}
+                  بازارینو
+                </span>
+              </div>
+              {article.authorId?.bio ? (
+                <p className="mt-1.5 text-sm text-gray-700 leading-7 line-clamp-3">
+                  {article.authorId.bio}
+                </p>
+              ) : (
+                <p className="mt-1.5 text-xs text-gray-500">
+                  تحریریه بازارینو — راهنمای ایرانیان اروپا
+                </p>
+              )}
+              {article.authorId?._id && (
+                <Link
+                  href={`/news/author/${article.authorId._id}`}
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-700"
+                >
+                  همه مقاله‌های این نویسنده
+                  <ArrowLeft size={12} />
+                </Link>
+              )}
+            </div>
           </div>
         </address>
 

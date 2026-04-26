@@ -8,7 +8,8 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import { CITIES } from '@/lib/constants';
 import toast from 'react-hot-toast';
-import { ImagePlus, Trash2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { ImagePlus, Trash2, Instagram, Twitter, Linkedin, Github, Youtube, Globe, Facebook } from 'lucide-react';
 
 export default function EditProfilePage() {
   const { data: session, status, update } = useSession();
@@ -23,6 +24,15 @@ export default function EditProfilePage() {
     telegram: '',
     bio: '',
     banner: '',
+    socialLinks: {
+      instagram: '',
+      twitter: '',
+      linkedin: '',
+      github: '',
+      youtube: '',
+      website: '',
+      facebook: '',
+    },
     fiscalCode: '',
     passportImage: '',
     selfieImage: '',
@@ -51,6 +61,15 @@ export default function EditProfilePage() {
           telegram: user.telegram || '',
           bio: user.bio || '',
           banner: user.banner || '',
+          socialLinks: {
+            instagram: user.socialLinks?.instagram || '',
+            twitter: user.socialLinks?.twitter || '',
+            linkedin: user.socialLinks?.linkedin || '',
+            github: user.socialLinks?.github || '',
+            youtube: user.socialLinks?.youtube || '',
+            website: user.socialLinks?.website || '',
+            facebook: user.socialLinks?.facebook || '',
+          },
           fiscalCode: user.fiscalCode || '',
             passportImage: user.passportImage || '',
             selfieImage: user.selfieImage || '',
@@ -218,9 +237,13 @@ export default function EditProfilePage() {
             <textarea
               value={form.bio}
               onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
-              placeholder="توضیحات صفحه شخصی شما"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm h-24 resize-none"
+              placeholder="درباره خودت بنویس (تا ۱۰۰۰ کاراکتر) — اگه نویسنده‌ای، این تو صفحه مقالاتت نشون داده می‌شه."
+              maxLength={1000}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm h-28 resize-y"
             />
+            <div className="text-[11px] text-gray-400 -mt-2 text-left">
+              {form.bio.length} / 1000
+            </div>
             <select
               value={form.city}
               onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))}
@@ -229,6 +252,63 @@ export default function EditProfilePage() {
               <option value="">انتخاب شهر</option>
               {CITIES.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}
             </select>
+          </div>
+
+          {/* Social links */}
+          <div className="mt-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">شبکه‌های اجتماعی</h3>
+            <p className="text-xs text-gray-500 mb-3">لینک کامل یا آیدی بدون @ — تو صفحه پروفایل و صفحه مقالاتت نشون داده می‌شن.</p>
+            <div className="space-y-2.5 mb-1">
+              <SocialField
+                Icon={Instagram}
+                color="text-pink-500"
+                placeholder="آیدی اینستاگرام یا لینک کامل"
+                value={form.socialLinks.instagram}
+                onChange={(v) => setForm((prev) => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: v } }))}
+              />
+              <SocialField
+                Icon={Twitter}
+                color="text-sky-500"
+                placeholder="آیدی توییتر / X یا لینک کامل"
+                value={form.socialLinks.twitter}
+                onChange={(v) => setForm((prev) => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: v } }))}
+              />
+              <SocialField
+                Icon={Linkedin}
+                color="text-blue-700"
+                placeholder="لینک لینکدین (mehr-i / company / ...)"
+                value={form.socialLinks.linkedin}
+                onChange={(v) => setForm((prev) => ({ ...prev, socialLinks: { ...prev.socialLinks, linkedin: v } }))}
+              />
+              <SocialField
+                Icon={Github}
+                color="text-gray-800"
+                placeholder="آیدی گیت‌هاب"
+                value={form.socialLinks.github}
+                onChange={(v) => setForm((prev) => ({ ...prev, socialLinks: { ...prev.socialLinks, github: v } }))}
+              />
+              <SocialField
+                Icon={Youtube}
+                color="text-red-600"
+                placeholder="لینک کانال یوتیوب"
+                value={form.socialLinks.youtube}
+                onChange={(v) => setForm((prev) => ({ ...prev, socialLinks: { ...prev.socialLinks, youtube: v } }))}
+              />
+              <SocialField
+                Icon={Facebook}
+                color="text-blue-600"
+                placeholder="لینک فیسبوک"
+                value={form.socialLinks.facebook}
+                onChange={(v) => setForm((prev) => ({ ...prev, socialLinks: { ...prev.socialLinks, facebook: v } }))}
+              />
+              <SocialField
+                Icon={Globe}
+                color="text-emerald-600"
+                placeholder="وب‌سایت شخصی (https://...)"
+                value={form.socialLinks.website}
+                onChange={(v) => setForm((prev) => ({ ...prev, socialLinks: { ...prev.socialLinks, website: v } }))}
+              />
+            </div>
           </div>
 
           <div className="mt-5">
@@ -347,6 +427,34 @@ export default function EditProfilePage() {
         </div>
       </div>
       <BottomNav />
+    </div>
+  );
+}
+
+/* Inline reusable social input row, kept colocated to avoid creating yet another
+   tiny file just for one-shot UI. */
+function SocialField({
+  Icon,
+  color,
+  placeholder,
+  value,
+  onChange,
+}: {
+  Icon: LucideIcon;
+  color: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <Icon size={15} className={`absolute right-3 top-1/2 -translate-y-1/2 ${color}`} />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full border border-gray-200 rounded-xl pr-9 pl-3 py-2 text-sm focus:border-brand-300 focus:outline-none"
+      />
     </div>
   );
 }

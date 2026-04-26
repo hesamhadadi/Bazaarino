@@ -14,7 +14,7 @@ export async function GET() {
     const userId = await resolveSessionUserId(session.user);
     if (!userId) return NextResponse.json({ message: 'کاربر معتبر یافت نشد' }, { status: 401 });
 
-    const user = await User.findById(userId).select('name email phone city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus businessName businessCategory businessDescription businessSubscriptionActive chatEmailNotificationsEnabled lastSeenAt').lean();
+    const user = await User.findById(userId).select('name email phone city avatar telegram bio banner socialLinks fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus businessName businessCategory businessDescription businessSubscriptionActive chatEmailNotificationsEnabled lastSeenAt').lean();
     return NextResponse.json({ user: JSON.parse(JSON.stringify(user)) });
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest) {
     if (!session) return NextResponse.json({ message: 'لطفاً وارد شوید' }, { status: 401 });
 
     const body = await request.json();
-    const { name, phone, city, avatar, telegram, bio, banner, fiscalCode, passportImage, selfieImage, businessName, businessCategory, businessDescription, businessSubscriptionActive, chatEmailNotificationsEnabled } = body;
+    const { name, phone, city, avatar, telegram, bio, banner, socialLinks, fiscalCode, passportImage, selfieImage, businessName, businessCategory, businessDescription, businessSubscriptionActive, chatEmailNotificationsEnabled } = body;
 
     await connectDB();
     const userId = await resolveSessionUserId(session.user);
@@ -43,6 +43,16 @@ export async function PATCH(request: NextRequest) {
     if (telegram !== undefined) updates.telegram = String(telegram).trim();
     if (bio !== undefined) updates.bio = String(bio).trim();
     if (banner !== undefined) updates.banner = banner || '';
+    if (socialLinks !== undefined && socialLinks && typeof socialLinks === 'object') {
+      // Whitelist allowed keys to avoid arbitrary writes.
+      const allowed = ['instagram', 'twitter', 'linkedin', 'github', 'youtube', 'website', 'facebook'] as const;
+      const cleaned: Record<string, string> = {};
+      for (const key of allowed) {
+        const v = (socialLinks as any)[key];
+        if (typeof v === 'string') cleaned[key] = v.trim().slice(0, 300);
+      }
+      updates.socialLinks = cleaned;
+    }
     if (fiscalCode !== undefined) {
       updates.fiscalCode = String(fiscalCode).trim();
       updates.fiscalCodeStatus = updates.fiscalCode ? 'pending' : 'none';
@@ -64,7 +74,7 @@ export async function PATCH(request: NextRequest) {
     updates.identityStatus = hasAny ? 'pending' : 'none';
 
     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
-      .select('name email phone city avatar telegram bio banner fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus businessName businessCategory businessDescription businessSubscriptionActive chatEmailNotificationsEnabled lastSeenAt')
+      .select('name email phone city avatar telegram bio banner socialLinks fiscalCode passportImage selfieImage fiscalCodeStatus passportStatus selfieStatus identityStatus businessName businessCategory businessDescription businessSubscriptionActive chatEmailNotificationsEnabled lastSeenAt')
       .lean();
 
     return NextResponse.json({ user: JSON.parse(JSON.stringify(user)) });
