@@ -1,4 +1,4 @@
-import type { MetadataRoute } from 'next';
+import { NextResponse } from 'next/server';
 import { getAppUrl } from '@/lib/app-url';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
@@ -10,11 +10,60 @@ export const revalidate = 3600;
 const MAX_ADS = 5000;
 const MAX_ARTICLES = 2000;
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = getAppUrl();
+type ChangeFreq =
+  | 'always'
+  | 'hourly'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'yearly'
+  | 'never';
+
+type Entry = {
+  url: string;
+  lastModified?: Date | string;
+  changeFrequency?: ChangeFreq;
+  priority?: number;
+};
+
+// Escape characters that are not legal in XML text/attributes.
+function xmlEscape(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function toIso(d: Date | string | undefined): string {
+  if (!d) return new Date().toISOString();
+  if (d instanceof Date) return d.toISOString();
+  try {
+    return new Date(d).toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
+function entryToXml(e: Entry): string {
+  const url = xmlEscape(e.url);
+  const lastmod = toIso(e.lastModified);
+  const cf = e.changeFrequency
+    ? `\n    <changefreq>${e.changeFrequency}</changefreq>`
+    : '';
+  const pr =
+    typeof e.priority === 'number'
+      ? `\n    <priority>${e.priority.toFixed(1)}</priority>`
+      : '';
+  return `  <url>\n    <loc>${url}</loc>\n    <lastmod>${lastmod}</lastmod>${cf}${pr}\n  </url>`;
+}
+
+export async function GET() {
+  const base = getAppUrl().replace(/\/$/, '');
   const now = new Date();
 
-  const staticRoutes: MetadataRoute.Sitemap = [
+  const staticRoutes: Entry[] = [
     { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1 },
     { url: `${base}/search`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/house-reservation`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
@@ -26,7 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
-  const countryCityRoutes: MetadataRoute.Sitemap = [];
+  const countryCityRoutes: Entry[] = [];
   for (const country of COUNTRIES) {
     countryCityRoutes.push({
       url: `${base}/search?country=${encodeURIComponent(country.value)}`,
@@ -53,10 +102,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  let adRoutes: MetadataRoute.Sitemap = [];
-  let articleRoutes: MetadataRoute.Sitemap = [];
-  let tagRoutes: MetadataRoute.Sitemap = [];
-  let authorRoutes: MetadataRoute.Sitemap = [];
+  let adRoutes: Entry[] = [];
+  let articleRoutes: Entry[] = [];
+  let tagRoutes: Entry[] = [];
+  let authorRoutes: Entry[] = [];
 
   try {
     await connectDB();
@@ -87,21 +136,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     adRoutes = ads.map((ad: any) => ({
       url: `${base}/ads/${ad._id}`,
       lastModified: ad.updatedAt || ad.createdAt || now,
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.7,
     }));
 
     articleRoutes = articles.map((a: any) => ({
       url: `${base}/news/${encodeURIComponent(a.slug)}`,
       lastModified: a.updatedAt || a.createdAt || now,
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.6,
     }));
 
     tagRoutes = (tagAgg as any[]).map((t) => ({
       url: `${base}/news/tag/${encodeURIComponent(t._id)}`,
       lastModified: t.lastModified || now,
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.5,
     }));
 
@@ -110,14 +159,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .map((a) => ({
         url: `${base}/news/author/${a._id}`,
         lastModified: a.lastModified || now,
-        changeFrequency: 'weekly' as const,
+        changeFrequency: 'weekly',
         priority: 0.4,
       }));
   } catch (e) {
     console.error('[sitemap] DB error', e);
   }
 
-  return [
+  const all: Entry[] = [
     ...staticRoutes,
     ...countryCityRoutes,
     ...adRoutes,
@@ -125,4 +174,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...tagRoutes,
     ...authorRoutes,
   ];
+
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${all.map(entryToXml).join('\n')}
+</urlset>`;
+
+  return new NextResponse(body, {
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+    },
+  });
 }
