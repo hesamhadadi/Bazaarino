@@ -48,6 +48,10 @@ body {
   background: #9ca3af;
 }
 
+/* Hide scrollbar (for horizontal scroll rows) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* RTL inputs */
 input, textarea, select, button {
   font-family: inherit;
