@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { RefreshCcw, Home } from 'lucide-react';
 import Link from 'next/link';
+import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
   error,
@@ -13,6 +14,9 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error('App error:', error);
+    // Forward to Sentry too — instrumentation only catches RSC/server
+    // throws automatically; client-side render errors need this manual hop.
+    Sentry.captureException(error);
   }, [error]);
 
   return (

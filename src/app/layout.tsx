@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Vazirmatn } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import GoogleAnalytics from '@/components/analytics/GoogleAnalytics';
 import './globals.css';
 import 'leaflet/dist/leaflet.css';
 import { Toaster } from 'react-hot-toast';
@@ -54,6 +55,21 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
     googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  },
+  // Site verification meta tags. Set the corresponding env vars in Vercel.
+  // Google Search Console:        NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+  // Bing Webmaster Tools:         NEXT_PUBLIC_BING_SITE_VERIFICATION
+  // Yandex Webmaster (optional):  NEXT_PUBLIC_YANDEX_SITE_VERIFICATION
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+    other: {
+      ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+        ? { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+        : {}),
+      ...(process.env.NEXT_PUBLIC_YANDEX_SITE_VERIFICATION
+        ? { 'yandex-verification': process.env.NEXT_PUBLIC_YANDEX_SITE_VERIFICATION }
+        : {}),
+    },
   },
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
@@ -145,6 +161,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </AuthProvider>
         <Analytics />
         <SpeedInsights />
+        <GoogleAnalytics />
       </body>
     </html>
   );
