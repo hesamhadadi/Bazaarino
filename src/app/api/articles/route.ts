@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, excerpt, content, coverImage, tags, isHot, status, scheduledFor } = body;
+    const { title, excerpt, content, coverImage, tags, isHot, status, scheduledFor, slug: rawSlug } = body;
     if (!title || !excerpt || !content) {
       return NextResponse.json({ message: 'عنوان، خلاصه و متن الزامی است' }, { status: 400 });
     }
@@ -68,10 +68,24 @@ export async function POST(request: NextRequest) {
     const authorId = await resolveSessionUserId(session.user);
     if (!authorId) return NextResponse.json({ message: 'کاربر معتبر یافت نشد' }, { status: 401 });
 
-    let slug = slugify(title);
+    // If the editor supplied an explicit slug, use it (after normalising
+    // through slugify so we can't end up with anything URL-unsafe). Else
+    // fall back to deriving one from the title. Either way, ensure
+    // uniqueness by suffixing -2/-3/... until free.
+    const baseSlug =
+      typeof rawSlug === 'string' && rawSlug.trim()
+        ? slugify(rawSlug.trim())
+        : slugify(title);
+    if (!baseSlug) {
+      return NextResponse.json(
+        { message: 'نشانی (slug) معتبر نیست' },
+        { status: 400 },
+      );
+    }
+    let slug = baseSlug;
     let counter = 1;
     while (await Article.exists({ slug })) {
-      slug = `${slugify(title)}-${counter++}`;
+      slug = `${baseSlug}-${counter++}`;
     }
 
     // Resolve final status + dates.

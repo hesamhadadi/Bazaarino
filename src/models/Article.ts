@@ -31,6 +31,7 @@ const ArticleSchema = new Schema<IArticle>(
   {
     title: { type: String, required: true, trim: true, maxlength: 140 },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    previousSlugs: { type: [String], default: [], index: true },
     excerpt: { type: String, required: true, maxlength: 320 },
     content: { type: String, required: true },
     coverImage: { type: String },

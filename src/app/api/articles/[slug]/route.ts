@@ -52,18 +52,43 @@ export async function PATCH(request: NextRequest, { params }: { params: { slug: 
     if (!article) return NextResponse.json({ message: 'یافت نشد' }, { status: 404 });
 
     const body = await request.json();
-    const { title, excerpt, content, coverImage, tags, isHot, status, scheduledFor } = body;
+    const { title, excerpt, content, coverImage, tags, isHot, status, scheduledFor, slug: rawSlug } = body;
 
     if (typeof title === 'string' && title.trim()) {
-      // If title changed, regenerate slug uniquely.
-      if (title.trim() !== article.title) {
-        let nextSlug = slugify(title);
+      article.title = title.trim();
+    }
+
+    // Slug handling — explicit override wins over title-derived slug. When
+    // the canonical slug actually changes, we archive the old one in
+    // previousSlugs so old Google-indexed URLs can still 301 to the new
+    // page (see [slug]/page.tsx).
+    const desiredSlugSource =
+      typeof rawSlug === 'string' && rawSlug.trim()
+        ? rawSlug.trim()
+        : typeof title === 'string' && title.trim()
+        ? title.trim()
+        : null;
+
+    if (desiredSlugSource) {
+      const baseSlug = slugify(desiredSlugSource);
+      if (baseSlug && baseSlug !== article.slug) {
+        let nextSlug = baseSlug;
         let counter = 1;
         while (await Article.exists({ slug: nextSlug, _id: { $ne: article._id } })) {
-          nextSlug = `${slugify(title)}-${counter++}`;
+          nextSlug = `${baseSlug}-${counter++}`;
         }
-        article.slug = nextSlug;
-        article.title = title.trim();
+        if (nextSlug !== article.slug) {
+          const prev = Array.isArray(article.previousSlugs)
+            ? article.previousSlugs
+            : [];
+          if (article.slug && !prev.includes(article.slug)) {
+            prev.push(article.slug);
+          }
+          // Drop the new slug from previousSlugs if it was sitting there
+          // (re-renaming back to an old value should not redirect to itself).
+          article.previousSlugs = prev.filter((s: string) => s !== nextSlug);
+          article.slug = nextSlug;
+        }
       }
     }
 

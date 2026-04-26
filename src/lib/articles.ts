@@ -55,6 +55,20 @@ export async function fetchArticleBySlug(
       )
       .lean();
 
+    // Look up by previousSlugs as a second pass — caller can detect this
+    // by comparing item.slug to the requested slug and emit a 301 redirect.
+    if (!item) {
+      item = await Article.findOne({
+        previousSlugs: { $in: slugList },
+        ...statusFilter,
+      })
+        .populate(
+          'authorId',
+          'name avatar role bio socialLinks ratingAvg ratingCount',
+        )
+        .lean();
+    }
+
     if (!item && mongoose.Types.ObjectId.isValid(rawSlug)) {
       item = await Article.findOne({ _id: rawSlug, ...statusFilter })
         .populate(

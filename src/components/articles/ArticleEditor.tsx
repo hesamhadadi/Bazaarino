@@ -74,6 +74,9 @@ export default function ArticleEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState(initial?.title || '');
+  // Editable slug. Empty string means "derive from title server-side";
+  // any explicit value will be used as-is (after slugify on the server).
+  const [slug, setSlug] = useState(initial?.slug || '');
   const [excerpt, setExcerpt] = useState(initial?.excerpt || '');
   const [content, setContent] = useState(initial?.content || '');
   const [coverImage, setCoverImage] = useState(initial?.coverImage || '');
@@ -134,6 +137,7 @@ export default function ArticleEditor({
     try {
       const payload = {
         title: title.trim(),
+        slug: slug.trim() || undefined,
         excerpt: excerpt.trim(),
         content,
         coverImage: coverImage.trim() || null,
@@ -282,6 +286,32 @@ export default function ArticleEditor({
               placeholder="یه عنوان جذاب بنویس..."
               className="w-full text-2xl font-black text-gray-900 bg-transparent border-0 outline-none placeholder:text-gray-300 focus:placeholder:text-gray-400"
             />
+          </div>
+          {/* Slug — optional override. Empty = auto from title. */}
+          <div className="border-t border-gray-100 pt-4">
+            <label className="flex items-center justify-between text-[11px] font-semibold text-gray-500 mb-1.5">
+              <span>نشانی اینترنتی (Slug)</span>
+              {isEdit && initial?.slug && slug !== initial.slug && (
+                <span className="text-amber-700 font-bold">
+                  ⚠ تغییر می‌کند — نشانی قبلی به نشانی جدید ریدایرکت می‌شود
+                </span>
+              )}
+            </label>
+            <div className="flex items-stretch gap-0">
+              <span className="inline-flex items-center px-3 rounded-r-xl border border-l-0 border-gray-200 bg-gray-50 text-[11px] text-gray-500 font-mono">
+                /news/
+              </span>
+              <input
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder={title ? '(خودکار از روی عنوان ساخته می‌شود)' : 'مثلاً: enteghal-pool-iran-europe'}
+                dir="ltr"
+                className="flex-1 bg-gray-50 hover:bg-white focus:bg-white focus:border-gray-400 border border-gray-200 rounded-l-xl px-3 py-2 text-xs outline-none transition font-mono"
+              />
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1">
+              برای SEO بهتر، انگلیسی-لاتین (مثل <code>permesso-soggiorno-2026</code>) پیشنهاد می‌شود. خالی بذاری از روی عنوان ساخته می‌شه.
+            </p>
           </div>
           <div className="border-t border-gray-100 pt-4">
             <label className="block text-[11px] font-semibold text-gray-500 mb-1.5">خلاصه (Excerpt)</label>

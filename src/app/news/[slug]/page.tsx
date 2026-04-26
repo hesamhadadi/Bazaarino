@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -100,6 +100,25 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   });
   if (!article) {
     notFound();
+  }
+
+  // Permanent redirect when the requested slug isn't the canonical one.
+  // This preserves SEO ranking after slug renames (Persian → Latin migration,
+  // typo fixes, etc.) by 301-ing every previousSlugs hit to the live URL.
+  // We compare both raw and decoded forms because Next forwards URL-encoded
+  // params, while DB stores plain text.
+  let decodedRequested = params.slug;
+  try {
+    decodedRequested = decodeURIComponent(params.slug);
+  } catch {
+    // ignore malformed URI — fall through with the raw value
+  }
+  if (
+    article.slug &&
+    article.slug !== params.slug &&
+    article.slug !== decodedRequested
+  ) {
+    redirect(`/news/${article.slug}`);
   }
 
   const isPublished = article.status === 'published';
