@@ -13,6 +13,9 @@ export interface IArticle extends Document {
   publishedAt?: Date;
   authorId: mongoose.Types.ObjectId;
   views: number;
+  ratingAvg: number;
+  ratingCount: number;
+  commentCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +38,9 @@ const ArticleSchema = new Schema<IArticle>(
     publishedAt: { type: Date },
     authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     views: { type: Number, default: 0 },
+    ratingAvg: { type: Number, default: 0, min: 0, max: 5 },
+    ratingCount: { type: Number, default: 0, min: 0 },
+    commentCount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

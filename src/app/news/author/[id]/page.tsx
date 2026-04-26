@@ -227,14 +227,15 @@ export default async function AuthorPage({ params }: { params: { id: string } })
 
         {/* Hero card with banner + avatar overlap */}
         <header className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-          {/* Banner */}
-          <div className="relative h-36 md:h-44 overflow-hidden bg-gradient-to-br from-orange-400 via-amber-400 to-rose-400">
+          {/* Banner — fixed aspect ratio so the cover crops predictably on every screen */}
+          <div className="relative w-full aspect-[3/1] md:aspect-[4/1] overflow-hidden bg-gradient-to-br from-orange-400 via-amber-400 to-rose-400">
             {author.banner ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={author.banner}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                loading="eager"
               />
             ) : (
               // Decorative dot pattern when no custom banner
@@ -248,13 +249,14 @@ export default async function AuthorPage({ params }: { params: { id: string } })
                 }}
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+            {/* Bottom fade for legibility regardless of cover */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
           </div>
 
-          {/* Avatar + name */}
-          <div className="px-5 md:px-7 pt-0 pb-5 md:pb-6">
-            <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12 md:-mt-14">
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-white ring-4 ring-white shadow-lg flex-shrink-0">
+          {/* Avatar + name — avatar overlaps banner on the right (RTL) for both mobile and desktop */}
+          <div className="px-5 md:px-7 pb-5 md:pb-6">
+            <div className="flex items-end gap-4 -mt-10 md:-mt-14">
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-white ring-4 ring-white shadow-lg flex-shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={author.avatar || '/default-avatar.svg'}
@@ -264,13 +266,13 @@ export default async function AuthorPage({ params }: { params: { id: string } })
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex-1 min-w-0 md:pb-2">
+              <div className="flex-1 min-w-0 pb-1 md:pb-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight">
+                  <h1 className="text-xl md:text-3xl font-black text-gray-900 leading-tight truncate">
                     {author.name}
                   </h1>
                   <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${role.cls}`}
+                    className={`inline-flex items-center gap-1 text-[10px] md:text-[11px] font-bold px-2 py-0.5 md:px-2.5 md:py-1 rounded-full border ${role.cls}`}
                   >
                     <ShieldCheck size={11} />
                     {role.label}

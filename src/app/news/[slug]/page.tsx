@@ -10,6 +10,8 @@ import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
 import ShareButton from '@/components/ads/ShareButton';
 import ArticleBody from '@/components/articles/ArticleBody';
+import ArticleRating from '@/components/articles/ArticleRating';
+import ArticleComments from '@/components/articles/ArticleComments';
 import { toFaDigits } from '@/lib/locale';
 import { getAppUrl } from '@/lib/app-url';
 import {
@@ -153,6 +155,18 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       '@type': 'SpeakableSpecification',
       cssSelector: ['h1', '[data-speakable-summary]'],
     },
+    ...(article.ratingCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Number(article.ratingAvg || 0).toFixed(1),
+            ratingCount: article.ratingCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
+    ...(article.commentCount > 0 ? { commentCount: article.commentCount } : {}),
   };
 
   const breadcrumbLd = {
@@ -292,6 +306,14 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
         <ArticleBody content={article.content || ''} />
 
+        {article.status === 'published' && (
+          <ArticleRating
+            slug={article.slug}
+            initialAvg={article.ratingAvg || 0}
+            initialCount={article.ratingCount || 0}
+          />
+        )}
+
         <div className="mt-8 flex items-center justify-between gap-3 border-t border-b border-gray-100 py-4">
           <ShareButton title={article.title} text={article.excerpt} />
           <Link href="/news" className="text-sm text-gray-600 hover:text-brand-600 inline-flex items-center gap-1">
@@ -405,6 +427,13 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               ))}
             </div>
           </section>
+        )}
+
+        {article.status === 'published' && (
+          <ArticleComments
+            slug={article.slug}
+            initialCount={article.commentCount || 0}
+          />
         )}
       </article>
       <Footer />
