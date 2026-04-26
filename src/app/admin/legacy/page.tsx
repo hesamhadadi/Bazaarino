@@ -551,29 +551,9 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-gray-100 to-gray-200" dir="rtl">
-      <div className="bg-gradient-to-l from-slate-950 via-slate-900 to-gray-900 text-white px-6 py-5 border-b border-gray-700/50 shadow-lg">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex gap-0.5">
-              <span className="w-2 h-6 bg-green-500 rounded-sm"></span>
-              <span className="w-2 h-6 bg-gray-400 rounded-sm"></span>
-              <span className="w-2 h-6 bg-red-500 rounded-sm"></span>
-            </div>
-            <div>
-              <span className="font-bold text-lg">بازارینو</span>
-              <span className="text-gray-400 text-sm mr-2">پنل مدیریت پیشرفته</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-gray-400 text-sm">{session?.user?.name}</span>
-            <Link href="/" className="text-gray-400 hover:text-white text-sm">← سایت</Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {stats && (
+    <div dir="rtl">
+      <div>
+        {false && stats && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3 mb-4">
               {[
@@ -828,28 +808,6 @@ export default function AdminDashboard() {
           </>
         )}
 
-        <div className="flex gap-2 mb-5 border-b border-gray-300/70 overflow-x-auto">
-          {[
-            { id: 'pending', label: 'در انتظار', count: pendingAds.length, icon: Clock },
-            { id: 'all', label: 'همه آگهی‌ها', icon: FileText },
-            { id: 'users', label: 'کاربران', icon: Users },
-            { id: 'banners', label: 'بنر تبلیغاتی', icon: ImagePlus },
-            { id: 'reports', label: 'گزارش‌ها', icon: Eye },
-            { id: 'settings', label: 'تنظیمات', icon: ShieldCheck },
-          ].map((tab: any) => (
-            <button
-              key={tab.id}
-              onClick={() => changeTab(tab.id)}
-               className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                 activeTab === tab.id ? 'border-brand-500 text-brand-700 bg-white/70 rounded-t-xl' : 'border-transparent text-gray-500'
-               }`}
-            >
-              <tab.icon size={14} />
-              {tab.label}
-              {tab.count !== undefined && tab.count > 0 && <span className="mr-2 bg-yellow-400 text-yellow-900 text-xs px-1.5 py-0.5 rounded-full">{tab.count}</span>}
-            </button>
-          ))}
-        </div>
 
         {(activeTab === 'pending' || activeTab === 'all') && (
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-4 mb-4">

@@ -1,13 +1,14 @@
 import Link from 'next/link';
-import { Search, ArrowLeft, Home as HomeIcon, Calendar, Plus, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Home as HomeIcon, Calendar, Plus, TrendingUp } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
 import AdCard from '@/components/ads/AdCard';
 import LatestAdsSection from '@/components/home/LatestAdsSection';
-import CategoryIcon from '@/components/ui/CategoryIcon';
+import HomeSearchPanel from '@/components/home/HomeSearchPanel';
 import CityIcon from '@/components/ui/CityIcon';
-import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
+import { CATEGORIES, CITIES } from '@/lib/constants';
+import { getCategoryImage } from '@/lib/category-images';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import { attachMarketPriceToAds } from '@/lib/market-price';
@@ -102,46 +103,9 @@ export default async function HomePage() {
           </div>
 
           {/* Big search bar */}
-          <form
-            action="/search"
-            method="GET"
-            className="mt-6 grid gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm md:grid-cols-[1.6fr_1fr_1fr_auto] md:p-2"
-          >
-            <div className="relative">
-              <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                name="q"
-                type="text"
-                placeholder="مثلاً آپارتمان رم، لپ‌تاپ دست دوم..."
-                className="w-full rounded-xl border-0 bg-transparent pr-10 pl-3 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
-              />
-            </div>
-            <select
-              name="country"
-              className="rounded-xl border-0 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:bg-gray-100 cursor-pointer"
-            >
-              <option value="">همه کشورها</option>
-              {COUNTRIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
-            <select
-              name="city"
-              className="rounded-xl border-0 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:bg-gray-100 cursor-pointer"
-            >
-              <option value="">همه شهرها</option>
-              {CITIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 hover:bg-gray-800 px-6 py-3 text-sm font-semibold text-white transition"
-            >
-              <Search size={16} />
-              جست‌وجو
-            </button>
-          </form>
+          <div className="mt-6">
+            <HomeSearchPanel />
+          </div>
 
           {/* Trending searches */}
           <div className="mt-5 flex items-center gap-2 flex-wrap">
@@ -161,27 +125,44 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CATEGORY ROW — horizontal scroll, dense */}
+      {/* CATEGORY ROW — image cards */}
       <section className="border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-900">دسته‌بندی‌ها</h2>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="flex items-end justify-between mb-4">
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-gray-900">دسته‌بندی‌ها</h2>
+              <p className="text-xs text-gray-500 mt-1">هر چیزی که دنبالشی، اینجاست.</p>
+            </div>
             <Link href="/search" className="text-xs text-gray-500 hover:text-gray-700 inline-flex items-center gap-0.5">
-              همه <ArrowLeft size={12} />
+              همه دسته‌ها <ArrowLeft size={12} />
             </Link>
           </div>
           <div className="-mx-4 px-4 overflow-x-auto scroll-smooth no-scrollbar">
-            <div className="flex md:grid md:grid-cols-8 gap-2 min-w-max md:min-w-0">
+            <div className="flex md:grid md:grid-cols-4 lg:grid-cols-6 gap-3 min-w-max md:min-w-0">
               {CATEGORIES.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/search?category=${cat.id}`}
-                  className="group flex flex-col items-center gap-2 rounded-xl border border-gray-100 bg-white hover:border-gray-300 hover:shadow-sm px-3 py-4 w-24 md:w-auto transition"
+                  className="group relative flex flex-col w-36 md:w-auto overflow-hidden rounded-2xl border border-gray-200 bg-white hover:shadow-lg transition"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition">
-                    <CategoryIcon categoryId={cat.id} size={18} className="text-gray-700 group-hover:text-orange-600 transition" />
+                  <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getCategoryImage(cat.id)}
+                      alt={cat.label}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                    <div className="absolute bottom-2 right-3 left-3">
+                      <p className="text-white text-sm font-bold drop-shadow-sm leading-tight">{cat.label}</p>
+                      {cat.subcategories?.[0] && (
+                        <p className="text-white/80 text-[10px] mt-0.5 truncate">
+                          {cat.subcategories.slice(0, 2).map((s) => s.label).join(' · ')}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-[11px] text-gray-700 text-center leading-tight line-clamp-2">{cat.label}</span>
                 </Link>
               ))}
             </div>

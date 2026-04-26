@@ -307,50 +307,184 @@ select {
   }
 }
 
+/* ─── react-multi-date-picker — Airbnb / Booking style ───── */
 .rmdp-wrapper {
   border: 1px solid #e5e7eb !important;
   border-radius: 1.5rem !important;
-  box-shadow: 0 26px 55px rgba(15, 23, 42, 0.18) !important;
-  padding: 0.6rem !important;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12) !important;
+  padding: 1rem 0.6rem 0.5rem !important;
   background: #fff !important;
+  font-family: var(--font-vazir), 'Vazirmatn', Tahoma, Arial, sans-serif !important;
 }
 
-.rmdp-day {
-  width: 2.7rem !important;
-  height: 2.7rem !important;
-  font-size: 1rem !important;
+.rmdp-calendar {
+  padding: 0 0.4rem !important;
 }
 
-.rmdp-day span {
-  border-radius: 9999px !important;
+/* Header (month/year + arrows) */
+.rmdp-header {
+  height: 2.6rem !important;
+  margin-bottom: 0.25rem !important;
 }
-
-.rmdp-day.rmdp-today span {
-  background-color: #fff7ed !important;
-  color: #9a3412 !important;
-}
-
-.rmdp-day.rmdp-selected span {
-  background-color: #f97316 !important;
-}
-
-.rmdp-day.rmdp-range span {
-  background-color: #ffedd5 !important;
-  color: #9a3412 !important;
-}
-
-.rmdp-day.rmdp-range-start span,
-.rmdp-day.rmdp-range-end span {
-  background-color: #f97316 !important;
-  color: #fff !important;
-}
-
-.rmdp-week-day {
-  font-size: 0.85rem !important;
-  font-weight: 700 !important;
-}
-
 .rmdp-header-values {
-  font-size: 1rem !important;
+  font-size: 0.95rem !important;
   font-weight: 700 !important;
+  color: #111827 !important;
+  letter-spacing: 0.01em;
+}
+.rmdp-arrow-container {
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  background: #fff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+  transition: all 0.15s ease;
+}
+.rmdp-arrow-container:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+.rmdp-arrow {
+  border-color: #4b5563 !important;
+  margin-top: 4px !important;
+  width: 6px !important;
+  height: 6px !important;
+}
+
+/* Weekday row */
+.rmdp-week-day {
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  color: #9ca3af !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  height: 2rem !important;
+}
+
+/* Day cell — perfect square with circular hover */
+.rmdp-day {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #1f2937 !important;
+  padding: 0 !important;
+}
+.rmdp-day span {
+  inset: 1px !important;
+  border-radius: 9999px !important;
+  font-weight: 500 !important;
+  transition: all 0.12s ease;
+}
+.rmdp-day:not(.rmdp-disabled):not(.rmdp-day-hidden) span:hover {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  border: 1.5px solid #111827 !important;
+}
+
+/* Disabled days */
+.rmdp-day.rmdp-disabled,
+.rmdp-day.rmdp-deactive {
+  color: #d1d5db !important;
+  text-decoration: line-through !important;
+}
+.rmdp-day.rmdp-disabled span:hover {
+  background: transparent !important;
+  border: 0 !important;
+  color: #d1d5db !important;
+}
+
+/* Today */
+.rmdp-day.rmdp-today span {
+  background-color: transparent !important;
+  color: #111827 !important;
+  font-weight: 700 !important;
+  position: relative;
+}
+.rmdp-day.rmdp-today span::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: #f97316;
+}
+
+/* In-range days — continuous bar effect */
+.rmdp-day.rmdp-range {
+  background-color: #fff7ed !important;
+  color: #1f2937 !important;
+  box-shadow: none !important;
+}
+.rmdp-day.rmdp-range span {
+  background-color: transparent !important;
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+}
+.rmdp-day.rmdp-range:hover span {
+  background-color: #ffedd5 !important;
+  border: 0 !important;
+}
+
+/* Range hover preview (dotted style as user drags) */
+.rmdp-day.rmdp-range-hover {
+  background-color: #fff7ed !important;
+}
+.rmdp-day.rmdp-range-hover span {
+  background-color: transparent !important;
+  border: 1px dashed #fb923c !important;
+  color: #9a3412 !important;
+}
+
+/* Start / End — solid filled circle */
+.rmdp-day.rmdp-range.start,
+.rmdp-day.rmdp-range.end,
+.rmdp-day.rmdp-range-start,
+.rmdp-day.rmdp-range-end,
+.rmdp-day.rmdp-selected {
+  background-color: #fff7ed !important;
+}
+.rmdp-day.rmdp-range.start span,
+.rmdp-day.rmdp-range.end span,
+.rmdp-day.rmdp-range-start span,
+.rmdp-day.rmdp-range-end span,
+.rmdp-day.rmdp-selected span:not(.sd) {
+  background-color: #111827 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.18) !important;
+}
+/* When start has no end yet, don't fill row */
+.rmdp-day.rmdp-range.start.end {
+  background-color: transparent !important;
+}
+/* Half-row backgrounds so range bar stops at endpoint cleanly */
+.rmdp-day.rmdp-range.start:not(.end) {
+  background: linear-gradient(to left, #fff7ed 50%, transparent 50%) !important;
+}
+.rmdp-day.rmdp-range.end:not(.start) {
+  background: linear-gradient(to right, #fff7ed 50%, transparent 50%) !important;
+}
+
+/* RTL flips: flip the half-bar gradients */
+[dir="rtl"] .rmdp-day.rmdp-range.start:not(.end) {
+  background: linear-gradient(to right, #fff7ed 50%, transparent 50%) !important;
+}
+[dir="rtl"] .rmdp-day.rmdp-range.end:not(.start) {
+  background: linear-gradient(to left, #fff7ed 50%, transparent 50%) !important;
+}
+
+/* Two-month layout spacing */
+.rmdp-calendar.multi-months {
+  gap: 1.5rem !important;
+}
+.rmdp-day-picker {
+  padding: 0 0.25rem !important;
 }
