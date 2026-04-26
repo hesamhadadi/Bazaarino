@@ -227,8 +227,9 @@ export default async function AuthorPage({ params }: { params: { id: string } })
 
         {/* Hero card with banner + avatar overlap */}
         <header className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-          {/* Banner — fixed aspect ratio so the cover crops predictably on every screen */}
-          <div className="relative w-full aspect-[3/1] md:aspect-[4/1] overflow-hidden bg-gradient-to-br from-orange-400 via-amber-400 to-rose-400">
+          {/* Banner — short, magazine-style strip. Fixed mobile height keeps phones tight,
+              desktop uses an aspect ratio with a hard max-height so wide screens don't blow it up */}
+          <div className="relative w-full h-32 md:h-auto md:aspect-[6/1] md:max-h-[200px] overflow-hidden bg-gradient-to-br from-orange-400 via-amber-400 to-rose-400">
             {author.banner ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
