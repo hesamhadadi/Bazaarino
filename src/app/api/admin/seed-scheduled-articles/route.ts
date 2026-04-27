@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Article from '@/models/Article';
-import User from '@/models/User';
 
 // Pull the article list straight from the existing CommonJS source-of-truth
 // so we don't have to maintain two copies. Next.js compiles this fine via
@@ -47,23 +47,41 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'دسترسی ندارید' }, { status: 403 });
   }
 
-  const dryRun = new URL(request.url).searchParams.get('dryRun') === '1';
+  const url = new URL(request.url);
+  const dryRun = url.searchParams.get('dryRun') === '1';
+  const fixAuthor = url.searchParams.get('fixAuthor') === '1';
 
   await connectDB();
 
-  // Resolve author — first admin user.
-  const admin = await User.findOne({ role: 'admin' }).select('_id name email').lean<{
-    _id: unknown;
-    name?: string;
-    email?: string;
-  }>();
-  if (!admin) {
-    return NextResponse.json({ message: 'هیچ کاربر ادمینی یافت نشد' }, { status: 500 });
+  // Author the articles as the currently logged-in admin (the one calling
+  // this endpoint), not "the first admin in the DB" — otherwise an early
+  // admin account ends up credited for everyone's seeded posts.
+  const sessionUser = session.user as { id?: string; name?: string; email?: string };
+  if (!sessionUser.id || !mongoose.Types.ObjectId.isValid(sessionUser.id)) {
+    return NextResponse.json({ message: 'شناسه کاربر معتبر نیست' }, { status: 400 });
+  }
+  const authorId = new mongoose.Types.ObjectId(sessionUser.id);
+
+  // Maintenance mode: re-assign authorId on already-seeded slugs to the
+  // current admin. Useful when the first run picked up the wrong author.
+  if (fixAuthor) {
+    const slugs = articleData.map((a) => a.slug).filter(Boolean);
+    const res = await Article.updateMany(
+      { slug: { $in: slugs } },
+      { $set: { authorId } },
+    );
+    return NextResponse.json({
+      mode: 'fixAuthor',
+      author: { id: sessionUser.id, name: sessionUser.name, email: sessionUser.email },
+      matched: res.matchedCount,
+      modified: res.modifiedCount,
+      slugs,
+    });
   }
 
   const results = {
     dryRun,
-    author: { id: String(admin._id), name: admin.name, email: admin.email },
+    author: { id: sessionUser.id, name: sessionUser.name, email: sessionUser.email },
     total: articleData.length,
     created: [] as string[],
     skipped: [] as string[],
@@ -104,7 +122,7 @@ export async function POST(request: NextRequest) {
         isHot: Boolean(a.isHot),
         status: 'scheduled',
         scheduledFor,
-        authorId: admin._id,
+        authorId,
         previousSlugs: [],
       });
       results.created.push(a.slug);
