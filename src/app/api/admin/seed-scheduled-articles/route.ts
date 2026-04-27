@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
   const url = new URL(request.url);
   const dryRun = url.searchParams.get('dryRun') === '1';
   const fixAuthor = url.searchParams.get('fixAuthor') === '1';
+  const syncMeta = url.searchParams.get('syncMeta') === '1';
 
   await connectDB();
 
@@ -61,6 +62,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'شناسه کاربر معتبر نیست' }, { status: 400 });
   }
   const authorId = new mongoose.Types.ObjectId(sessionUser.id);
+
+  // Maintenance mode: sync metadata (cover image, title, excerpt, tags,
+  // scheduledFor) for already-seeded slugs from the data file. Skips the
+  // `content` field on purpose so that any manual edits in the admin
+  // editor are preserved.
+  if (syncMeta) {
+    const updates: Array<{ slug: string; modified: boolean; fields: string[] }> = [];
+    for (const a of articleData) {
+      if (!a.slug) continue;
+      const set: Record<string, unknown> = {
+        title: a.title,
+        excerpt: a.excerpt,
+        coverImage: a.coverImage,
+        tags: Array.isArray(a.tags) ? a.tags : [],
+        scheduledFor: new Date(a.scheduledFor),
+      };
+      const res = await Article.updateOne({ slug: a.slug }, { $set: set });
+      updates.push({
+        slug: a.slug,
+        modified: res.modifiedCount > 0,
+        fields: Object.keys(set),
+      });
+    }
+    return NextResponse.json({ mode: 'syncMeta', updates });
+  }
 
   // Maintenance mode: re-assign authorId on already-seeded slugs to the
   // current admin. Useful when the first run picked up the wrong author.

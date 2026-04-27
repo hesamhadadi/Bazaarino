@@ -803,7 +803,7 @@ SSN سیستم بهداشت دولتی ایتالیاست که شامل:
     slug: 'daneshgah-italia-apply-dsu-iranian',
     scheduledFor: '2026-05-19T07:00:00Z',
     coverImage:
-      'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&h=630&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&h=630&fit=crop&q=80',
     tags: ['دانشگاه', 'تحصیل', 'ایتالیا', 'بورسیه', 'DSU'],
     excerpt:
       'پذیرش از دانشگاه‌های ایتالیا، Universitaly، آزمون TOLC، اقامت دانشجویی، بورسیه DSU و هزینه زندگی برای دانشجوهای ایرانی در ۲۰۲۶.',
