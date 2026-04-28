@@ -42,11 +42,23 @@ export default async function UserPage({ params }: { params: { id: string } }) {
       <Navbar />
       <div className="max-w-5xl mx-auto px-4 py-6 pb-24 md:pb-10">
         <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden mb-5">
-          <div className="h-36 bg-gray-100">
+          <div className="h-36 relative overflow-hidden bg-gradient-to-br from-orange-400 via-amber-400 to-rose-400">
             {user.banner ? (
-              <Image src={user.banner} alt="banner" width={1200} height={300} className="w-full h-full object-cover" />
+              <Image src={user.banner} alt="banner" width={1200} height={300} className="w-full h-full object-cover relative z-10" />
             ) : (
-              <div className="w-full h-full bg-gradient-to-r from-slate-100 to-slate-50" />
+              <>
+                {/* Decorative dot pattern matching the author page banner */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 opacity-30"
+                  style={{
+                    backgroundImage:
+                      'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)',
+                    backgroundSize: '20px 20px',
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
+              </>
             )}
           </div>
           <div className="p-5 flex items-center gap-4">
