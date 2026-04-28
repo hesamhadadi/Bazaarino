@@ -5,6 +5,21 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  // Badge gradient classes are stored in Mongo and applied at runtime, so
+  // Tailwind can't see them in source files. Safelist a generous palette
+  // covering anything an admin might pick from the badge editor.
+  safelist: [
+    'bg-gradient-to-r',
+    'bg-gradient-to-br',
+    'bg-gradient-to-l',
+    'bg-gradient-to-bl',
+    'bg-gradient-to-t',
+    'bg-gradient-to-b',
+    {
+      pattern:
+        /^(from|via|to)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(300|400|500|600|700)$/,
+    },
+  ],
   theme: {
     extend: {
       fontFamily: {
