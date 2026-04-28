@@ -72,6 +72,7 @@ export default async function SimilarAds({
 
   async function runTier(filter: Record<string, unknown>) {
     return (await Ad.find(filter)
+      .populate('userId', 'name avatar role')
       .sort({ isFeatured: -1, bumpedAt: -1, createdAt: -1 })
       .limit(limit * 2)
       .lean()) as AdDoc[];

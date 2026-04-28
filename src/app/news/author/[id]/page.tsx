@@ -8,6 +8,7 @@ import User from '@/models/User';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
+import UserBadges from '@/components/ui/UserBadges';
 import { toFaDigits } from '@/lib/locale';
 import { getAppUrl } from '@/lib/app-url';
 import {
@@ -44,7 +45,7 @@ async function getAuthor(id: string) {
   try {
     await connectDB();
     const author: any = await User.findById(id)
-      .select('name avatar role bio banner telegram socialLinks city createdAt')
+      .select('name avatar role bio banner telegram socialLinks city createdAt badges')
       .lean();
     if (!author) return null;
     return JSON.parse(JSON.stringify(author));
@@ -301,6 +302,9 @@ export default async function AuthorPage({ params }: { params: { id: string } })
                   <ShieldCheck size={11} />
                   {role.label}
                 </span>
+                {author.badges && author.badges.length > 0 && (
+                  <UserBadges badges={author.badges} size="md" />
+                )}
               </div>
               {author.city && (
                 <p className="text-xs text-gray-500 mt-1">📍 {author.city}</p>
