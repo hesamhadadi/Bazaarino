@@ -35,6 +35,13 @@ export interface IUser extends Document {
   businessDescription?: string;
   businessSubscriptionActive?: boolean;
   chatEmailNotificationsEnabled?: boolean;
+  /**
+   * Slugs of badges awarded to this user. Stored denormalised so we can
+   * render the user's badge chips with a single `.lean()` read; the
+   * actual metadata (label / colour / icon) lives in the Badge
+   * collection and is loaded by the BadgeChip component.
+   */
+  badges?: string[];
   lastSeenAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -158,6 +165,11 @@ const UserSchema = new Schema<IUser>(
     chatEmailNotificationsEnabled: {
       type: Boolean,
       default: true,
+    },
+    badges: {
+      type: [String],
+      default: [],
+      index: true,
     },
     lastSeenAt: {
       type: Date,

@@ -21,6 +21,7 @@ import {
   LogOut,
   Sparkles,
   Building2,
+  Award,
 } from 'lucide-react';
 import CommandPalette from './CommandPalette';
 
@@ -122,6 +123,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           label: 'نظرات',
           icon: MessageSquare,
           match: (p) => p.startsWith('/admin/comments'),
+        },
+        {
+          href: '/admin/badges',
+          label: 'بج‌ها',
+          icon: Award,
+          match: (p) => p.startsWith('/admin/badges'),
         },
       ],
     },

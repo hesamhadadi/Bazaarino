@@ -19,6 +19,7 @@ import StartChatButton from '@/components/ads/StartChatButton';
 import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
 import SimilarAds from '@/components/ads/SimilarAds';
 import RecentViewTracker from '@/components/ads/RecentViewTracker';
+import UserBadges from '@/components/ui/UserBadges';
 import ReservationRequestForm from '@/components/reservations/ReservationRequestForm';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel, getCountryLabel, getCountryByCity } from '@/lib/constants';
@@ -38,7 +39,7 @@ async function getAd(id: string) {
   try {
     await connectDB();
     const ad = await Ad.findById(id)
-      .populate('userId', 'name avatar phone email city createdAt role telegram identityStatus')
+      .populate('userId', 'name avatar phone email city createdAt role telegram identityStatus badges')
       .lean();
 
     if (!ad) {
@@ -509,6 +510,11 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   <p className="text-xs text-gray-400">عضو بازارینو</p>
                 </div>
               </div>
+              {ad.userId?.badges && ad.userId.badges.length > 0 && (
+                <div className="mb-3">
+                  <UserBadges badges={ad.userId.badges} size="sm" max={4} />
+                </div>
+              )}
               <div className="mb-4 flex items-center justify-between">
                 <div className="text-xs text-gray-500">امتیاز صاحب آگهی</div>
                 <StarRating value={ratingSummary.avg} count={ratingSummary.count} />

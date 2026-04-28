@@ -7,6 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import AdCard from '@/components/ads/AdCard';
 import { StarRating } from '@/components/ui/StarRating';
+import UserBadges from '@/components/ui/UserBadges';
 import { Store } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -62,6 +63,11 @@ export default async function UserPage({ params }: { params: { id: string } }) {
               <div className="mt-1">
                 <StarRating value={Number(user.ratingAvg || 0)} count={Number(user.ratingCount || 0)} />
               </div>
+              {user.badges && user.badges.length > 0 && (
+                <div className="mt-3">
+                  <UserBadges badges={user.badges} size="md" />
+                </div>
+              )}
               {user.bio && <p className="text-sm text-gray-600 mt-2">{user.bio}</p>}
               {user.businessName && (
                 <div className="mt-2 text-xs">
