@@ -15,6 +15,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { LatLng } from '@/lib/map-data';
 import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
+import AiAdGenerator from '@/components/ads/AiAdGenerator';
 
 const HousingLocationPicker = dynamic(() => import('@/components/maps/HousingLocationPicker'), { ssr: false });
 
@@ -259,7 +260,31 @@ export default function NewAdPage() {
 
           {/* Details */}
           <div className="bg-white rounded-2xl p-4 border border-gray-100">
-            <h2 className="font-semibold text-gray-800 mb-3">اطلاعات آگهی</h2>
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <h2 className="font-semibold text-gray-800">اطلاعات آگهی</h2>
+              <AiAdGenerator
+                context={{
+                  category: watch('category'),
+                  subcategory: watch('subcategory'),
+                  city: watch('city'),
+                  listingMode: watch('listingMode'),
+                  priceType: watch('priceType'),
+                  imageUrls: images,
+                }}
+                disabled={submitting}
+                onAccept={({ title, description, suggestedPrice }) => {
+                  setValue('title', title, { shouldValidate: true });
+                  setValue('description', description, { shouldValidate: true });
+                  if (
+                    suggestedPrice &&
+                    watch('priceType') === 'fixed' &&
+                    !watch('price')
+                  ) {
+                    setValue('price', String(suggestedPrice));
+                  }
+                }}
+              />
+            </div>
 
             <div className="space-y-4">
               <div>
