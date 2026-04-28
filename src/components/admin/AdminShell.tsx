@@ -22,6 +22,7 @@ import {
   Sparkles,
   Building2,
   Award,
+  Layers,
 } from 'lucide-react';
 import CommandPalette from './CommandPalette';
 
@@ -129,6 +130,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           label: 'بج‌ها',
           icon: Award,
           match: (p) => p.startsWith('/admin/badges'),
+        },
+        {
+          href: '/admin/pages',
+          label: 'صفحات لندینگ',
+          icon: Layers,
+          match: (p) => p.startsWith('/admin/pages'),
         },
       ],
     },

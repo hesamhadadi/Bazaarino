@@ -3,6 +3,7 @@ import { getAppUrl } from '@/lib/app-url';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import Article from '@/models/Article';
+import LandingPage from '@/models/LandingPage';
 import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
 
 export const revalidate = 3600;
@@ -106,6 +107,7 @@ export async function GET() {
   let articleRoutes: Entry[] = [];
   let tagRoutes: Entry[] = [];
   let authorRoutes: Entry[] = [];
+  let landingRoutes: Entry[] = [];
 
   try {
     await connectDB();
@@ -132,6 +134,19 @@ export async function GET() {
         { $limit: 200 },
       ]),
     ]);
+
+    const landingDocs = await LandingPage.find({ status: 'published' })
+      .select('slug updatedAt pageType')
+      .sort({ updatedAt: -1 })
+      .limit(500)
+      .lean();
+    landingRoutes = (landingDocs as any[]).map((p) => ({
+      url: `${base}/p/${encodeURIComponent(p.slug)}`,
+      lastModified: p.updatedAt || now,
+      changeFrequency: 'weekly',
+      // City landing pages are particularly SEO-valuable, give them a boost.
+      priority: p.pageType === 'city' ? 0.9 : 0.7,
+    }));
 
     adRoutes = ads.map((ad: any) => ({
       url: `${base}/ads/${ad._id}`,
@@ -168,6 +183,7 @@ export async function GET() {
 
   const all: Entry[] = [
     ...staticRoutes,
+    ...landingRoutes,
     ...countryCityRoutes,
     ...adRoutes,
     ...articleRoutes,
