@@ -1228,13 +1228,19 @@ export default function AdminDashboard() {
                         key={u._id}
                         className="grid grid-cols-[1fr_auto] md:grid-cols-[1.8fr_0.8fr_0.7fr_0.9fr_0.7fr_auto] gap-3 px-4 py-3 hover:bg-gray-50/60 transition"
                       >
-                        {/* User cell */}
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        {/* User cell — clicking takes admins straight to the
+                            full management page so they don't have to hunt
+                            for the small ShieldCheck button. */}
+                        <Link
+                          href={`/admin/users/${u._id}`}
+                          className="flex items-center gap-3 min-w-0 group rounded-lg -mx-2 px-2 py-1 hover:bg-orange-50/60 transition"
+                          title="مدیریت کامل کاربر"
+                        >
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-xs font-bold shrink-0 ring-2 ring-transparent group-hover:ring-orange-300 transition">
                             {(u.name || u.email || '?').charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">
+                            <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-orange-700 transition">
                               {u.name || '—'}
                               {isSelf && <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 align-middle">شما</span>}
                             </p>
@@ -1244,7 +1250,7 @@ export default function AdminDashboard() {
                               {u.phone && <span dir="ltr">{u.phone}</span>}
                             </p>
                           </div>
-                        </div>
+                        </Link>
 
                         {/* Role */}
                         <div className="hidden md:flex items-center">
