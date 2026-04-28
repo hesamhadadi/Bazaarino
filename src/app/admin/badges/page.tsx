@@ -10,10 +10,9 @@ import {
   Save,
   X,
   AlertCircle,
-  Check,
   Sparkles,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 interface Badge {
   _id: string;
@@ -23,9 +22,9 @@ interface Badge {
   icon?: string;
   color?: string;
   gradient?: string;
-  tier?: 'common' | 'rare' | 'epic' | 'legendary';
+  tier?: string;
   isPublic?: boolean;
-  order?: number;
+  sortOrder?: number;
 }
 
 export default function BadgesPage() {
@@ -41,14 +40,14 @@ export default function BadgesPage() {
     icon: 'Award',
     color: '#f97316',
     gradient: '',
-    tier: 'common',
+    tier: 'standard',
     isPublic: true,
-    order: 0,
+    sortOrder: 100,
   });
 
   const fetchBadges = useCallback(async () => {
     try {
-      const res = await fetch('/api/badges');
+      const res = await fetch('/api/admin/badges');
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setBadges(data.badges || []);
@@ -66,10 +65,9 @@ export default function BadgesPage() {
   const seedDefaults = async () => {
     setSeedLoading(true);
     try {
-      const res = await fetch('/api/admin/badges', {
+      const res = await fetch('/api/admin/badges?seedDefaults=1', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'seedDefaults' }),
       });
       if (!res.ok) throw new Error('Failed');
       toast.success('بج‌های پیش‌فرض اضافه شدند');
@@ -105,9 +103,9 @@ export default function BadgesPage() {
         icon: 'Award',
         color: '#f97316',
         gradient: '',
-        tier: 'common',
+        tier: 'standard',
         isPublic: true,
-        order: 0,
+        sortOrder: 100,
       });
       fetchBadges();
     } catch (e) {
@@ -151,11 +149,13 @@ export default function BadgesPage() {
     setForm({ ...badge });
   };
 
-  const tierColors = {
-    common: 'bg-gray-100 text-gray-700',
+  const tierColors: Record<string, string> = {
+    standard: 'bg-gray-100 text-gray-700',
     rare: 'bg-blue-100 text-blue-700',
     epic: 'bg-purple-100 text-purple-700',
     legendary: 'bg-amber-100 text-amber-700',
+    team: 'bg-emerald-100 text-emerald-700',
+    founder: 'bg-orange-100 text-orange-700',
   };
 
   if (loading) {
@@ -283,19 +283,21 @@ export default function BadgesPage() {
                     سطح
                   </label>
                   <select
-                    value={form.tier || 'common'}
+                    value={form.tier || 'standard'}
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        tier: e.target.value as Badge['tier'],
+                        tier: e.target.value,
                       })
                     }
                     className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
                   >
-                    <option value="common">معمولی</option>
+                    <option value="standard">معمولی</option>
                     <option value="rare">کمیاب</option>
                     <option value="epic">حیرت‌انگیز</option>
                     <option value="legendary">افسانه‌ای</option>
+                    <option value="team">تیم</option>
+                    <option value="founder">بنیان‌گذار</option>
                   </select>
                 </div>
               </div>
@@ -325,9 +327,9 @@ export default function BadgesPage() {
                   <span className="text-xs text-gray-600">ترتیب:</span>
                   <input
                     type="number"
-                    value={form.order || 0}
+                    value={form.sortOrder ?? 100}
                     onChange={(e) =>
-                      setForm({ ...form, order: parseInt(e.target.value) || 0 })
+                      setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })
                     }
                     className="w-16 px-2 py-1 border rounded-lg text-sm"
                   />
@@ -371,7 +373,7 @@ export default function BadgesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {badges
-            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .sort((a, b) => (a.sortOrder ?? 100) - (b.sortOrder ?? 100))
             .map((badge) => (
               <div
                 key={badge._id}
@@ -416,13 +418,10 @@ export default function BadgesPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
-                      tierColors[badge.tier || 'common']
+                      tierColors[badge.tier || 'standard'] || tierColors.standard
                     }`}
                   >
-                    {badge.tier === 'common' && 'معمولی'}
-                    {badge.tier === 'rare' && 'کمیاب'}
-                    {badge.tier === 'epic' && 'حیرت‌انگیز'}
-                    {badge.tier === 'legendary' && 'افسانه‌ای'}
+                    {badge.tier || 'standard'}
                   </span>
                   {!badge.isPublic && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
@@ -430,7 +429,7 @@ export default function BadgesPage() {
                     </span>
                   )}
                   <span className="text-xs text-gray-400 mr-auto">
-                    ترتیب: {badge.order || 0}
+                    ترتیب: {badge.sortOrder ?? 100}
                   </span>
                 </div>
               </div>
