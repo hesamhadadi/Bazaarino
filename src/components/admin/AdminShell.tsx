@@ -327,6 +327,8 @@ function Breadcrumb({ pathname, tab }: { pathname: string; tab: string }) {
     pageName = tabLabels[tab] || 'مدیریت';
   } else if (pathname === '/admin/users' || pathname.startsWith('/admin/users/')) {
     pageName = 'کاربران';
+  } else if (pathname.startsWith('/admin/badges')) {
+    pageName = 'بج‌ها';
   }
 
   return (
