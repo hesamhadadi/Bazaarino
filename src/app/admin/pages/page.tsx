@@ -16,7 +16,6 @@ import {
   Layers,
   ExternalLink,
 } from 'lucide-react';
-import Navbar from '@/components/layout/Navbar';
 import { CITIES } from '@/lib/constants';
 
 interface PageListItem {
@@ -63,11 +62,6 @@ export default function AdminLandingPagesList() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('turin');
   const [seedingCities, setSeedingCities] = useState(false);
-  const [showBlankModal, setShowBlankModal] = useState(false);
-  const [blankTitle, setBlankTitle] = useState('');
-  const [blankSlug, setBlankSlug] = useState('');
-  const [blankType, setBlankType] = useState<'general' | 'campaign' | 'category' | 'city'>('general');
-  const [creatingBlank, setCreatingBlank] = useState(false);
 
   const seedTopCities = async (force = false) => {
     const confirmMsg = force
@@ -120,51 +114,6 @@ export default function AdminLandingPagesList() {
     if (status === 'authenticated') fetchPages();
   }, [status]);
 
-  const openBlankModal = () => {
-    setBlankTitle('');
-    setBlankSlug('');
-    setBlankType('general');
-    setShowBlankModal(true);
-  };
-
-  // Live-slugify the title so the admin sees the URL update as they type.
-  // Handles both Latin and Persian — keeps Persian letters but strips spaces
-  // to dashes and drops anything that would break a URL.
-  const slugify = (s: string) =>
-    s
-      .trim()
-      .toLowerCase()
-      .replace(/[\s_]+/g, '-')
-      // Keep ASCII letters/digits/dash + common Persian/Arabic ranges; drop the rest.
-      .replace(/[^a-z0-9\u0600-\u06FF\u0750-\u077F-]/g, '')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-
-  const createBlank = async () => {
-    const slug = slugify(blankSlug || blankTitle);
-    const title = blankTitle.trim() || slug;
-    if (!slug) {
-      toast.error('یک عنوان یا slug وارد کن');
-      return;
-    }
-    setCreatingBlank(true);
-    try {
-      const res = await fetch('/api/admin/landing-pages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, title, pageType: blankType }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'failed');
-      toast.success('صفحه جدید ساخته شد');
-      setShowBlankModal(false);
-      router.push(`/admin/pages/${data.page._id}`);
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'خطا در ساخت');
-    } finally {
-      setCreatingBlank(false);
-    }
-  };
 
   const createFromCityTemplate = async () => {
     if (!selectedCity) return;
@@ -200,12 +149,11 @@ export default function AdminLandingPagesList() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50/40 via-white to-white">
-      <Navbar />
-      <div className="max-w-6xl mx-auto px-4 py-6 pb-24">
+    <>
+    <div className="max-w-6xl mx-auto pb-24">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <div>
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="min-w-0">
             <Link
               href="/admin"
               className="text-xs text-gray-500 hover:text-orange-600 inline-flex items-center gap-1"
@@ -217,43 +165,54 @@ export default function AdminLandingPagesList() {
               <Layers className="text-orange-500" size={26} />
               صفحات لندینگ
             </h1>
-            <p className="text-xs text-gray-500 mt-1">
-              صفحات SEO سفارشی بساز، با قالب آماده شهری یا از صفر — کاملاً قابل انتشار
+            <p className="text-xs text-gray-500 mt-1.5">
+              صفحات SEO سفارشی بساز — از صفر، با قالب آماده شهری، یا دفعی برای ۹ شهر اصلی
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => seedTopCities(false)}
-              disabled={seedingCities}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold shadow-md hover:shadow-lg transition disabled:opacity-50"
-              title="ساخت و انتشار همزمان ۵ شهر اصلی ایتالیا"
-            >
-              <Sparkles size={14} />
-              {seedingCities ? 'در حال ساخت...' : 'ساخت سریع ۵ شهر اصلی'}
-            </button>
-            <button
-              onClick={() => seedTopCities(true)}
-              disabled={seedingCities}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs font-bold transition disabled:opacity-50"
-              title="جایگزینی محتوای ۵ صفحه شهری با قالب جدید (overwrite)"
-            >
-              ↻ به‌روزرسانی قالب
-            </button>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
             <button
               onClick={() => setShowTemplateModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-bold shadow-md hover:shadow-lg transition"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition"
             >
               <Sparkles size={14} />
               قالب شهری آماده
             </button>
-            <button
-              onClick={openBlankModal}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition"
+            <Link
+              href="/admin/pages/new"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 hover:-translate-y-0.5 transition shadow-md"
             >
               <Plus size={14} />
-              صفحه خالی
-            </button>
+              صفحه جدید
+            </Link>
           </div>
+        </div>
+
+        {/* Quick tools row — secondary actions, separate from primary CTA */}
+        <div className="mb-5 bg-white rounded-2xl border border-gray-100 px-4 py-3 flex items-center gap-3 flex-wrap shadow-sm">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 inline-flex items-center gap-1">
+            <Sparkles size={11} />
+            ابزارهای سریع
+          </span>
+          <span className="hidden md:inline-block w-px h-5 bg-gray-200" />
+          <button
+            onClick={() => seedTopCities(false)}
+            disabled={seedingCities}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition disabled:opacity-50"
+            title="ساخت و انتشار ۹ شهر اصلی ایتالیا در یک کلیک"
+          >
+            ✨ {seedingCities ? 'در حال ساخت...' : 'ساخت ۹ شهر اصلی'}
+          </button>
+          <button
+            onClick={() => seedTopCities(true)}
+            disabled={seedingCities}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-bold transition disabled:opacity-50"
+            title="جایگزینی محتوای صفحات شهری با آخرین قالب (overwrite)"
+          >
+            ↻ به‌روزرسانی قالب شهری
+          </button>
+          <span className="text-[10px] text-gray-400 ml-auto hidden lg:inline">
+            به‌روزرسانی محتوای سرور را برای تمام صفحات شهری جایگزین می‌کند
+          </span>
         </div>
 
         {/* List */}
@@ -413,103 +372,6 @@ export default function AdminLandingPagesList() {
           </div>
         </div>
       )}
-
-      {/* Blank Page Modal */}
-      {showBlankModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !creatingBlank) setShowBlankModal(false);
-          }}
-        >
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white p-5">
-              <h3 className="font-bold text-lg inline-flex items-center gap-2">
-                <Plus size={20} />
-                صفحه جدید از صفر
-              </h3>
-              <p className="text-xs text-white/80 mt-1">
-                عنوان، نشانی URL و نوع صفحه را تعیین کن. در صفحه‌ی ویرایش می‌توانی بخش‌ها را اضافه کنی.
-              </p>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">عنوان صفحه</label>
-                <input
-                  type="text"
-                  value={blankTitle}
-                  onChange={(e) => setBlankTitle(e.target.value)}
-                  onBlur={() => {
-                    if (!blankSlug && blankTitle) setBlankSlug(slugify(blankTitle));
-                  }}
-                  placeholder="مثلاً: ایرانیان تورین"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  نشانی (slug)
-                </label>
-                <div className="flex items-stretch border border-gray-200 rounded-xl overflow-hidden focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900">
-                  <span className="bg-gray-50 px-3 flex items-center text-xs text-gray-500 border-l border-gray-200 font-mono">
-                    /p/
-                  </span>
-                  <input
-                    type="text"
-                    value={blankSlug}
-                    onChange={(e) => setBlankSlug(e.target.value)}
-                    onBlur={() => setBlankSlug(slugify(blankSlug))}
-                    placeholder="torino"
-                    className="flex-1 px-3 py-2.5 text-sm outline-none font-mono"
-                    dir="ltr"
-                  />
-                </div>
-                {blankSlug && (
-                  <p className="text-[10px] text-gray-400 mt-1.5 font-mono">
-                    URL: /p/{slugify(blankSlug)}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">نوع صفحه</label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(['general', 'city', 'category', 'campaign'] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setBlankType(t)}
-                      className={`text-[11px] font-bold px-2 py-2 rounded-lg border transition ${
-                        blankType === t
-                          ? 'bg-gray-900 text-white border-gray-900'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                      }`}
-                    >
-                      {pageTypeLabel[t]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => setShowBlankModal(false)}
-                  disabled={creatingBlank}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition disabled:opacity-50"
-                >
-                  انصراف
-                </button>
-                <button
-                  onClick={createBlank}
-                  disabled={creatingBlank || (!blankTitle && !blankSlug)}
-                  className="flex-1 py-2.5 rounded-xl bg-gray-900 text-white font-bold shadow-md hover:bg-gray-800 transition disabled:opacity-50"
-                >
-                  {creatingBlank ? 'در حال ساخت...' : 'بساز و برو به ویرایش'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

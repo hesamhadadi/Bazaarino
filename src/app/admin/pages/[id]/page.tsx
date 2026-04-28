@@ -18,7 +18,6 @@ import {
   Sparkles,
   HelpCircle,
 } from 'lucide-react';
-import Navbar from '@/components/layout/Navbar';
 import { CATEGORIES, CITIES } from '@/lib/constants';
 
 interface Section {
@@ -137,6 +136,7 @@ export default function AdminLandingPageEditor() {
   const [page, setPage] = useState<PageDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showSectionPalette, setShowSectionPalette] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/auth/login');
@@ -228,72 +228,124 @@ export default function AdminLandingPageEditor() {
 
   if (loading || !page) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="p-12 text-center text-sm text-gray-400">در حال بارگذاری...</div>
-      </div>
+      <div className="p-12 text-center text-sm text-gray-400">در حال بارگذاری...</div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50/40 via-white to-white pb-24">
-      <Navbar />
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-          <div className="min-w-0">
-            <Link
-              href="/admin/pages"
-              className="text-xs text-gray-500 hover:text-orange-600 inline-flex items-center gap-1"
-            >
-              صفحات لندینگ
-              <ArrowRight size={12} />
-            </Link>
-            <h1 className="text-xl md:text-2xl font-black text-gray-900 mt-1 truncate">
-              {page.title}
-            </h1>
-            <code className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded mt-1 inline-block">
-              /p/{page.slug}
-            </code>
+    <div className="max-w-5xl mx-auto pb-24">
+        {/* Breadcrumb */}
+        <Link
+          href="/admin/pages"
+          className="text-xs text-gray-500 hover:text-orange-600 inline-flex items-center gap-1 mb-3"
+        >
+          صفحات لندینگ
+          <ArrowRight size={12} />
+        </Link>
+
+        {/* Header card — title + status + actions in one polished surface */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-gray-800 to-zinc-900 text-white p-5 md:p-7 mb-4 shadow-xl">
+          <div
+            aria-hidden
+            className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-orange-500/20 blur-3xl pointer-events-none"
+          />
+          <div
+            aria-hidden
+            className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-rose-500/15 blur-3xl pointer-events-none"
+          />
+          <div className="relative flex items-start justify-between gap-3 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <span
+                  className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border ${
+                    page.status === 'published'
+                      ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40'
+                      : page.status === 'archived'
+                      ? 'bg-gray-500/20 text-gray-200 border-gray-400/40'
+                      : 'bg-amber-500/20 text-amber-200 border-amber-400/40'
+                  }`}
+                >
+                  {page.status === 'published'
+                    ? '● منتشر شده'
+                    : page.status === 'archived'
+                    ? '● بایگانی'
+                    : '○ پیش‌نویس'}
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-white/80 uppercase tracking-wider">
+                  {page.pageType === 'city'
+                    ? 'شهری'
+                    : page.pageType === 'category'
+                    ? 'دسته‌بندی'
+                    : page.pageType === 'campaign'
+                    ? 'کمپین'
+                    : 'عمومی'}
+                </span>
+              </div>
+              <h1 className="text-xl md:text-3xl font-black tracking-tight truncate">
+                {page.title}
+              </h1>
+              <code className="text-[11px] text-white/70 bg-black/30 px-2 py-0.5 rounded mt-2 inline-block font-mono" dir="ltr">
+                /p/{page.slug}
+              </code>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link
+                href={`/p/${page.slug}`}
+                target="_blank"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-bold hover:bg-white/20 transition"
+              >
+                <Eye size={14} />
+                پیش‌نمایش
+              </Link>
+              <button
+                onClick={togglePublish}
+                disabled={saving}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-sm font-bold shadow-md transition disabled:opacity-50 ${
+                  page.status === 'published'
+                    ? 'bg-amber-500 hover:bg-amber-600'
+                    : 'bg-emerald-500 hover:bg-emerald-600'
+                }`}
+              >
+                {page.status === 'published' ? (
+                  <>
+                    <EyeOff size={14} />
+                    لغو انتشار
+                  </>
+                ) : (
+                  <>
+                    <Globe size={14} />
+                    انتشار
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => save()}
+                disabled={saving}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white text-gray-900 text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition disabled:opacity-50"
+              >
+                <Save size={14} />
+                ذخیره
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/p/${page.slug}`}
-              target="_blank"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-gray-700 text-sm font-bold hover:border-orange-300 hover:text-orange-600 transition"
-            >
-              <Eye size={14} />
-              پیش‌نمایش
-            </Link>
-            <button
-              onClick={togglePublish}
-              disabled={saving}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-sm font-bold shadow-md transition disabled:opacity-50 ${
-                page.status === 'published'
-                  ? 'bg-amber-500 hover:bg-amber-600'
-                  : 'bg-emerald-500 hover:bg-emerald-600'
-              }`}
-            >
-              {page.status === 'published' ? (
-                <>
-                  <EyeOff size={14} />
-                  لغو انتشار
-                </>
-              ) : (
-                <>
-                  <Globe size={14} />
-                  انتشار
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => save()}
-              disabled={saving}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition disabled:opacity-50"
-            >
-              <Save size={14} />
-              ذخیره
-            </button>
+
+          {/* Summary strip — quick stats inside the same hero card */}
+          <div className="relative mt-5 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+            <Stat label="بخش‌ها" value={page.sections.length} />
+            <Stat label="FAQ" value={(page.faq || []).length} />
+            <Stat
+              label="عنوان SEO"
+              value={`${page.title.length}/۱۶۰`}
+              warn={page.title.length < 30 || page.title.length > 60}
+            />
+            <Stat
+              label="توضیحات SEO"
+              value={`${(page.metaDescription || '').length}/۳۲۰`}
+              warn={
+                (page.metaDescription || '').length < 80 ||
+                (page.metaDescription || '').length > 160
+              }
+            />
           </div>
         </div>
 
@@ -430,31 +482,76 @@ export default function AdminLandingPageEditor() {
         {/* Sections */}
         <div className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
-            <h2 className="font-bold text-gray-800 text-sm">
-              بخش‌های صفحه ({page.sections.length})
+            <h2 className="font-bold text-gray-800 text-sm inline-flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-orange-50 text-orange-600 text-[10px] font-black flex items-center justify-center">
+                {page.sections.length}
+              </span>
+              بخش‌های صفحه
             </h2>
-            <div className="relative group">
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-bold transition">
-                <Plus size={12} />
-                افزودن بخش
-              </button>
-              <div className="absolute left-0 top-full mt-1 w-60 max-h-80 overflow-y-auto bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition z-10">
+            <button
+              type="button"
+              onClick={() => setShowSectionPalette((v) => !v)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                showSectionPalette
+                  ? 'bg-orange-500 text-white shadow-md'
+                  : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+              }`}
+            >
+              <Plus
+                size={12}
+                className={`transition ${showSectionPalette ? 'rotate-45' : ''}`}
+              />
+              {showSectionPalette ? 'بستن' : 'افزودن بخش'}
+            </button>
+          </div>
+
+          {/* Click-to-toggle palette — much friendlier than the old hover dropdown,
+              especially on touch devices. Adds a section then auto-collapses. */}
+          {showSectionPalette && (
+            <div className="border-b border-gray-100 bg-gradient-to-br from-orange-50/40 to-amber-50/30 px-4 py-4">
+              <p className="text-[11px] text-gray-600 mb-3">
+                یک نوع بخش انتخاب کن — به انتهای صفحه اضافه می‌شود.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                 {SECTION_TYPES.map((t) => (
                   <button
                     key={t.value}
-                    onClick={() => addSection(t.value)}
-                    className="w-full text-right px-3 py-2 hover:bg-orange-50 text-sm flex items-center gap-2 transition"
+                    type="button"
+                    onClick={() => {
+                      addSection(t.value);
+                      setShowSectionPalette(false);
+                    }}
+                    className="text-right p-3 rounded-xl bg-white border-2 border-transparent hover:border-orange-300 hover:shadow-md transition group"
                   >
-                    <span className="text-lg">{t.emoji}</span>
-                    <span className="font-medium text-gray-800">{t.label}</span>
+                    <div className="text-2xl mb-1.5 group-hover:scale-110 group-hover:-rotate-3 transition">
+                      {t.emoji}
+                    </div>
+                    <div className="text-[11px] font-bold text-gray-800 leading-tight">
+                      {t.label}
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
-          </div>
+          )}
+
           {page.sections.length === 0 ? (
-            <div className="p-10 text-center text-sm text-gray-400">
-              هنوز بخشی اضافه نکرده‌اید. روی «افزودن بخش» کلیک کنید.
+            <div className="p-10 text-center">
+              <div className="text-4xl mb-3">📋</div>
+              <p className="text-sm font-bold text-gray-700 mb-1">
+                این صفحه هنوز بخشی ندارد
+              </p>
+              <p className="text-xs text-gray-500 mb-5 max-w-sm mx-auto leading-6">
+                با افزودن بخش‌ها (Hero, آمار، گرید آگهی، …) صفحه رو شکل بده. ترتیب بخش‌ها قابل تغییره.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowSectionPalette(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-bold shadow-md hover:bg-orange-600 transition"
+              >
+                <Plus size={14} />
+                افزودن اولین بخش
+              </button>
             </div>
           ) : (
             <ul>
@@ -479,12 +576,38 @@ export default function AdminLandingPageEditor() {
           faq={page.faq || []}
           onChange={(faq) => updateField('faq', faq)}
         />
-      </div>
     </div>
   );
 }
 
 /* ----------------------------------------------------------------------- */
+
+function Stat({
+  label,
+  value,
+  warn,
+}: {
+  label: string;
+  value: string | number;
+  warn?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl p-3 backdrop-blur-md border ${
+        warn
+          ? 'bg-amber-500/15 border-amber-400/30'
+          : 'bg-white/10 border-white/20'
+      }`}
+    >
+      <p className="text-[10px] uppercase tracking-wider text-white/60 font-bold mb-1">
+        {label}
+      </p>
+      <p className={`text-lg md:text-xl font-black ${warn ? 'text-amber-200' : 'text-white'}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
 
 function Field({
   label,
@@ -549,44 +672,58 @@ function SectionEditor({
 
   return (
     <li className="border-b border-gray-100 last:border-b-0">
-      <div className="flex items-center justify-between px-5 py-2.5 bg-gray-50/50">
+      <div
+        className={`flex items-center justify-between px-4 py-3 transition ${
+          open ? 'bg-orange-50/30' : 'bg-white hover:bg-gray-50'
+        }`}
+      >
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2 text-sm font-bold text-gray-800 flex-1 text-right"
+          className="flex items-center gap-3 text-sm font-bold text-gray-800 flex-1 text-right min-w-0"
         >
-          <span className="text-lg">{meta?.emoji || '📦'}</span>
-          <span>{meta?.label || section.type}</span>
-          <span className="text-xs text-gray-400 font-normal">#{idx + 1}</span>
+          <span
+            className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition ${
+              open ? 'bg-orange-100' : 'bg-gray-100'
+            }`}
+          >
+            {meta?.emoji || '📦'}
+          </span>
+          <span className="min-w-0 truncate">
+            <span className="block truncate">{meta?.label || section.type}</span>
+            <span className="block text-[10px] text-gray-400 font-normal mt-0.5">
+              بخش #{idx + 1} از {total}
+            </span>
+          </span>
         </button>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 flex-shrink-0">
           <button
             onClick={onMoveUp}
             disabled={idx === 0}
-            title="بالا"
-            className="p-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="جابجایی به بالا"
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             <ArrowUp size={14} />
           </button>
           <button
             onClick={onMoveDown}
             disabled={idx === total - 1}
-            title="پایین"
-            className="p-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="جابجایی به پایین"
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             <ArrowDown size={14} />
           </button>
           <button
             onClick={onRemove}
-            title="حذف"
-            className="p-1.5 text-gray-400 hover:text-red-600"
+            title="حذف بخش"
+            className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
           >
             <Trash2 size={14} />
           </button>
         </div>
       </div>
       {open && (
-        <div className="px-5 py-4">
+        <div className="px-5 py-4 border-t border-orange-100/50">
           <SectionDataEditor section={section} onChange={onChange} />
         </div>
       )}

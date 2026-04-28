@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import LandingPage from '@/models/LandingPage';
 import Ad from '@/models/Ad';
 import { toFaDigits } from '@/lib/locale';
 import { getCityVisual } from '@/lib/city-images';
+import CityCardImage from './CityCardImage';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,10 +14,11 @@ interface CityCard {
   title: string;
   shortName: string;
   englishName: string;
-  description: string;
   views: number;
   adCount: number;
   city: string;
+  /** ogImage from the page itself takes priority over the shared map. */
+  ogImage?: string;
 }
 
 /** Pull "تورین" and "Torino" out of titles like "ایرانیان تورین | …" or "بازارینوی تورین". */
@@ -38,7 +40,7 @@ async function fetchCityCards(): Promise<CityCard[]> {
       status: 'published',
       pageType: 'city',
     })
-      .select('slug title metaDescription views targetCity')
+      .select('slug title metaDescription views targetCity ogImage')
       .sort({ views: -1, updatedAt: -1 })
       .limit(12)
       .lean();
@@ -64,10 +66,10 @@ async function fetchCityCards(): Promise<CityCard[]> {
         title: p.title,
         shortName: fa,
         englishName: en,
-        description: (p.metaDescription || '').slice(0, 110),
         views: p.views || 0,
         adCount: countMap.get(p.targetCity || '') || 0,
         city: p.targetCity || '',
+        ogImage: p.ogImage,
       };
     });
   } catch (err) {
@@ -108,86 +110,64 @@ export default async function CityLandingCards() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-          {cards.map((c, idx) => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 md:gap-3">
+          {cards.map((c) => {
             const theme = getCityVisual(c.city);
+            const img = c.ogImage || theme.image;
             return (
               <Link
                 key={c.slug}
                 href={`/p/${c.slug}`}
-                className="group relative overflow-hidden rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 aspect-[4/5] md:aspect-[3/4]"
+                className="group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 aspect-square"
               >
-                {/* Gradient base — always visible, also acts as fallback if
-                    the photo above fails to load. */}
+                {/* Gradient base — also fallback when the photo 404s. */}
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${theme.gradient}`}
                 />
-                {/* Photographic background, layered over the gradient with
-                    mix-blend so the city tone always wins through. */}
-                {theme.image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={theme.image}
-                    alt={c.shortName}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover opacity-55 mix-blend-overlay group-hover:scale-110 group-hover:opacity-65 transition-all duration-700"
-                  />
-                )}
-                {/* Subtle pattern overlay for texture */}
+                {/* Photo with onError fallback (renders nothing on failure). */}
+                {img && <CityCardImage src={img} alt={c.shortName} />}
+                {/* Texture pattern */}
                 <div
                   aria-hidden
-                  className="absolute inset-0 opacity-[0.18] mix-blend-overlay"
+                  className="absolute inset-0 opacity-[0.15] mix-blend-overlay"
                   style={{
                     backgroundImage:
                       'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.6) 0%, transparent 35%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.4) 0%, transparent 40%)',
                   }}
                 />
-                {/* Bottom darkening for text legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
+                {/* Bottom darkening so text stays readable */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-                {/* Top-right floating emoji badge */}
-                <div className="absolute top-3 right-3 w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-xl group-hover:scale-110 group-hover:rotate-6 transition">
+                {/* Floating emoji badge */}
+                <div className="absolute top-2 right-2 w-8 h-8 rounded-xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-base group-hover:scale-110 group-hover:rotate-6 transition">
                   {theme.emoji}
                 </div>
 
-                {/* Top-left rank pill (visual hierarchy without forcing order) */}
-                <div className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-[10px] font-bold text-white">
-                  <MapPin size={10} />
-                  {toFaDigits(String(idx + 1).padStart(2, '0'))}
-                </div>
-
-                {/* Content */}
-                <div className="absolute bottom-0 right-0 left-0 p-4 md:p-5">
+                {/* Content (compact) */}
+                <div className="absolute bottom-0 right-0 left-0 p-3">
                   {c.englishName && (
-                    <p className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-white/70 font-bold mb-0.5">
+                    <p className="text-[9px] uppercase tracking-[0.18em] text-white/70 font-bold mb-0.5">
                       {c.englishName}
                     </p>
                   )}
-                  <h3 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-md">
+                  <h3 className="text-lg md:text-xl font-black text-white leading-tight drop-shadow-md">
                     {c.shortName}
                   </h3>
-                  {c.description && (
-                    <p className="text-[11px] md:text-xs text-white/85 leading-5 mt-1.5 line-clamp-2">
-                      {c.description}
-                    </p>
-                  )}
-                  <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  <div className="mt-2 flex items-center gap-1.5">
                     {c.adCount > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[10px] md:text-[11px] font-bold text-white bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-2 py-1">
-                        <span className={`w-1.5 h-1.5 rounded-full ${theme.accent}`} />
-                        {toFaDigits(String(c.adCount))} آگهی
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-1.5 py-0.5">
+                        <span className={`w-1 h-1 rounded-full ${theme.accent}`} />
+                        {toFaDigits(String(c.adCount))}
                       </span>
                     )}
-                    <span className="ml-auto inline-flex items-center gap-1 text-[10px] md:text-[11px] font-bold text-white/95 group-hover:text-white">
-                      اکتشاف
-                      <ArrowLeft size={12} className="group-hover:-translate-x-1 transition" />
+                    <span className="ml-auto inline-flex items-center gap-0.5 text-[10px] font-bold text-white/90 group-hover:text-white">
+                      <ArrowLeft size={10} className="group-hover:-translate-x-1 transition" />
                     </span>
                   </div>
                 </div>
 
-                {/* Hover ring accent */}
-                <div className="absolute inset-0 rounded-3xl ring-0 group-hover:ring-2 ring-white/40 transition" />
+                {/* Hover ring */}
+                <div className="absolute inset-0 rounded-2xl ring-0 group-hover:ring-2 ring-white/40 transition" />
               </Link>
             );
           })}
