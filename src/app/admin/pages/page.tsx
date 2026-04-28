@@ -63,6 +63,11 @@ export default function AdminLandingPagesList() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('turin');
   const [seedingCities, setSeedingCities] = useState(false);
+  const [showBlankModal, setShowBlankModal] = useState(false);
+  const [blankTitle, setBlankTitle] = useState('');
+  const [blankSlug, setBlankSlug] = useState('');
+  const [blankType, setBlankType] = useState<'general' | 'campaign' | 'category' | 'city'>('general');
+  const [creatingBlank, setCreatingBlank] = useState(false);
 
   const seedTopCities = async (force = false) => {
     const confirmMsg = force
@@ -115,21 +120,49 @@ export default function AdminLandingPagesList() {
     if (status === 'authenticated') fetchPages();
   }, [status]);
 
+  const openBlankModal = () => {
+    setBlankTitle('');
+    setBlankSlug('');
+    setBlankType('general');
+    setShowBlankModal(true);
+  };
+
+  // Live-slugify the title so the admin sees the URL update as they type.
+  // Handles both Latin and Persian — keeps Persian letters but strips spaces
+  // to dashes and drops anything that would break a URL.
+  const slugify = (s: string) =>
+    s
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_]+/g, '-')
+      // Keep ASCII letters/digits/dash + common Persian/Arabic ranges; drop the rest.
+      .replace(/[^a-z0-9\u0600-\u06FF\u0750-\u077F-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
   const createBlank = async () => {
-    const slug = prompt('یک slug وارد کنید (مثلاً: torino یا black-friday):')?.trim();
-    if (!slug) return;
+    const slug = slugify(blankSlug || blankTitle);
+    const title = blankTitle.trim() || slug;
+    if (!slug) {
+      toast.error('یک عنوان یا slug وارد کن');
+      return;
+    }
+    setCreatingBlank(true);
     try {
       const res = await fetch('/api/admin/landing-pages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, title: slug, pageType: 'general' }),
+        body: JSON.stringify({ slug, title, pageType: blankType }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'failed');
       toast.success('صفحه جدید ساخته شد');
+      setShowBlankModal(false);
       router.push(`/admin/pages/${data.page._id}`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'خطا در ساخت');
+    } finally {
+      setCreatingBlank(false);
     }
   };
 
@@ -214,7 +247,7 @@ export default function AdminLandingPagesList() {
               قالب شهری آماده
             </button>
             <button
-              onClick={createBlank}
+              onClick={openBlankModal}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition"
             >
               <Plus size={14} />
@@ -374,6 +407,103 @@ export default function AdminLandingPagesList() {
                   className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold shadow-md hover:shadow-lg transition disabled:opacity-50"
                 >
                   {creatingTemplate ? 'در حال ساخت...' : 'بساز'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Blank Page Modal */}
+      {showBlankModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !creatingBlank) setShowBlankModal(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white p-5">
+              <h3 className="font-bold text-lg inline-flex items-center gap-2">
+                <Plus size={20} />
+                صفحه جدید از صفر
+              </h3>
+              <p className="text-xs text-white/80 mt-1">
+                عنوان، نشانی URL و نوع صفحه را تعیین کن. در صفحه‌ی ویرایش می‌توانی بخش‌ها را اضافه کنی.
+              </p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">عنوان صفحه</label>
+                <input
+                  type="text"
+                  value={blankTitle}
+                  onChange={(e) => setBlankTitle(e.target.value)}
+                  onBlur={() => {
+                    if (!blankSlug && blankTitle) setBlankSlug(slugify(blankTitle));
+                  }}
+                  placeholder="مثلاً: ایرانیان تورین"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  نشانی (slug)
+                </label>
+                <div className="flex items-stretch border border-gray-200 rounded-xl overflow-hidden focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900">
+                  <span className="bg-gray-50 px-3 flex items-center text-xs text-gray-500 border-l border-gray-200 font-mono">
+                    /p/
+                  </span>
+                  <input
+                    type="text"
+                    value={blankSlug}
+                    onChange={(e) => setBlankSlug(e.target.value)}
+                    onBlur={() => setBlankSlug(slugify(blankSlug))}
+                    placeholder="torino"
+                    className="flex-1 px-3 py-2.5 text-sm outline-none font-mono"
+                    dir="ltr"
+                  />
+                </div>
+                {blankSlug && (
+                  <p className="text-[10px] text-gray-400 mt-1.5 font-mono">
+                    URL: /p/{slugify(blankSlug)}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">نوع صفحه</label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(['general', 'city', 'category', 'campaign'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setBlankType(t)}
+                      className={`text-[11px] font-bold px-2 py-2 rounded-lg border transition ${
+                        blankType === t
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      {pageTypeLabel[t]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setShowBlankModal(false)}
+                  disabled={creatingBlank}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition disabled:opacity-50"
+                >
+                  انصراف
+                </button>
+                <button
+                  onClick={createBlank}
+                  disabled={creatingBlank || (!blankTitle && !blankSlug)}
+                  className="flex-1 py-2.5 rounded-xl bg-gray-900 text-white font-bold shadow-md hover:bg-gray-800 transition disabled:opacity-50"
+                >
+                  {creatingBlank ? 'در حال ساخت...' : 'بساز و برو به ویرایش'}
                 </button>
               </div>
             </div>

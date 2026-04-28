@@ -7,6 +7,7 @@ import AdCard from '@/components/ads/AdCard';
 import LatestAdsSection from '@/components/home/LatestAdsSection';
 import HomeSearchPanel from '@/components/home/HomeSearchPanel';
 import HomeArticlesSection from '@/components/home/HomeArticlesSection';
+import CityLandingCards from '@/components/home/CityLandingCards';
 import RecentlyViewedStrip from '@/components/ads/RecentlyViewedStrip';
 import CityIcon from '@/components/ui/CityIcon';
 import { CATEGORIES, CITIES } from '@/lib/constants';
@@ -225,6 +226,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* CITY LANDING CARDS — published city hub pages, only renders if any exist */}
+      <CityLandingCards />
 
       {/* FEATURED — only if any */}
       {featuredAds.length > 0 && (
