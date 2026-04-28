@@ -8,7 +8,7 @@ import { EyeOff } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
-import ShareButton from '@/components/ads/ShareButton';
+import ArticleShareSection from '@/components/articles/ArticleShareSection';
 import ArticleBody from '@/components/articles/ArticleBody';
 import ArticleRating from '@/components/articles/ArticleRating';
 import ArticleComments from '@/components/articles/ArticleComments';
@@ -333,8 +333,13 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           />
         )}
 
-        <div className="mt-8 flex items-center justify-between gap-3 border-t border-b border-gray-100 py-4">
-          <ShareButton title={article.title} text={article.excerpt} />
+        <ArticleShareSection
+          title={article.title}
+          excerpt={article.excerpt}
+          url={articleUrl}
+        />
+
+        <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
           <Link href="/news" className="text-sm text-gray-600 hover:text-brand-600 inline-flex items-center gap-1">
             <ArrowRight size={14} /> بازگشت به اخبار
           </Link>
