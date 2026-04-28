@@ -63,6 +63,51 @@ export async function POST(request: NextRequest, { params }: Ctx) {
 }
 
 /**
+ * Bulk-replace the user's badge list. Useful for "give me all badges"
+ * or for clearing everything in one click.
+ *
+ *   PUT /api/admin/users/:id/badges   { slugs: ["founder", "team", ...] }
+ *
+ * All slugs are validated against the Badge catalog; unknown slugs are
+ * dropped silently so a stale UI can't poison the user document.
+ */
+export async function PUT(request: NextRequest, { params }: Ctx) {
+  if (!(await ensureAdmin())) {
+    return NextResponse.json({ message: 'دسترسی ندارید' }, { status: 403 });
+  }
+  if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    return NextResponse.json({ message: 'شناسه کاربر معتبر نیست' }, { status: 400 });
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const incoming: string[] = Array.isArray(body?.slugs)
+    ? body.slugs.map((s: unknown) => String(s).trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  await connectDB();
+
+  // Filter against catalog so we never store unknown slugs.
+  const known = await Badge.find({ slug: { $in: incoming } }).select('slug').lean();
+  const validSlugs = Array.from(new Set(known.map((b) => b.slug)));
+
+  const updated = await User.findByIdAndUpdate(
+    params.id,
+    { $set: { badges: validSlugs } },
+    { new: true, projection: { badges: 1 } },
+  ).lean();
+
+  if (!updated) {
+    return NextResponse.json({ message: 'کاربر یافت نشد' }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    badges: (updated as { badges?: string[] }).badges || [],
+    ignored: incoming.filter((s) => !validSlugs.includes(s)),
+  });
+}
+
+/**
  * Remove a badge from a user.
  *
  *   DELETE /api/admin/users/:id/badges?slug=founder

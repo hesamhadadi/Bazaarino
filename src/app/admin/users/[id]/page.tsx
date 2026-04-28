@@ -6,7 +6,18 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
-import { ShieldCheck, UserCheck, UserX, Star, KeyRound } from 'lucide-react';
+import { ShieldCheck, UserCheck, UserX, Star, KeyRound, Award, X, Sparkles } from 'lucide-react';
+
+interface BadgeMeta {
+  _id: string;
+  slug: string;
+  label: string;
+  description?: string;
+  color?: string;
+  gradient?: string;
+  tier?: string;
+  sortOrder?: number;
+}
 
 export default function AdminUserPage() {
   const { data: session, status } = useSession();
@@ -17,6 +28,9 @@ export default function AdminUserPage() {
   const [user, setUser] = useState<any>(null);
   const [ads, setAds] = useState<any[]>([]);
   const [resetLink, setResetLink] = useState('');
+  const [allBadges, setAllBadges] = useState<BadgeMeta[]>([]);
+  const [badgeBusy, setBadgeBusy] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/auth/login');
@@ -29,6 +43,70 @@ export default function AdminUserPage() {
     if (res.ok) {
       setUser(data.user);
       setAds(data.ads || []);
+    }
+  };
+
+  const fetchBadgeCatalog = async () => {
+    const res = await fetch('/api/admin/badges');
+    if (res.ok) {
+      const data = await res.json();
+      setAllBadges(data.badges || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchBadgeCatalog();
+  }, []);
+
+  const assignBadge = async (slug: string) => {
+    setBadgeBusy(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/badges`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success('بج اضافه شد');
+      fetchUser();
+    } catch {
+      toast.error('خطا در اضافه کردن بج');
+    } finally {
+      setBadgeBusy(false);
+    }
+  };
+
+  const removeBadge = async (slug: string) => {
+    setBadgeBusy(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/badges?slug=${encodeURIComponent(slug)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error();
+      toast.success('بج حذف شد');
+      fetchUser();
+    } catch {
+      toast.error('خطا در حذف بج');
+    } finally {
+      setBadgeBusy(false);
+    }
+  };
+
+  const setAllBadgesForUser = async (slugs: string[]) => {
+    setBadgeBusy(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/badges`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slugs }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success('بج‌ها به‌روزرسانی شدند');
+      fetchUser();
+    } catch {
+      toast.error('خطا در به‌روزرسانی بج‌ها');
+    } finally {
+      setBadgeBusy(false);
     }
   };
 
@@ -145,6 +223,113 @@ export default function AdminUserPage() {
             </div>
           ) : (
             <p className="text-xs text-gray-500">برای ساخت لینک روی دکمه بالا بزن.</p>
+          )}
+        </div>
+
+        {/* Badge management */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-4">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h3 className="font-semibold text-gray-800 inline-flex items-center gap-2">
+              <Award size={16} className="text-orange-500" />
+              بج‌های کاربر
+              <span className="text-xs text-gray-400 font-normal">
+                ({(user.badges || []).length} از {allBadges.length})
+              </span>
+            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setAllBadgesForUser(allBadges.map((b) => b.slug))}
+                disabled={badgeBusy || allBadges.length === 0}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold disabled:opacity-50 transition"
+                title="اعطای تمام بج‌های کاتالوگ"
+              >
+                <Sparkles size={12} />
+                همه بج‌ها
+              </button>
+              {(user.badges || []).length > 0 && (
+                <button
+                  onClick={() => setAllBadgesForUser([])}
+                  disabled={badgeBusy}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold disabled:opacity-50 transition"
+                >
+                  <X size={12} />
+                  حذف همه
+                </button>
+              )}
+              <button
+                onClick={() => setPickerOpen((v) => !v)}
+                disabled={badgeBusy}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold disabled:opacity-50 transition"
+              >
+                <Award size={12} />
+                افزودن بج
+              </button>
+            </div>
+          </div>
+
+          {/* Current user badges */}
+          {(user.badges || []).length === 0 ? (
+            <p className="text-xs text-gray-400">کاربر هنوز بجی ندارد.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {(user.badges as string[]).map((slug) => {
+                const meta = allBadges.find((b) => b.slug === slug);
+                return (
+                  <div
+                    key={slug}
+                    className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white shadow-sm"
+                    style={{ background: meta?.gradient || meta?.color || '#6b7280' }}
+                  >
+                    <Award size={11} />
+                    <span>{meta?.label || slug}</span>
+                    <button
+                      onClick={() => removeBadge(slug)}
+                      disabled={badgeBusy}
+                      className="opacity-70 group-hover:opacity-100 hover:bg-black/20 rounded-full p-0.5 transition"
+                      title="حذف"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Picker */}
+          {pickerOpen && (
+            <div className="mt-3 border-t border-gray-100 pt-3">
+              <p className="text-xs text-gray-500 mb-2">بجی از کاتالوگ انتخاب کنید:</p>
+              {allBadges.length === 0 ? (
+                <p className="text-xs text-gray-400">
+                  کاتالوگ خالی است.{' '}
+                  <Link href="/admin/badges" className="text-orange-600 underline">
+                    افزودن بج
+                  </Link>
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {allBadges
+                    .filter((b) => !(user.badges || []).includes(b.slug))
+                    .map((b) => (
+                      <button
+                        key={b.slug}
+                        onClick={() => assignBadge(b.slug)}
+                        disabled={badgeBusy}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200 hover:border-gray-400 transition disabled:opacity-50"
+                        style={{ color: b.color || '#374151' }}
+                        title={b.description}
+                      >
+                        <Award size={11} />
+                        {b.label}
+                      </button>
+                    ))}
+                  {allBadges.every((b) => (user.badges || []).includes(b.slug)) && (
+                    <p className="text-xs text-gray-400">کاربر تمام بج‌های کاتالوگ را دارد.</p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
 
