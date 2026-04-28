@@ -8,6 +8,7 @@ import { EyeOff } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
+import UserBadges from '@/components/ui/UserBadges';
 import ArticleShareSection from '@/components/articles/ArticleShareSection';
 import ArticleBody from '@/components/articles/ArticleBody';
 import ArticleRating from '@/components/articles/ArticleRating';
@@ -379,6 +380,9 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                       : 'نویسنده'}{' '}
                   بازارینو
                 </span>
+                {article.authorId?.badges && article.authorId.badges.length > 0 && (
+                  <UserBadges badges={article.authorId.badges} size="sm" />
+                )}
               </div>
               {article.authorId?.bio ? (
                 <p className="mt-1.5 text-sm text-gray-700 leading-7 line-clamp-3">

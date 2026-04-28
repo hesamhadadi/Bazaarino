@@ -51,7 +51,7 @@ export async function fetchArticleBySlug(
     })
       .populate(
         'authorId',
-        'name avatar role bio socialLinks ratingAvg ratingCount',
+        'name avatar role bio socialLinks ratingAvg ratingCount badges',
       )
       .lean();
 
@@ -64,7 +64,7 @@ export async function fetchArticleBySlug(
       })
         .populate(
           'authorId',
-          'name avatar role bio socialLinks ratingAvg ratingCount',
+          'name avatar role bio socialLinks ratingAvg ratingCount badges',
         )
         .lean();
     }
@@ -73,7 +73,7 @@ export async function fetchArticleBySlug(
       item = await Article.findOne({ _id: rawSlug, ...statusFilter })
         .populate(
           'authorId',
-          'name avatar role bio socialLinks ratingAvg ratingCount',
+          'name avatar role bio socialLinks ratingAvg ratingCount badges',
         )
         .lean();
     }
