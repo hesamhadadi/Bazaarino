@@ -64,24 +64,22 @@ export default function AdminLandingPagesList() {
   const [selectedCity, setSelectedCity] = useState<string>('turin');
   const [seedingCities, setSeedingCities] = useState(false);
 
-  const seedTopCities = async () => {
-    if (
-      !confirm(
-        'صفحات لندینگ شهرهای اصلی (تورین، میلان، رم، بولونیا، فلورانس) ساخته و منتشر می‌شوند. ادامه می‌دهی؟',
-      )
-    )
-      return;
+  const seedTopCities = async (force = false) => {
+    const confirmMsg = force
+      ? 'محتوای ۵ صفحه شهری اصلی با قالب جدید جایگزین می‌شود (هر تغییر دستی روی این صفحات از دست می‌رود). ادامه می‌دهی؟'
+      : 'صفحات لندینگ شهرهای اصلی (تورین، میلان، رم، بولونیا، فلورانس) ساخته و منتشر می‌شوند. ادامه می‌دهی؟';
+    if (!confirm(confirmMsg)) return;
     setSeedingCities(true);
     try {
-      const res = await fetch('/api/admin/landing-pages/seed-cities', {
-        method: 'POST',
-      });
+      const url = `/api/admin/landing-pages/seed-cities${force ? '?force=1' : ''}`;
+      const res = await fetch(url, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'failed');
-      const msg = `${data.created.length} صفحه ساخته شد${
-        data.skipped.length ? ` · ${data.skipped.length} از قبل وجود داشت` : ''
-      }`;
-      toast.success(msg);
+      const parts: string[] = [];
+      if (data.created?.length) parts.push(`${data.created.length} ساخته شد`);
+      if (data.updated?.length) parts.push(`${data.updated.length} به‌روزرسانی شد`);
+      if (data.skipped?.length) parts.push(`${data.skipped.length} رد شد`);
+      toast.success(parts.join(' · ') || 'انجام شد');
       fetchPages();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'خطا در ساخت');
@@ -192,13 +190,21 @@ export default function AdminLandingPagesList() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={seedTopCities}
+              onClick={() => seedTopCities(false)}
               disabled={seedingCities}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold shadow-md hover:shadow-lg transition disabled:opacity-50"
               title="ساخت و انتشار همزمان ۵ شهر اصلی ایتالیا"
             >
               <Sparkles size={14} />
               {seedingCities ? 'در حال ساخت...' : 'ساخت سریع ۵ شهر اصلی'}
+            </button>
+            <button
+              onClick={() => seedTopCities(true)}
+              disabled={seedingCities}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs font-bold transition disabled:opacity-50"
+              title="جایگزینی محتوای ۵ صفحه شهری با قالب جدید (overwrite)"
+            >
+              ↻ به‌روزرسانی قالب
             </button>
             <button
               onClick={() => setShowTemplateModal(true)}

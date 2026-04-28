@@ -16,29 +16,53 @@ export const dynamic = 'force-dynamic';
  */
 const SEED_CITIES = ['turin', 'milan', 'rome', 'bologna', 'florence'];
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as { role?: string }).role !== 'admin') {
     return NextResponse.json({ message: 'دسترسی ندارید' }, { status: 403 });
   }
 
+  // `force=1` tells the seeder to overwrite content on existing slugs so
+  // the admin can pick up template improvements (richer copy, new
+  // sections, etc.) without manually deleting each page first.
+  const url = new URL(req.url);
+  const force = url.searchParams.get('force') === '1';
+
   await connectDB();
   const userId = (session.user as { id?: string }).id;
 
   const created: string[] = [];
+  const updated: string[] = [];
   const skipped: string[] = [];
 
   for (const city of SEED_CITIES) {
     const slug = city;
-    const existing = await LandingPage.findOne({ slug }).lean();
-    if (existing) {
-      skipped.push(slug);
-      continue;
-    }
+    const existing = await LandingPage.findOne({ slug });
     const data = buildCityTemplate({
       cityValue: city,
       cityLabel: getCityLabel(city) || city,
     });
+
+    if (existing) {
+      if (!force) {
+        skipped.push(slug);
+        continue;
+      }
+      existing.title = data.title;
+      existing.metaDescription = data.metaDescription;
+      existing.metaKeywords = data.metaKeywords;
+      existing.targetCity = data.targetCity;
+      existing.sections = data.sections;
+      existing.faq = data.faq;
+      existing.pageType = data.pageType;
+      existing.status = 'published';
+      if (!existing.publishedAt) existing.publishedAt = new Date();
+      existing.updatedBy = userId as never;
+      await existing.save();
+      updated.push(slug);
+      continue;
+    }
+
     await LandingPage.create({
       slug,
       pageType: data.pageType,
@@ -60,6 +84,7 @@ export async function POST() {
 
   return NextResponse.json({
     created,
+    updated,
     skipped,
     total: SEED_CITIES.length,
   });

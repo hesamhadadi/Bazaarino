@@ -18,6 +18,101 @@ function nanoid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+/**
+ * Hand-curated facts per city. The renderer uses these as fallback
+ * paragraphs and FAQ context so even cities without a single ad still
+ * have meaningful content for SEO. Anything missing falls back to a
+ * generic city-agnostic paragraph.
+ */
+interface CityFacts {
+  highlights: string[];
+  universities?: string[];
+  description: string;
+}
+
+const CITY_FACTS: Record<string, CityFacts> = {
+  turin: {
+    description:
+      'تورین (Torino) پایتخت منطقه پیمونته در شمال غرب ایتالیا و چهارمین شهر بزرگ ایتالیاست. این شهر صنعتی و فرهنگی، خانه دانشگاه پلی‌تکنیک تورین، یکی از معتبرترین دانشگاه‌های فنی اروپا، است و جامعه‌ای رو به رشد از دانشجویان و متخصصان ایرانی را در خود جای داده.',
+    highlights: [
+      'مقصد محبوب دانشجویان ایرانی به دلیل دانشگاه پلی‌تکنیک تورین (Politecnico di Torino)',
+      'هزینه زندگی پایین‌تر از میلان و رم، با کیفیت زندگی بالا',
+      'مرکز صنعت خودروسازی ایتالیا (FIAT) و فرصت‌های شغلی مهندسی',
+      'فرهنگ غنی، موزه‌های کلاسیک و کوه‌های آلپ در نزدیکی',
+    ],
+    universities: ['Politecnico di Torino', 'Università degli Studi di Torino'],
+  },
+  milan: {
+    description:
+      'میلان (Milano) پایتخت اقتصادی و مد ایتالیا و دومین شهر بزرگ کشور است. میلان پویاترین جامعه ایرانیان شمال ایتالیا را در خود دارد و قطب کسب‌وکار، طراحی و دانشگاه‌های معتبر مانند Politecnico di Milano و Bocconi است.',
+    highlights: [
+      'پایتخت کسب‌وکار، مد و دیزاین ایتالیا',
+      'دانشگاه‌های جهانی: Politecnico di Milano, Bocconi, Università Statale',
+      'بازار کار قوی برای متخصصان فناوری، مالی و طراحی',
+      'متروی گسترده و دسترسی عالی به شهرهای دیگر اروپا',
+    ],
+    universities: [
+      'Politecnico di Milano',
+      'Università Bocconi',
+      'Università degli Studi di Milano',
+    ],
+  },
+  rome: {
+    description:
+      'رم (Roma) پایتخت ایتالیا و یکی از تاریخی‌ترین شهرهای جهان است. رم بزرگ‌ترین شهر ایتالیا با جامعه گسترده ایرانی شامل دانشجویان، متخصصان، کارمندان دیپلماتیک و خانواده‌های مهاجر است.',
+    highlights: [
+      'پایتخت سیاسی و فرهنگی ایتالیا — مرکز سفارت‌ها و سازمان‌های بین‌المللی',
+      'دانشگاه La Sapienza، یکی از قدیمی‌ترین دانشگاه‌های اروپا',
+      'فرصت‌های شغلی در سازمان ملل (FAO, IFAD, WFP) و سایر نهادهای بین‌المللی',
+      'بازار اجاره گسترده و آپشن‌های متنوع',
+    ],
+    universities: [
+      'Sapienza Università di Roma',
+      'Università di Roma Tor Vergata',
+      'Roma Tre',
+    ],
+  },
+  bologna: {
+    description:
+      'بولونیا (Bologna) پایتخت منطقه امیلیا-رومانیا و خانه قدیمی‌ترین دانشگاه جهان غرب (تأسیس ۱۰۸۸) است. این شهر دانشجویی پر از انرژی، یکی از مقاصد محبوب دانشجویان ایرانی پزشکی، مهندسی و علوم انسانی است.',
+    highlights: [
+      'دانشگاه بولونیا — قدیمی‌ترین دانشگاه دنیا با شهرت جهانی',
+      'محیط دانشجویی پویا با هزینه زندگی متعادل',
+      'مرکز فرهنگ، غذا و موسیقی ایتالیا',
+      'موقعیت استراتژیک بین شمال و مرکز ایتالیا',
+    ],
+    universities: ['Università di Bologna'],
+  },
+  florence: {
+    description:
+      'فلورانس (Firenze) پایتخت توسکانی و گهواره رنسانس است. این شهر هنر و معماری مقصد دانشجویان رشته‌های هنر، طراحی و معماری از جمله ایرانیان مقیم است.',
+    highlights: [
+      'پایتخت رنسانس — شهری زنده با موزه‌های جهانی Uffizi و Accademia',
+      'دانشگاه فلورانس و آکادمی هنر',
+      'محیطی آرام‌تر از میلان و رم با فرهنگ فوق‌العاده',
+      'پل قدیمی Ponte Vecchio و کلیسای Duomo از جاذبه‌های شهر',
+    ],
+    universities: [
+      'Università degli Studi di Firenze',
+      'Accademia di Belle Arti di Firenze',
+    ],
+  },
+};
+
+function getCityFacts(city: string): CityFacts {
+  return (
+    CITY_FACTS[city] || {
+      description:
+        'این شهر یکی از مقاصد محبوب ایرانیان مقیم اروپا است و جامعه‌ای رو به رشد از دانشجویان، متخصصان و خانواده‌های مهاجر را در خود جای داده.',
+      highlights: [
+        'دسترسی عالی به آموزش، کار و زیرساخت‌های شهری',
+        'جامعه فعال ایرانیان با گفتگوها و رویدادهای منظم',
+        'فرهنگ غنی ایتالیایی در کنار راحتی زندگی روزمره',
+      ],
+    }
+  );
+}
+
 export interface TemplateResult {
   title: string;
   metaDescription: string;
@@ -35,6 +130,11 @@ export function buildCityTemplate({ cityValue, cityLabel }: TemplateInput): Temp
   const cityFa = cityLabel || getCityLabel(city) || 'تورین';
   const country = getCountryByCity(city) || 'italy';
   const countryFa = country === 'italy' ? 'ایتالیا' : country;
+  const facts = getCityFacts(city);
+  const highlightLines = facts.highlights.map((h) => `• ${h}`).join('\n');
+  const universitiesLine = facts.universities && facts.universities.length > 0
+    ? `\n\n**دانشگاه‌های اصلی ${cityFa}:**\n${facts.universities.map((u) => `• ${u}`).join('\n')}`
+    : '';
 
   const sections: LandingSection[] = [
     {
@@ -129,8 +229,8 @@ export function buildCityTemplate({ cityValue, cityLabel }: TemplateInput): Temp
       id: nanoid(),
       type: 'rich-text',
       data: {
-        title: `زندگی ایرانی در ${cityFa}`,
-        body: `${cityFa} یکی از شهرهای پویا و پرجاذبه ${countryFa} است که جامعه‌ای فعال از ایرانیان را در خود جای داده است.\n\nاز دانشجویان دانشگاه‌های معتبر گرفته تا متخصصان شاغل، کارآفرینان و خانواده‌های مهاجر، ${cityFa} مقصدی محبوب برای ایرانیان مقیم اروپا است.\n\nبازارینو تلاش می‌کند زندگی روزمره ایرانیان ${cityFa} را با ارائه پلتفرمی فارسی، امن و رایگان ساده‌تر کند.`,
+        title: `چرا ${cityFa}؟ نگاهی به زندگی ایرانی در این شهر`,
+        body: `${facts.description}\n\n**ویژگی‌های شاخص ${cityFa} برای ایرانیان مقیم:**\n${highlightLines}${universitiesLine}\n\nبازارینو تلاش می‌کند زندگی روزمره ایرانیان ${cityFa} را با ارائه پلتفرمی فارسی، امن و رایگان ساده‌تر کند — از پیدا کردن خانه دانشجویی گرفته تا خرید مبلمان دست دوم، یافتن همخانه فارسی‌زبان و خواندن راهنماهای ورود به ${countryFa}.`,
       },
     },
     {

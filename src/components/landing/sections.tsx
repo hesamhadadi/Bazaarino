@@ -210,8 +210,6 @@ export async function AdGridSection({ data }: { data: AdGridData }) {
     .limit(limit)
     .lean();
 
-  if (ads.length === 0) return null;
-
   const safeAds = JSON.parse(JSON.stringify(ads)) as Array<
     React.ComponentProps<typeof AdCard>['ad']
   >;
@@ -244,11 +242,32 @@ export async function AdGridSection({ data }: { data: AdGridData }) {
           <ArrowLeft size={12} />
         </Link>
       </header>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-        {safeAds.map((ad) => (
-          <AdCard key={ad._id} ad={ad} />
-        ))}
-      </div>
+      {safeAds.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          {safeAds.map((ad) => (
+            <AdCard key={ad._id} ad={ad} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50/30 p-8 md:p-10 text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-orange-100 flex items-center justify-center mb-3">
+            <TrendingUp size={26} className="text-orange-500" />
+          </div>
+          <h3 className="font-bold text-gray-900 mb-2">
+            هنوز آگهی‌ای ثبت نشده!
+          </h3>
+          <p className="text-xs md:text-sm text-gray-600 max-w-md mx-auto leading-7 mb-4">
+            اولین کسی باش که در این بخش آگهی می‌گذاره. کاربران خاص آگهی‌های اول‌نفر را بیشتر می‌بینند و اعتمادسازی سریع‌تر می‌شود.
+          </p>
+          <Link
+            href={`/ads/new${data.city ? `?city=${data.city}` : ''}`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition"
+          >
+            ثبت اولین آگهی
+            <ArrowLeft size={12} />
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
@@ -278,8 +297,6 @@ export async function ArticleGridSection({ data }: { data: ArticleGridData }) {
     .select('title slug coverImage excerpt createdAt views readTime tags')
     .lean();
 
-  if (articles.length === 0) return null;
-
   return (
     <section className="bg-white rounded-3xl border border-gray-100 p-5 md:p-7 shadow-sm">
       <header className="flex items-end justify-between mb-5">
@@ -300,6 +317,26 @@ export async function ArticleGridSection({ data }: { data: ArticleGridData }) {
           <ArrowLeft size={12} />
         </Link>
       </header>
+      {articles.length === 0 ? (
+        <div className="rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/30 p-8 text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-100 flex items-center justify-center mb-3">
+            <Newspaper size={26} className="text-rose-500" />
+          </div>
+          <h3 className="font-bold text-gray-900 mb-2">
+            مقاله‌ای در این موضوع پیدا نشد
+          </h3>
+          <p className="text-xs md:text-sm text-gray-600 max-w-md mx-auto leading-7 mb-4">
+            به‌زودی راهنماهای جدید برای این بخش منتشر می‌شود. در همین حال، می‌توانی همه مقالات بازارینو را ببینی.
+          </p>
+          <Link
+            href="/news"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition"
+          >
+            مشاهده همه مقالات
+            <ArrowLeft size={12} />
+          </Link>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {articles.map((a: any) => (
           <Link
@@ -334,6 +371,7 @@ export async function ArticleGridSection({ data }: { data: ArticleGridData }) {
           </Link>
         ))}
       </div>
+      )}
     </section>
   );
 }
