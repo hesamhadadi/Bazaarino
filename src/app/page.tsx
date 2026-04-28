@@ -7,6 +7,7 @@ import AdCard from '@/components/ads/AdCard';
 import LatestAdsSection from '@/components/home/LatestAdsSection';
 import HomeSearchPanel from '@/components/home/HomeSearchPanel';
 import HomeArticlesSection from '@/components/home/HomeArticlesSection';
+import RecentlyViewedStrip from '@/components/ads/RecentlyViewedStrip';
 import CityIcon from '@/components/ui/CityIcon';
 import { CATEGORIES, CITIES } from '@/lib/constants';
 import { getCategoryImage } from '@/lib/category-images';
@@ -144,6 +145,13 @@ export default async function HomePage() {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* RECENTLY VIEWED — only shown to returning users with localStorage history */}
+      <section>
+        <div className="max-w-6xl mx-auto px-4 pt-6">
+          <RecentlyViewedStrip />
         </div>
       </section>
 

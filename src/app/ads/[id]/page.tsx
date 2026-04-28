@@ -17,6 +17,8 @@ import RateUser from '@/components/ads/RateUser';
 import ReportForm from '@/components/ads/ReportForm';
 import StartChatButton from '@/components/ads/StartChatButton';
 import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
+import SimilarAds from '@/components/ads/SimilarAds';
+import RecentViewTracker from '@/components/ads/RecentViewTracker';
 import ReservationRequestForm from '@/components/reservations/ReservationRequestForm';
 import Image from 'next/image';
 import { CATEGORIES, getCityLabel, getCountryLabel, getCountryByCity } from '@/lib/constants';
@@ -576,6 +578,29 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
             </div>
             <ReportForm adId={ad._id.toString()} />
           </div>
+        </div>
+
+        <RecentViewTracker
+          ad={{
+            id: ad._id.toString(),
+            title: ad.title,
+            price: ad.price,
+            priceType: ad.priceType,
+            city: ad.city,
+            category: ad.category,
+            image: Array.isArray(ad.images) && ad.images[0] ? ad.images[0] : undefined,
+          }}
+        />
+        <div className="mt-6">
+          <SimilarAds
+            adId={ad._id.toString()}
+            category={ad.category}
+            subcategory={ad.subcategory}
+            city={ad.city}
+            country={ad.country}
+            price={ad.price}
+            priceType={ad.priceType}
+          />
         </div>
       </div>
       <Footer />
