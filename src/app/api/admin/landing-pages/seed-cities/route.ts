@@ -9,12 +9,25 @@ import { getCityLabel } from '@/lib/constants';
 export const dynamic = 'force-dynamic';
 
 /**
- * The five Italian cities with the largest active Iranian community on
+ * The Italian cities with meaningful active Iranian communities on
  * Bazaarino. We pre-seed published landing pages for each so Google has
  * fresh, content-rich URLs to index right away — way more impactful
- * than asking the admin to click through the template modal five times.
+ * than asking the admin to click through the template modal nine times.
+ *
+ * Order matters for the home grid (sorted by views, then updatedAt) — the
+ * "tier-1" SEO targets come first.
  */
-const SEED_CITIES = ['turin', 'milan', 'rome', 'bologna', 'florence'];
+const SEED_CITIES = [
+  'turin',
+  'milan',
+  'rome',
+  'bologna',
+  'florence',
+  'venice',
+  'naples',
+  'verona',
+  'padua',
+];
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);

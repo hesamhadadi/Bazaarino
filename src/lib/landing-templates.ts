@@ -97,6 +97,53 @@ const CITY_FACTS: Record<string, CityFacts> = {
       'Accademia di Belle Arti di Firenze',
     ],
   },
+  venice: {
+    description:
+      'ونیز (Venezia) شهر کانال‌ها و یکی از منحصربه‌فردترین شهرهای جهان است. ونیز با Ca\' Foscari و IUAV دو دانشگاه قدرتمند در حوزه‌های اقتصاد، زبان و معماری دارد و میزبان دانشجویان ایرانی به‌ویژه در مقاطع تحصیلات تکمیلی است.',
+    highlights: [
+      'یکی از زیباترین شهرهای جهان با کانال‌ها، گوندولا و معماری بی‌نظیر',
+      'دانشگاه‌های معتبر Ca\' Foscari (اقتصاد و علوم انسانی) و IUAV (معماری)',
+      'فرصت‌های شغلی در گردشگری، هنر، صنایع دستی و کشتیرانی',
+      'دسترسی عالی به شمال شرق ایتالیا، اتریش و اسلوونی',
+    ],
+    universities: ['Ca\' Foscari Università di Venezia', 'IUAV Università di Venezia'],
+  },
+  naples: {
+    description:
+      'ناپل (Napoli) سومین شهر بزرگ ایتالیا و پایتخت منطقه کامپانیا در جنوب کشور است. ناپل با هزینه زندگی بسیار پایین‌تر از شمال، دانشگاه قدیمی Federico II و فرهنگ منحصربه‌فرد جنوبی، گزینه‌ای جذاب برای دانشجویان و خانواده‌های ایرانی است.',
+    highlights: [
+      'هزینه زندگی پایین‌تر از میلان، رم و تورین — اجاره خانه ارزان‌تر',
+      'دانشگاه Federico II، یکی از قدیمی‌ترین دانشگاه‌های دولتی جهان (تأسیس ۱۲۲۴)',
+      'فرهنگ غنی، آشپزی معروف ایتالیا (پیتزای ناپلی) و دریا در دسترس',
+      'موقعیت استراتژیک برای سفر به جنوب ایتالیا، سیسیل و ساردنیا',
+    ],
+    universities: [
+      'Università degli Studi di Napoli Federico II',
+      'Università degli Studi di Napoli L\'Orientale',
+    ],
+  },
+  verona: {
+    description:
+      'ورونا (Verona) شهر تاریخی منطقه ونتو و خانه داستان رومئو و ژولیت است. ورونا با موقعیت میان میلان و ونیز، هزینه زندگی متعادل و دانشگاه با کیفیت، انتخابی هوشمندانه برای دانشجویان ایرانی است.',
+    highlights: [
+      'موقعیت عالی بین میلان و ونیز، ۱.۵ ساعت تا هرکدام',
+      'هزینه زندگی پایین‌تر از کلان‌شهرها با کیفیت بالا',
+      'آمفی‌تئاتر Arena di Verona و فستیوال اپرای جهانی',
+      'دانشگاه ورونا قوی در پزشکی، اقتصاد و علوم انسانی',
+    ],
+    universities: ['Università degli Studi di Verona'],
+  },
+  padua: {
+    description:
+      'پادوا (Padova) یکی از قدیمی‌ترین شهرهای دانشگاهی اروپا با دانشگاهی که از سال ۱۲۲۲ فعال است. پادوا نزدیک ونیز، با محیط دانشجویی پر انرژی و هزینه زندگی متعادل، مقصدی محبوب برای دانشجویان ایرانی پزشکی و علوم پایه است.',
+    highlights: [
+      'دانشگاه Padova، دومین دانشگاه قدیمی ایتالیا (Galileo Galilei اینجا تدریس می‌کرد)',
+      'یکی از بهترین دانشگاه‌های پزشکی، مهندسی و علوم پایه ایتالیا',
+      'فقط ۳۰ دقیقه با قطار تا ونیز',
+      'محیط دانشجویی پر جنب و جوش با هزینه زندگی متعادل',
+    ],
+    universities: ['Università degli Studi di Padova'],
+  },
 };
 
 function getCityFacts(city: string): CityFacts {
@@ -127,7 +174,13 @@ export interface TemplateResult {
 /** Build a fully-loaded city landing page (the SEO money page). */
 export function buildCityTemplate({ cityValue, cityLabel }: TemplateInput): TemplateResult {
   const city = cityValue || 'torino';
-  const cityFa = cityLabel || getCityLabel(city) || 'تورین';
+  // CITIES labels look like "تورین (Torino)". Split into a clean Persian-only
+  // form for use in headlines/body copy, and keep the Latin form for use in
+  // eyebrow / subtitle / SEO meta — much cleaner than dropping the raw label
+  // into every <h1>.
+  const rawLabel = cityLabel || getCityLabel(city) || 'تورین';
+  const cityFa = rawLabel.split(' (')[0].trim();
+  const cityEn = rawLabel.match(/\(([^)]+)\)/)?.[1]?.trim() || '';
   const country = getCountryByCity(city) || 'italy';
   const countryFa = country === 'italy' ? 'ایتالیا' : country;
   const facts = getCityFacts(city);
@@ -143,8 +196,10 @@ export function buildCityTemplate({ cityValue, cityLabel }: TemplateInput): Temp
       data: {
         eyebrow: `جامعه ایرانیان ${cityFa}`,
         title: `بازارینوی ${cityFa}`,
+        cityEn,
         subtitle: `همه چیز برای ایرانیان مقیم ${cityFa} در یک مکان: اجاره خانه، آگهی‌ها، گفتگو، اخبار و راهنماهای کاربردی.`,
         showFlag: country === 'italy',
+        cityValue: city,
         primaryCta: {
           label: `آگهی‌های ${cityFa}`,
           href: `/search?city=${city}`,
@@ -168,8 +223,8 @@ export function buildCityTemplate({ cityValue, cityLabel }: TemplateInput): Temp
       id: nanoid(),
       type: 'feature-grid',
       data: {
-        title: `چرا بازارینو برای زندگی در ${cityFa}؟`,
-        subtitle: 'تجربه‌ای ساخته‌شده برای ایرانیان مقیم اروپا',
+        title: `زندگی در ${cityFa} با بازارینو، ساده‌تر`,
+        subtitle: `هر چیزی که یک ایرانی تازه‌وارد یا مقیم ${cityFa} لازم دارد — یک‌جا، فارسی، رایگان`,
         features: [
           {
             emoji: '🏠',

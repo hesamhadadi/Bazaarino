@@ -4,43 +4,9 @@ import connectDB from '@/lib/mongodb';
 import LandingPage from '@/models/LandingPage';
 import Ad from '@/models/Ad';
 import { toFaDigits } from '@/lib/locale';
+import { getCityVisual } from '@/lib/city-images';
 
 export const dynamic = 'force-dynamic';
-
-/**
- * Per-city visual identity for the home-page card grid.
- * Anything not listed here falls back to a neutral brand gradient,
- * so adding a new city page never breaks the layout.
- */
-const CITY_THEME: Record<
-  string,
-  { gradient: string; accent: string; emoji: string }
-> = {
-  rome: { gradient: 'from-rose-600 via-red-600 to-amber-600', accent: 'bg-rose-300', emoji: '🏛️' },
-  milan: { gradient: 'from-slate-800 via-slate-700 to-zinc-900', accent: 'bg-amber-300', emoji: '🗼' },
-  turin: { gradient: 'from-amber-600 via-orange-600 to-red-700', accent: 'bg-amber-200', emoji: '🏔️' },
-  bologna: { gradient: 'from-orange-700 via-red-700 to-rose-800', accent: 'bg-orange-200', emoji: '🎓' },
-  florence: { gradient: 'from-amber-500 via-orange-500 to-rose-500', accent: 'bg-amber-200', emoji: '🎨' },
-  venice: { gradient: 'from-sky-600 via-cyan-600 to-blue-800', accent: 'bg-sky-200', emoji: '🚤' },
-  naples: { gradient: 'from-yellow-500 via-orange-500 to-red-600', accent: 'bg-yellow-200', emoji: '🌋' },
-  genoa: { gradient: 'from-emerald-600 via-teal-600 to-sky-700', accent: 'bg-emerald-200', emoji: '⚓' },
-  verona: { gradient: 'from-pink-500 via-rose-500 to-red-600', accent: 'bg-pink-200', emoji: '💌' },
-  bergamo: { gradient: 'from-indigo-600 via-purple-600 to-fuchsia-700', accent: 'bg-indigo-200', emoji: '🏰' },
-  brescia: { gradient: 'from-stone-700 via-stone-800 to-zinc-900', accent: 'bg-stone-300', emoji: '🏟️' },
-  padua: { gradient: 'from-violet-600 via-purple-600 to-indigo-700', accent: 'bg-violet-200', emoji: '📚' },
-  bari: { gradient: 'from-cyan-500 via-sky-600 to-blue-700', accent: 'bg-cyan-200', emoji: '🏖️' },
-  catania: { gradient: 'from-orange-600 via-red-600 to-stone-800', accent: 'bg-orange-200', emoji: '🌋' },
-  palermo: { gradient: 'from-amber-500 via-yellow-600 to-orange-700', accent: 'bg-amber-200', emoji: '🍋' },
-  berlin: { gradient: 'from-zinc-700 via-neutral-800 to-stone-900', accent: 'bg-yellow-300', emoji: '🐻' },
-  munich: { gradient: 'from-blue-600 via-sky-700 to-indigo-800', accent: 'bg-blue-200', emoji: '🍺' },
-  london: { gradient: 'from-red-600 via-rose-700 to-slate-900', accent: 'bg-red-200', emoji: '☂️' },
-};
-
-const DEFAULT_THEME = {
-  gradient: 'from-orange-500 via-amber-500 to-rose-500',
-  accent: 'bg-orange-200',
-  emoji: '✨',
-};
 
 interface CityCard {
   slug: string;
@@ -74,7 +40,7 @@ async function fetchCityCards(): Promise<CityCard[]> {
     })
       .select('slug title metaDescription views targetCity')
       .sort({ views: -1, updatedAt: -1 })
-      .limit(8)
+      .limit(12)
       .lean();
 
     if (pages.length === 0) return [];
@@ -140,25 +106,34 @@ export default async function CityLandingCards() {
               راهنمای کامل زندگی، آگهی، و جامعه ایرانیان در هر شهر — یک جا، یک کلیک.
             </p>
           </div>
-          <span className="text-[11px] text-gray-400 hidden md:inline-flex items-center gap-1">
-            <Sparkles size={11} className="text-orange-400" />
-            راهنمای SEO هر شهر
-          </span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {cards.map((c, idx) => {
-            const theme = CITY_THEME[c.city] || DEFAULT_THEME;
+            const theme = getCityVisual(c.city);
             return (
               <Link
                 key={c.slug}
                 href={`/p/${c.slug}`}
                 className="group relative overflow-hidden rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 aspect-[4/5] md:aspect-[3/4]"
               >
-                {/* Gradient base */}
+                {/* Gradient base — always visible, also acts as fallback if
+                    the photo above fails to load. */}
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${theme.gradient}`}
                 />
+                {/* Photographic background, layered over the gradient with
+                    mix-blend so the city tone always wins through. */}
+                {theme.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={theme.image}
+                    alt={c.shortName}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover opacity-55 mix-blend-overlay group-hover:scale-110 group-hover:opacity-65 transition-all duration-700"
+                  />
+                )}
                 {/* Subtle pattern overlay for texture */}
                 <div
                   aria-hidden
@@ -169,7 +144,7 @@ export default async function CityLandingCards() {
                   }}
                 />
                 {/* Bottom darkening for text legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
 
                 {/* Top-right floating emoji badge */}
                 <div className="absolute top-3 right-3 w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-xl group-hover:scale-110 group-hover:rotate-6 transition">

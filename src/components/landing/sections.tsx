@@ -15,6 +15,7 @@ import Article from '@/models/Article';
 import User from '@/models/User';
 import AdCard from '@/components/ads/AdCard';
 import { getCityLabel } from '@/lib/constants';
+import { getCityVisual } from '@/lib/city-images';
 import type { LandingSection } from '@/models/LandingPage';
 
 /* ----------------------------------------------------------------------- */
@@ -24,7 +25,13 @@ import type { LandingSection } from '@/models/LandingPage';
 interface HeroData {
   eyebrow?: string;
   title: string;
+  /** Latin form of the city name, e.g. "Torino" — rendered as decorative
+   *  oversize backdrop type behind the Persian headline. */
+  cityEn?: string;
+  /** Optional city slug, used to look up shared imagery in city-images. */
+  cityValue?: string;
   subtitle?: string;
+  /** Direct override; falls back to the city-image map if cityValue is set. */
   backgroundImage?: string;
   primaryCta?: { label: string; href: string };
   secondaryCta?: { label: string; href: string };
@@ -33,66 +40,106 @@ interface HeroData {
 }
 
 export function HeroSection({ data }: { data: HeroData }) {
+  const visual = data.cityValue ? getCityVisual(data.cityValue) : null;
+  const bg = data.backgroundImage || visual?.image;
+  const gradient = visual?.gradient || 'from-orange-500 via-amber-500 to-rose-500';
+
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-amber-500 to-rose-500 text-white shadow-xl">
-      {data.backgroundImage && (
+    <section
+      className={`relative overflow-hidden rounded-[2rem] bg-gradient-to-br ${gradient} text-white shadow-2xl ring-1 ring-white/20`}
+    >
+      {/* Photographic background — sits below all overlays so anything on
+          top stays legible even on bright photos. */}
+      {bg && (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={data.backgroundImage}
+            src={bg}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-overlay"
+            aria-hidden
+            className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-orange-700/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         </>
       )}
-      {/* Decorative dot pattern */}
+
+      {/* Soft floating glow for premium feel */}
       <div
         aria-hidden
-        className="absolute inset-0 opacity-20"
+        className="absolute -top-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-white/15 blur-3xl pointer-events-none"
+      />
+      <div
+        aria-hidden
+        className="absolute -bottom-40 -left-32 w-[24rem] h-[24rem] rounded-full bg-black/30 blur-3xl pointer-events-none"
+      />
+
+      {/* Dot pattern */}
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-15"
         style={{
           backgroundImage:
-            'radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
+            'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
         }}
       />
-      <div className="relative px-6 md:px-12 py-12 md:py-20 max-w-4xl">
+
+      {/* Oversize decorative city name in Latin — pure visual, hidden from a11y */}
+      {data.cityEn && (
+        <span
+          aria-hidden
+          className="hidden md:block absolute -bottom-6 left-6 text-[8rem] lg:text-[11rem] font-black text-white/10 leading-none tracking-tighter select-none pointer-events-none"
+          style={{ fontFamily: 'serif' }}
+        >
+          {data.cityEn}
+        </span>
+      )}
+
+      <div className="relative px-6 md:px-14 py-14 md:py-24 max-w-4xl">
         {data.eyebrow && (
-          <p className="inline-flex items-center gap-1.5 text-xs md:text-sm font-bold bg-white/20 backdrop-blur px-3 py-1 rounded-full mb-4">
-            <Sparkles size={14} />
+          <p className="inline-flex items-center gap-1.5 text-[11px] md:text-sm font-bold bg-white/15 backdrop-blur-md ring-1 ring-white/30 px-3 py-1.5 rounded-full mb-5">
+            <Sparkles size={14} className="animate-pulse" />
             {data.eyebrow}
           </p>
         )}
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight drop-shadow-sm">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight drop-shadow-lg">
           {data.title}
         </h1>
+        {data.cityEn && (
+          <p className="mt-2 text-sm md:text-base font-semibold uppercase tracking-[0.4em] text-white/80">
+            {data.cityEn}
+          </p>
+        )}
         {data.showFlag && (
-          <div className="mt-3 flex gap-1 w-24">
+          <div className="mt-4 flex gap-1 w-28">
             <span className="h-1.5 flex-1 rounded-full bg-emerald-400" />
             <span className="h-1.5 flex-1 rounded-full bg-white" />
             <span className="h-1.5 flex-1 rounded-full bg-red-400" />
           </div>
         )}
         {data.subtitle && (
-          <p className="mt-4 text-base md:text-lg leading-relaxed text-white/95 max-w-2xl">
+          <p className="mt-5 text-base md:text-xl leading-relaxed text-white/95 max-w-2xl">
             {data.subtitle}
           </p>
         )}
         {(data.primaryCta || data.secondaryCta) && (
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-7 flex flex-wrap gap-3">
             {data.primaryCta && (
               <Link
                 href={data.primaryCta.href}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-white text-orange-600 font-bold shadow-lg hover:scale-105 transition"
+                className="group inline-flex items-center gap-1.5 px-6 py-3 rounded-2xl bg-white text-gray-900 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all"
               >
                 {data.primaryCta.label}
-                <ArrowLeft size={16} />
+                <ArrowLeft
+                  size={16}
+                  className="group-hover:-translate-x-1 transition"
+                />
               </Link>
             )}
             {data.secondaryCta && (
               <Link
                 href={data.secondaryCta.href}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-white/15 backdrop-blur ring-1 ring-white/30 font-bold hover:bg-white/25 transition"
+                className="inline-flex items-center gap-1.5 px-6 py-3 rounded-2xl bg-white/10 backdrop-blur-md ring-1 ring-white/40 font-bold hover:bg-white/20 transition"
               >
                 {data.secondaryCta.label}
               </Link>
@@ -455,33 +502,72 @@ interface FeatureGridData {
 
 export function FeatureGridSection({ data }: { data: FeatureGridData }) {
   if (!data.features || data.features.length === 0) return null;
+  // Per-card accent colors so the grid feels lively rather than monotone.
+  const accents = [
+    { ring: 'group-hover:ring-orange-200', halo: 'from-orange-100', icon: 'bg-orange-50 text-orange-600' },
+    { ring: 'group-hover:ring-rose-200', halo: 'from-rose-100', icon: 'bg-rose-50 text-rose-600' },
+    { ring: 'group-hover:ring-amber-200', halo: 'from-amber-100', icon: 'bg-amber-50 text-amber-600' },
+    { ring: 'group-hover:ring-emerald-200', halo: 'from-emerald-100', icon: 'bg-emerald-50 text-emerald-600' },
+    { ring: 'group-hover:ring-sky-200', halo: 'from-sky-100', icon: 'bg-sky-50 text-sky-600' },
+    { ring: 'group-hover:ring-violet-200', halo: 'from-violet-100', icon: 'bg-violet-50 text-violet-600' },
+  ];
   return (
-    <section className="bg-gradient-to-br from-gray-50 to-white rounded-3xl border border-gray-100 p-6 md:p-10">
+    <section className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-white via-orange-50/30 to-amber-50/40 p-6 md:p-12 shadow-sm">
+      {/* Decorative blobs */}
+      <div
+        aria-hidden
+        className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-gradient-to-br from-orange-200/40 to-transparent blur-3xl pointer-events-none"
+      />
+      <div
+        aria-hidden
+        className="absolute -bottom-32 -left-20 w-72 h-72 rounded-full bg-gradient-to-tr from-rose-200/40 to-transparent blur-3xl pointer-events-none"
+      />
+
       {data.title && (
-        <header className="text-center max-w-2xl mx-auto mb-8">
-          <h2 className="text-xl md:text-3xl font-black text-gray-900">
+        <header className="relative text-center max-w-2xl mx-auto mb-10">
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-orange-600 mb-2">
+            <Sparkles size={12} />
+            ویژگی‌ها
+          </p>
+          <h2 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight leading-tight">
             {data.title}
           </h2>
           {data.subtitle && (
-            <p className="mt-2 text-sm md:text-base text-gray-600">
+            <p className="mt-3 text-sm md:text-base text-gray-600 leading-7">
               {data.subtitle}
             </p>
           )}
         </header>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {data.features.map((f, i) => (
-          <div
-            key={i}
-            className="rounded-2xl bg-white p-5 border border-gray-100 hover:border-orange-200 hover:shadow-md transition"
-          >
-            <div className="text-3xl md:text-4xl mb-3">{f.emoji || '✨'}</div>
-            <h3 className="font-bold text-gray-900 mb-1">{f.title}</h3>
-            {f.description && (
-              <p className="text-sm text-gray-600 leading-6">{f.description}</p>
-            )}
-          </div>
-        ))}
+      <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {data.features.map((f, i) => {
+          const a = accents[i % accents.length];
+          return (
+            <div
+              key={i}
+              className={`group relative overflow-hidden rounded-2xl bg-white p-5 md:p-6 border border-gray-100 ring-2 ring-transparent ${a.ring} hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300`}
+            >
+              {/* Soft corner halo that intensifies on hover */}
+              <div
+                aria-hidden
+                className={`absolute -top-12 -right-12 w-32 h-32 rounded-full bg-gradient-to-br ${a.halo} to-transparent opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all duration-500`}
+              />
+              <div className="relative">
+                <div
+                  className={`w-12 h-12 rounded-2xl ${a.icon} flex items-center justify-center text-2xl md:text-3xl mb-4 group-hover:scale-110 group-hover:-rotate-3 transition`}
+                >
+                  {f.emoji || '✨'}
+                </div>
+                <h3 className="font-black text-gray-900 mb-1.5 text-base md:text-lg leading-snug">
+                  {f.title}
+                </h3>
+                {f.description && (
+                  <p className="text-sm text-gray-600 leading-7">{f.description}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
