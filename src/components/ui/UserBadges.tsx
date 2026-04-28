@@ -168,15 +168,14 @@ function BadgeWithTooltip({
       {children}
       <span
         role="tooltip"
-        className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-50 whitespace-nowrap rounded-lg bg-gray-900 text-white text-[11px] px-2.5 py-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        dir="rtl"
+        className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 w-44 rounded-lg bg-gray-900 text-white text-[11px] leading-relaxed px-3 py-2 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-right"
       >
-        <span className="font-semibold">{label}</span>
+        <span className="block font-bold mb-0.5">{label}</span>
         {description && (
-          <span className="block text-gray-300 font-normal mt-0.5 max-w-[200px] whitespace-normal text-right" dir="rtl">
-            {description}
-          </span>
+          <span className="block text-gray-300 font-normal">{description}</span>
         )}
-        <span className="absolute -top-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900" />
+        <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45" />
       </span>
     </span>
   );
