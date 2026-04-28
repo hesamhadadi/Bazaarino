@@ -1,13 +1,54 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, MessageCircle, Send } from 'lucide-react';
+import connectDB from '@/lib/mongodb';
+import LandingPage from '@/models/LandingPage';
 
-export default function Footer() {
+export const dynamic = 'force-dynamic';
+
+/**
+ * Pulls a small set of published city landing pages so the footer can
+ * link directly to them. This builds an internal-link graph from every
+ * page on the site → city hubs, which is one of the cheapest SEO wins
+ * we can get for keyword targeting.
+ *
+ * Errors are swallowed so a DB hiccup never breaks the global footer.
+ */
+async function fetchCityLinks() {
+  try {
+    await connectDB();
+    const pages = await LandingPage.find({
+      status: 'published',
+      pageType: 'city',
+    })
+      .select('slug title targetCity')
+      .sort({ updatedAt: -1 })
+      .limit(8)
+      .lean();
+    return pages as Array<{ slug: string; title: string; targetCity?: string }>;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Strips the marketing tail from titles like
+ *   "ایرانیان تورین | آگهی، مسکن و راهنمای تورین | بازارینو"
+ * so the footer link reads "ایرانیان تورین" — short, scannable, and
+ * still keyword-rich.
+ */
+function shortLabel(title: string) {
+  const head = title.split('|')[0]?.trim() || title;
+  return head.length > 30 ? head.slice(0, 30) + '…' : head;
+}
+
+export default async function Footer() {
   const year = new Date().getFullYear();
+  const cityLinks = await fetchCityLinks();
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-10">
-      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-5 gap-8">
         <div className="col-span-2 md:col-span-1">
           <Link href="/" className="flex items-center gap-2 mb-3">
             <Image src="/logo-eu.svg" alt="bazaarino" width={28} height={28} />
@@ -37,6 +78,26 @@ export default function Footer() {
             <li><Link href="/saved-searches" className="hover:text-brand-600">جست‌وجوهای ذخیره شده</Link></li>
           </ul>
         </div>
+
+        {/* SEO money column — only renders when we actually have published
+            city pages, so we don't ship an empty list to the user. */}
+        {cityLinks.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-3 text-sm">جامعه ایرانیان</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              {cityLinks.map((p) => (
+                <li key={p.slug}>
+                  <Link
+                    href={`/p/${p.slug}`}
+                    className="hover:text-brand-600 inline-block"
+                  >
+                    {shortLabel(p.title)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div>
           <h4 className="font-semibold text-gray-800 mb-3 text-sm">قانونی</h4>

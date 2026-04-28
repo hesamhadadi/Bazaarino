@@ -62,6 +62,33 @@ export default function AdminLandingPagesList() {
   const [creatingTemplate, setCreatingTemplate] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('turin');
+  const [seedingCities, setSeedingCities] = useState(false);
+
+  const seedTopCities = async () => {
+    if (
+      !confirm(
+        'صفحات لندینگ شهرهای اصلی (تورین، میلان، رم، بولونیا، فلورانس) ساخته و منتشر می‌شوند. ادامه می‌دهی؟',
+      )
+    )
+      return;
+    setSeedingCities(true);
+    try {
+      const res = await fetch('/api/admin/landing-pages/seed-cities', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'failed');
+      const msg = `${data.created.length} صفحه ساخته شد${
+        data.skipped.length ? ` · ${data.skipped.length} از قبل وجود داشت` : ''
+      }`;
+      toast.success(msg);
+      fetchPages();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'خطا در ساخت');
+    } finally {
+      setSeedingCities(false);
+    }
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/auth/login');
@@ -163,7 +190,16 @@ export default function AdminLandingPagesList() {
               صفحات SEO سفارشی بساز، با قالب آماده شهری یا از صفر — کاملاً قابل انتشار
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={seedTopCities}
+              disabled={seedingCities}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold shadow-md hover:shadow-lg transition disabled:opacity-50"
+              title="ساخت و انتشار همزمان ۵ شهر اصلی ایتالیا"
+            >
+              <Sparkles size={14} />
+              {seedingCities ? 'در حال ساخت...' : 'ساخت سریع ۵ شهر اصلی'}
+            </button>
             <button
               onClick={() => setShowTemplateModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-bold shadow-md hover:shadow-lg transition"
