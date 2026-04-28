@@ -30,7 +30,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, imageUrl, linkUrl, startsAt, endsAt, placement, categoryId } = body;
+    const {
+      title,
+      description,
+      imageUrl,
+      imageUrlMobile,
+      linkUrl,
+      startsAt,
+      endsAt,
+      placement,
+      size,
+      priority,
+      categoryId,
+      isActive,
+    } = body;
     if (!imageUrl || !startsAt || !endsAt) {
       return NextResponse.json({ message: 'فیلدهای الزامی را پر کنید' }, { status: 400 });
     }
@@ -41,13 +54,17 @@ export async function POST(request: NextRequest) {
     await connectDB();
     const banner = await Banner.create({
       title,
+      description,
       imageUrl,
+      imageUrlMobile,
       linkUrl,
       placement: placement || 'home',
+      size: size || 'hero',
+      priority: typeof priority === 'number' ? priority : 0,
       categoryId: placement === 'category' ? categoryId : undefined,
       startsAt: new Date(startsAt),
       endsAt: new Date(endsAt),
-      isActive: true,
+      isActive: isActive !== false,
     });
 
     return NextResponse.json({ banner }, { status: 201 });

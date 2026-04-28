@@ -8,6 +8,7 @@ import LatestAdsSection from '@/components/home/LatestAdsSection';
 import HomeSearchPanel from '@/components/home/HomeSearchPanel';
 import HomeArticlesSection from '@/components/home/HomeArticlesSection';
 import CityLandingCards from '@/components/home/CityLandingCards';
+import HomeBanner from '@/components/home/HomeBanner';
 import RecentlyViewedStrip from '@/components/ads/RecentlyViewedStrip';
 import CityIcon from '@/components/ui/CityIcon';
 import { CATEGORIES, CITIES } from '@/lib/constants';
@@ -148,6 +149,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* HOME BANNER — large hero billboard, only renders if an active banner exists */}
+      <HomeBanner slot="hero" />
 
       {/* RECENTLY VIEWED — only shown to returning users with localStorage history */}
       <section>

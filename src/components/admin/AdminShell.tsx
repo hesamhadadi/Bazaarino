@@ -108,10 +108,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           match: () => isLegacyTab('users'),
         },
         {
-          href: '/admin/legacy?tab=banners',
-          label: 'بنر و تصاویر شهری',
+          href: '/admin/banners',
+          label: 'بنرهای تبلیغاتی',
           icon: ImageIcon,
-          match: () => isLegacyTab('banners'),
+          match: (p) => p.startsWith('/admin/banners') || isLegacyTab('banners'),
         },
         {
           href: '/admin/articles',
