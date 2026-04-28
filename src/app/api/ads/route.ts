@@ -11,6 +11,7 @@ import Setting from '@/models/Setting';
 import { getAppSettings } from '@/lib/settings';
 import { getCityLabel, getCategoryById, getCountryByCity } from '@/lib/constants';
 import { attachMarketPriceToAds } from '@/lib/market-price';
+import { normalizeProducts } from '@/lib/ad-products';
 
 export async function GET(request: NextRequest) {
   try {
@@ -137,10 +138,20 @@ export async function POST(request: NextRequest) {
       listingMode,
       isUrgent,
       housing,
+      products: rawProducts,
     } = body;
 
     if (!title || !description || !category || !subcategory || !city) {
       return NextResponse.json({ message: 'فیلدهای الزامی را پر کنید' }, { status: 400 });
+    }
+
+    // Multi-product mode: normalize incoming products array and derive the
+    // top-level `price` from the cheapest product so search/filter pipelines
+    // keep working without changes downstream.
+    const { products: cleanProducts, derivedPrice, error: productsError } =
+      normalizeProducts(rawProducts);
+    if (productsError) {
+      return NextResponse.json({ message: productsError }, { status: 400 });
     }
 
     await connectDB();
@@ -211,10 +222,19 @@ export async function POST(request: NextRequest) {
 
     const resolvedCountry = country || getCountryByCity(city) || 'italy';
 
+    // When products[] is supplied, the cheapest product price wins so that
+    // search/sort by price still works for catalog ads.
+    const finalPrice =
+      cleanProducts && cleanProducts.length > 0
+        ? derivedPrice
+        : price
+        ? parseFloat(price)
+        : undefined;
+
     const ad = await Ad.create({
       title,
       description,
-      price: price ? parseFloat(price) : undefined,
+      price: finalPrice,
       priceType: priceType || 'fixed',
       currency: currency || 'EUR',
       category,
@@ -222,6 +242,7 @@ export async function POST(request: NextRequest) {
       country: resolvedCountry,
       city,
       images: images || [],
+      products: cleanProducts,
       phone,
       email,
       showPhone: showPhone !== false,

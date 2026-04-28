@@ -10,10 +10,15 @@ import toast from 'react-hot-toast';
 import { BILLS_INFO_OPTIONS, CATEGORIES, CITIES, LISTING_MODES } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
 import dynamic from 'next/dynamic';
-import { Upload, X, ChevronLeft, Save } from 'lucide-react';
+import { Upload, X, ChevronLeft, Save, Package, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { LatLng } from '@/lib/map-data';
+import ProductsEditor, {
+  draftsToProducts,
+  productsToDrafts,
+  type ProductDraft,
+} from '@/components/ads/ProductsEditor';
 
 const HousingLocationPicker = dynamic(() => import('@/components/maps/HousingLocationPicker'), { ssr: false });
 
@@ -56,6 +61,10 @@ export default function EditAdPage() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingAd, setLoadingAd] = useState(true);
   const [location, setLocation] = useState<LatLng | null>(null);
+  // Multi-product (catalog) mode mirrors the create form so editing works
+  // identically. We hydrate from the loaded ad below.
+  const [multiProduct, setMultiProduct] = useState(false);
+  const [products, setProducts] = useState<ProductDraft[]>([]);
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<AdForm>({
     resolver: zodResolver(adSchema),
@@ -111,6 +120,10 @@ export default function EditAdPage() {
         setLocation({ lat: ad.housing.location.lat, lng: ad.housing.location.lng });
       }
       setImages(ad.images || []);
+      if (Array.isArray(ad.products) && ad.products.length > 0) {
+        setMultiProduct(true);
+        setProducts(productsToDrafts(ad.products));
+      }
     } catch {
       toast.error('خطا در دریافت آگهی');
     } finally {
@@ -139,6 +152,19 @@ export default function EditAdPage() {
   };
 
   const onSubmit = async (data: AdForm) => {
+    // When in catalog mode, validate at least one product. Sending an empty
+    // products[] (clearing the catalog) is allowed when the toggle is off.
+    let cleanProducts: ReturnType<typeof draftsToProducts> | undefined;
+    if (multiProduct) {
+      cleanProducts = draftsToProducts(products);
+      if (cleanProducts.length === 0) {
+        toast.error('حداقل یک محصول با عنوان و قیمت معتبر اضافه کنید');
+        return;
+      }
+    } else {
+      // Explicit empty array clears any previously-saved catalog server-side.
+      cleanProducts = [];
+    }
     setSubmitting(true);
     try {
       const res = await fetch(`/api/ads/${adId}`, {
@@ -147,6 +173,7 @@ export default function EditAdPage() {
         body: JSON.stringify({
           ...data,
           images,
+          products: cleanProducts,
           housing: category === 'real-estate' ? {
             deposit: data.deposit ? Number(data.deposit) : undefined,
             residenceEligible: data.residenceEligible === true,
@@ -332,6 +359,45 @@ export default function EditAdPage() {
               </div>
             )}
           </div>
+
+          {/* Multi-product catalog */}
+          {listingMode !== 'request' && (
+            <div className="bg-white rounded-2xl p-4 border border-gray-100">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <h2 className="font-semibold text-gray-800 inline-flex items-center gap-2">
+                  {multiProduct ? (
+                    <>
+                      <Package size={16} className="text-orange-500" />
+                      کاتالوگ محصولات
+                    </>
+                  ) : (
+                    'کاتالوگ محصولات (اختیاری)'
+                  )}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setMultiProduct((v) => !v)}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition inline-flex items-center gap-1.5 ${
+                    multiProduct
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-gray-900'
+                  }`}
+                >
+                  <Sparkles size={12} />
+                  {multiProduct ? 'حذف کاتالوگ' : 'فعال‌سازی کاتالوگ'}
+                </button>
+              </div>
+              {multiProduct && (
+                <>
+                  <div className="rounded-xl bg-orange-50/60 border border-orange-100 p-3 mb-3 text-[11px] text-orange-800 leading-6">
+                    در حالت کاتالوگ، چند محصول با قیمت و توضیحات جدا ثبت می‌کنی.
+                    قیمت اصلی آگهی به‌صورت خودکار از ارزان‌ترین محصول محاسبه می‌شود.
+                  </div>
+                  <ProductsEditor products={products} onChange={setProducts} />
+                </>
+              )}
+            </div>
+          )}
 
           <div className="bg-white rounded-2xl p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-800 mb-3">تصاویر</h2>

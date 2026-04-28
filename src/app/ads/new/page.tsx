@@ -16,6 +16,11 @@ import Image from 'next/image';
 import type { LatLng } from '@/lib/map-data';
 import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
 import AiAdGenerator from '@/components/ads/AiAdGenerator';
+import ProductsEditor, {
+  draftsToProducts,
+  type ProductDraft,
+} from '@/components/ads/ProductsEditor';
+import { Package, Sparkles } from 'lucide-react';
 
 const HousingLocationPicker = dynamic(() => import('@/components/maps/HousingLocationPicker'), { ssr: false });
 
@@ -62,6 +67,10 @@ export default function NewAdPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [location, setLocation] = useState<LatLng | null>(null);
   const [marketPrice, setMarketPrice] = useState<{ referencePrice: number; sampleSize: number } | null>(null);
+  // Multi-product (catalog) mode: when on, the price block is hidden and the
+  // user fills products[] instead. Top-level price is auto-derived on submit.
+  const [multiProduct, setMultiProduct] = useState(false);
+  const [products, setProducts] = useState<ProductDraft[]>([]);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<AdForm>({
     resolver: zodResolver(adSchema),
@@ -144,6 +153,15 @@ export default function NewAdPage() {
   };
 
   const onSubmit = async (data: AdForm) => {
+    // Multi-product validation: at least one valid (title + price) row
+    let cleanProducts: ReturnType<typeof draftsToProducts> | undefined;
+    if (multiProduct) {
+      cleanProducts = draftsToProducts(products);
+      if (cleanProducts.length === 0) {
+        toast.error('حداقل یک محصول با عنوان و قیمت معتبر اضافه کنید');
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const res = await fetch('/api/ads', {
@@ -152,6 +170,7 @@ export default function NewAdPage() {
         body: JSON.stringify({
           ...data,
           images,
+          products: cleanProducts,
           housing: category === 'real-estate' ? {
             deposit: data.deposit ? Number(data.deposit) : undefined,
             residenceEligible: data.residenceEligible === true,
@@ -541,57 +560,99 @@ export default function NewAdPage() {
             </div>
           </div>
 
-          {/* Price */}
+          {/* Price + Multi-product toggle */}
           {listingMode !== 'request' && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100">
-            <h2 className="font-semibold text-gray-800 mb-3">قیمت</h2>
-
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {[
-                { value: 'fixed', label: 'قیمت ثابت' },
-                { value: 'negotiable', label: 'توافقی' },
-                { value: 'free', label: 'رایگان' },
-                { value: 'exchange', label: 'معاوضه' },
-              ].map(type => (
-                <label
-                  key={type.value}
-                  className={`flex items-center gap-2 p-3 border rounded-xl cursor-pointer transition-colors ${
-                    priceType === type.value ? 'border-brand-400 bg-brand-50' : 'border-gray-200'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    value={type.value}
-                    {...register('priceType')}
-                    className="accent-brand-500"
-                  />
-                  <span className="text-sm">{type.label}</span>
-                </label>
-              ))}
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <h2 className="font-semibold text-gray-800 inline-flex items-center gap-2">
+                {multiProduct ? (
+                  <>
+                    <Package size={16} className="text-orange-500" />
+                    کاتالوگ محصولات
+                  </>
+                ) : (
+                  'قیمت'
+                )}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setMultiProduct((v) => !v)}
+                className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition inline-flex items-center gap-1.5 ${
+                  multiProduct
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-900'
+                }`}
+              >
+                <Sparkles size={12} />
+                {multiProduct
+                  ? 'حالت تک‌قیمتی'
+                  : 'حالت چندمحصولی (کاتالوگ)'}
+              </button>
             </div>
 
-            {priceType === 'fixed' && (
-              <div>
-                <label className="block text-sm text-gray-600 mb-1.5">قیمت (یورو)</label>
-                <div className="relative">
-                  <input
-                    {...register('price')}
-                    type="number"
-                    placeholder="0"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pl-12 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
-                    dir="ltr"
-                  />
-                  <span className="absolute left-4 top-2.5 text-gray-400 text-sm">EUR €</span>
+            {multiProduct ? (
+              <>
+                <div className="rounded-xl bg-orange-50/60 border border-orange-100 p-3 mb-3 text-[11px] text-orange-800 leading-6">
+                  در حالت کاتالوگ می‌توانی چند محصول با قیمت و توضیحات جدا
+                  ثبت کنی. برای هر محصول می‌توانی <strong>قیمت تخفیف‌خورده</strong> و
+                  قیمت اصلی (خط‌خورده) تعیین کنی. قیمت کلی آگهی به‌صورت خودکار
+                  از ارزان‌ترین محصول تعیین می‌شود.
                 </div>
-                {category === 'real-estate' && (
-                  <div className="mt-3">
-                    <MarketPriceBadge
-                      price={livePrice ? Number(livePrice) : undefined}
-                      marketPrice={marketPrice || undefined}
-                    />
+                <ProductsEditor
+                  products={products}
+                  onChange={setProducts}
+                />
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {[
+                    { value: 'fixed', label: 'قیمت ثابت' },
+                    { value: 'negotiable', label: 'توافقی' },
+                    { value: 'free', label: 'رایگان' },
+                    { value: 'exchange', label: 'معاوضه' },
+                  ].map(type => (
+                    <label
+                      key={type.value}
+                      className={`flex items-center gap-2 p-3 border rounded-xl cursor-pointer transition-colors ${
+                        priceType === type.value ? 'border-brand-400 bg-brand-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        value={type.value}
+                        {...register('priceType')}
+                        className="accent-brand-500"
+                      />
+                      <span className="text-sm">{type.label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {priceType === 'fixed' && (
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1.5">قیمت (یورو)</label>
+                    <div className="relative">
+                      <input
+                        {...register('price')}
+                        type="number"
+                        placeholder="0"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pl-12 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                        dir="ltr"
+                      />
+                      <span className="absolute left-4 top-2.5 text-gray-400 text-sm">EUR €</span>
+                    </div>
+                    {category === 'real-estate' && (
+                      <div className="mt-3">
+                        <MarketPriceBadge
+                          price={livePrice ? Number(livePrice) : undefined}
+                          marketPrice={marketPrice || undefined}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
           )}

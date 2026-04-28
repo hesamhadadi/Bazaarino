@@ -18,6 +18,7 @@ import ReportForm from '@/components/ads/ReportForm';
 import StartChatButton from '@/components/ads/StartChatButton';
 import MarketPriceBadge from '@/components/ads/MarketPriceBadge';
 import SimilarAds from '@/components/ads/SimilarAds';
+import ProductsList from '@/components/ads/ProductsList';
 import RecentViewTracker from '@/components/ads/RecentViewTracker';
 import UserBadges from '@/components/ui/UserBadges';
 import ReservationRequestForm from '@/components/reservations/ReservationRequestForm';
@@ -368,6 +369,16 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
               </div>
               <h2 className="font-semibold text-gray-800 mb-2">توضیحات</h2>
               <p className="text-gray-600 text-sm leading-loose whitespace-pre-wrap">{ad.description}</p>
+
+              {/* Multi-product catalog — only renders when the ad has products[] */}
+              {Array.isArray(ad.products) && ad.products.length > 0 && (
+                <div className="mt-5">
+                  <ProductsList
+                    products={ad.products}
+                    fallbackImages={ad.images}
+                  />
+                </div>
+              )}
 
               {ad.category === 'real-estate' && (
                 <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-2">

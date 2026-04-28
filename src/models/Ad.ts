@@ -1,5 +1,32 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+/**
+ * A single product entry for catalog-style ads (a seller listing many
+ * products under one ad). Each product has its own price, optional discount
+ * (`originalPrice` is crossed-out when present), description, images and
+ * key/value specs. When an ad has `products.length > 0`, the top-level
+ * `price` is auto-derived from the minimum product price so existing
+ * search/filter pipelines keep working without changes.
+ */
+export interface IAdProduct {
+  /** Local identifier for ordering & React keys (UUID-ish, not a Mongo _id). */
+  id: string;
+  title: string;
+  description?: string;
+  /** Current (sale) price the buyer pays. */
+  price: number;
+  /** Original price shown crossed-out — must be > price to render the discount. */
+  originalPrice?: number;
+  currency?: 'EUR';
+  /** Product-specific images; falls back to ad-level `images` when empty. */
+  images?: string[];
+  /** Free-form spec rows, e.g. {label: 'سایز', value: 'M'}. */
+  specs?: Array<{ label: string; value: string }>;
+  inStock?: boolean;
+  /** Optional internal SKU/code from the seller's bookkeeping. */
+  sku?: string;
+}
+
 export interface IAd extends Document {
   title: string;
   description: string;
@@ -11,6 +38,8 @@ export interface IAd extends Document {
   country?: string;
   city: string;
   images: string[];
+  /** Multi-product catalog. Optional — empty/missing keeps the ad single-item. */
+  products?: IAdProduct[];
   status: 'pending' | 'approved' | 'rejected' | 'expired' | 'sold';
   userId: mongoose.Types.ObjectId;
   phone?: string;
@@ -112,6 +141,60 @@ const AdSchema = new Schema<IAd>(
         validator: (v: string[]) => v.length <= 8,
         message: 'حداکثر ۸ تصویر می‌توانید آپلود کنید',
       },
+    },
+    products: {
+      type: [
+        {
+          _id: false,
+          id: { type: String, required: true },
+          title: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: [120, 'عنوان محصول حداکثر ۱۲۰ کاراکتر'],
+          },
+          description: {
+            type: String,
+            trim: true,
+            maxlength: [1000, 'توضیحات محصول حداکثر ۱۰۰۰ کاراکتر'],
+          },
+          price: {
+            type: Number,
+            required: true,
+            min: [0, 'قیمت محصول نمی‌تواند منفی باشد'],
+          },
+          originalPrice: {
+            type: Number,
+            min: [0, 'قیمت اصلی نمی‌تواند منفی باشد'],
+          },
+          currency: { type: String, enum: ['EUR'], default: 'EUR' },
+          images: {
+            type: [String],
+            validate: {
+              validator: (v: string[]) => v.length <= 6,
+              message: 'حداکثر ۶ تصویر برای هر محصول',
+            },
+            default: undefined,
+          },
+          specs: {
+            type: [
+              {
+                _id: false,
+                label: { type: String, trim: true, maxlength: 60 },
+                value: { type: String, trim: true, maxlength: 200 },
+              },
+            ],
+            default: undefined,
+          },
+          inStock: { type: Boolean, default: true },
+          sku: { type: String, trim: true, maxlength: 60 },
+        },
+      ],
+      validate: {
+        validator: (v: unknown[]) => !v || v.length <= 50,
+        message: 'حداکثر ۵۰ محصول در هر آگهی',
+      },
+      default: undefined,
     },
     status: {
       type: String,

@@ -6,6 +6,7 @@ import Ad from '@/models/Ad';
 import { resolveSessionUserId } from '@/lib/session-user';
 import { computeHousingNearby } from '@/lib/map-data';
 import { updateAdStatusAndNotifyOwner } from '@/lib/ad-moderation';
+import { normalizeProducts } from '@/lib/ad-products';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -121,6 +122,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       if (body.bump === true) {
         (ad as any).bumpedAt = new Date();
         (ad as any).bumpCount = Number((ad as any).bumpCount || 0) + 1;
+      }
+      // Multi-product catalog: if products[] is supplied, normalize and
+      // replace the array (sending [] clears the catalog). The top-level
+      // price is realigned to the cheapest product so search keeps working.
+      if (body.products !== undefined) {
+        const { products: cleanProducts, derivedPrice, error } =
+          normalizeProducts(body.products);
+        if (error) {
+          return NextResponse.json({ message: error }, { status: 400 });
+        }
+        (ad as any).products = cleanProducts;
+        if (cleanProducts && cleanProducts.length > 0) {
+          (ad as any).price = derivedPrice;
+        }
       }
       // Reset to pending when owner edits
       if (!isAdmin) ad.status = 'pending';
