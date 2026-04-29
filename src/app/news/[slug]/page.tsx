@@ -175,17 +175,15 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       '@type': 'SpeakableSpecification',
       cssSelector: ['h1', '[data-speakable-summary]'],
     },
-    ...(article.ratingCount > 0
-      ? {
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: Number(article.ratingAvg || 0).toFixed(1),
-            ratingCount: article.ratingCount,
-            bestRating: 5,
-            worstRating: 1,
-          },
-        }
-      : {}),
+    // Note: we deliberately do NOT emit `aggregateRating` here.
+    // Google's Review-snippet rich result restricts AggregateRating to a
+    // closed list of parent types (Product, Book, Movie, Recipe, Course,
+    // Event, LocalBusiness, SoftwareApplication, Organization, …) and
+    // Article / NewsArticle is *not* on that list. Keeping it triggered
+    // a "Unnamed item / Review snippets invalid" error in Search Console
+    // because Google couldn't determine the reviewed entity. The internal
+    // article rating UI still works — it just isn't surfaced as a review
+    // snippet in SERPs.
     ...(article.commentCount > 0 ? { commentCount: article.commentCount } : {}),
   };
 
