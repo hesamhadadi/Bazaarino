@@ -4,7 +4,8 @@ import connectDB from '@/lib/mongodb';
 import LandingPage from '@/models/LandingPage';
 import Ad from '@/models/Ad';
 import { toFaDigits } from '@/lib/locale';
-import { getCityVisual } from '@/lib/city-images';
+import { getCityVisualsBulk, DEFAULT_VISUAL, type CityVisual as CityVisualTheme } from '@/lib/city-images';
+import CityVisual from '@/models/CityVisual';
 import CityCardImage from './CityCardImage';
 
 export const dynamic = 'force-dynamic';
@@ -79,7 +80,37 @@ async function fetchCityCards(): Promise<CityCard[]> {
 }
 
 export default async function CityLandingCards() {
-  const cards = await fetchCityCards();
+  const allCards = await fetchCityCards();
+
+  // Apply admin overrides: disabled cities are hidden, priority bumps
+  // bigger numbers up. We do this after the DB fetch so unconfigured
+  // cities still show using the static defaults.
+  let cards = allCards;
+  let visuals: Record<string, CityVisualTheme> = {};
+  try {
+    await connectDB();
+    const cities = allCards.map((c) => c.city).filter(Boolean);
+    const overrides = await CityVisual.find({ slug: { $in: cities } })
+      .select('slug enabled priority')
+      .lean();
+    const overrideMap = new Map(
+      overrides.map((o) => [o.slug, o]),
+    );
+    cards = allCards
+      .filter((c) => overrideMap.get(c.city)?.enabled !== false)
+      .sort((a, b) => {
+        const pa = overrideMap.get(a.city)?.priority ?? 0;
+        const pb = overrideMap.get(b.city)?.priority ?? 0;
+        if (pa !== pb) return pb - pa;
+        return b.views - a.views;
+      });
+  } catch (err) {
+    console.error('[home/city-cards] override merge failed', err);
+  }
+
+  // Resolve final visuals (image/gradient/emoji/accent) in a single batch.
+  visuals = await getCityVisualsBulk(cards.map((c) => c.city));
+
   if (cards.length === 0) return null;
 
   return (
@@ -112,7 +143,7 @@ export default async function CityLandingCards() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 md:gap-3">
           {cards.map((c) => {
-            const theme = getCityVisual(c.city);
+            const theme = visuals[c.city] || DEFAULT_VISUAL;
             const img = c.ogImage || theme.image;
             return (
               <Link

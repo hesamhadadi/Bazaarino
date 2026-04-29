@@ -23,6 +23,7 @@ import {
   Building2,
   Award,
   Layers,
+  MapPin,
 } from 'lucide-react';
 import CommandPalette from './CommandPalette';
 
@@ -136,6 +137,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           label: 'صفحات لندینگ',
           icon: Layers,
           match: (p) => p.startsWith('/admin/pages'),
+        },
+        {
+          href: '/admin/city-visuals',
+          label: 'ویژوال شهرها',
+          icon: MapPin,
+          match: (p) => p.startsWith('/admin/city-visuals'),
         },
       ],
     },

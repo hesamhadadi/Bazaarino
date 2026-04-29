@@ -17,6 +17,7 @@ import AdCard from '@/components/ads/AdCard';
 import { getCityLabel } from '@/lib/constants';
 import { getCityVisual } from '@/lib/city-images';
 import type { LandingSection } from '@/models/LandingPage';
+import Markdown from '@/components/landing/Markdown';
 
 /* ----------------------------------------------------------------------- */
 /*  Hero                                                                    */
@@ -444,9 +445,10 @@ export function RichTextSection({ data }: { data: RichTextData }) {
           {data.title}
         </h2>
       )}
-      <div className="prose prose-sm md:prose-base max-w-3xl mx-auto text-gray-700 leading-8 whitespace-pre-line">
-        {data.body}
-      </div>
+      <Markdown
+        source={data.body}
+        className="max-w-3xl mx-auto text-gray-700"
+      />
     </section>
   );
 }
@@ -480,8 +482,8 @@ export function FaqSection({ data }: { data: FaqData }) {
                 className="text-orange-500 group-open:rotate-180 transition"
               />
             </summary>
-            <div className="px-4 pb-4 text-sm text-gray-700 leading-7 whitespace-pre-line">
-              {item.a}
+            <div className="px-4 pb-4 text-sm text-gray-700">
+              <Markdown source={item.a} />
             </div>
           </details>
         ))}

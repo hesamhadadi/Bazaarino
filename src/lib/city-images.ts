@@ -138,3 +138,65 @@ export function getCityVisual(city?: string): CityVisual {
   if (!city) return DEFAULT_VISUAL;
   return CITY_VISUALS[city] || DEFAULT_VISUAL;
 }
+
+/**
+ * Async variant that merges DB-managed overrides on top of the static map.
+ * Used by server components (CityLandingCards, landing-page Hero). When
+ * Mongo is unreachable for any reason we silently fall back to statics —
+ * never block UI on visual personalisation.
+ *
+ * The override doc may be partial: any unset field keeps the static value.
+ * `enabled === false` is a hard hide signal — callers that consume a list
+ * (the home grid) should filter those out *before* calling this.
+ */
+export async function getCityVisualAsync(city?: string): Promise<CityVisual> {
+  const base = getCityVisual(city);
+  if (!city) return base;
+  try {
+    // Lazy imports keep this file safe to use from client components that
+    // never call the async path (the sync one stays purely in-memory).
+    const { default: connectDB } = await import('@/lib/mongodb');
+    const { default: CityVisual } = await import('@/models/CityVisual');
+    await connectDB();
+    const override = await CityVisual.findOne({ slug: city }).lean();
+    if (!override) return base;
+    return {
+      image: override.image || base.image,
+      gradient: override.gradient || base.gradient,
+      accent: override.accent || base.accent,
+      emoji: override.emoji || base.emoji,
+    };
+  } catch {
+    return base;
+  }
+}
+
+/**
+ * Bulk variant: fetch overrides for many cities in a single query and
+ * return a `slug -> merged visual` map. Used by the home grid.
+ */
+export async function getCityVisualsBulk(
+  cities: string[],
+): Promise<Record<string, CityVisual>> {
+  const out: Record<string, CityVisual> = {};
+  for (const c of cities) out[c] = getCityVisual(c);
+  if (cities.length === 0) return out;
+  try {
+    const { default: connectDB } = await import('@/lib/mongodb');
+    const { default: CityVisual } = await import('@/models/CityVisual');
+    await connectDB();
+    const overrides = await CityVisual.find({ slug: { $in: cities } }).lean();
+    for (const o of overrides) {
+      const base = out[o.slug] || DEFAULT_VISUAL;
+      out[o.slug] = {
+        image: o.image || base.image,
+        gradient: o.gradient || base.gradient,
+        accent: o.accent || base.accent,
+        emoji: o.emoji || base.emoji,
+      };
+    }
+  } catch {
+    /* fall back to static-only map */
+  }
+  return out;
+}
