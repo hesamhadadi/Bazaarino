@@ -540,11 +540,17 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                 {ad.userId?._id && (
                   <StartChatButton adId={ad._id.toString()} sellerId={ad.userId._id.toString()} />
                 )}
-                <ReservationRequestForm
-                  adId={ad._id.toString()}
-                  nightlyPrice={ad.priceType === 'fixed' && ad.price ? Number(ad.price) : 0}
-                  isReservable={isReservableHousing}
-                />
+                {/* Reservation flow is housing-only — hide the whole block
+                    on non-real-estate or non-rental ads so the page stays
+                    focused for jobs/items/services/etc. */}
+                {isReservableHousing && (
+                  <ReservationRequestForm
+                    adId={ad._id.toString()}
+                    nightlyPrice={
+                      ad.priceType === 'fixed' && ad.price ? Number(ad.price) : 0
+                    }
+                  />
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {ad.showPhone && ad.phone && (
                     <a
