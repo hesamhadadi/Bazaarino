@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAppUrl } from '@/lib/app-url';
 import connectDB from '@/lib/mongodb';
-import Ad from '@/models/Ad';
 import Article from '@/models/Article';
 import LandingPage from '@/models/LandingPage';
 import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
 
 export const revalidate = 3600;
 
-const MAX_ADS = 5000;
 const MAX_ARTICLES = 2000;
 
 type ChangeFreq =
@@ -103,7 +101,11 @@ export async function GET() {
     });
   }
 
-  let adRoutes: Entry[] = [];
+  // Note: individual /ads/<id> pages are intentionally NOT in the sitemap.
+  // They emit `robots: noindex, follow` (see src/app/ads/[id]/page.tsx)
+  // because each ad is short-lived and thin-content; surfacing thousands
+  // of them would burn crawl budget that should go to articles, city
+  // landings and category search pages instead.
   let articleRoutes: Entry[] = [];
   let tagRoutes: Entry[] = [];
   let authorRoutes: Entry[] = [];
@@ -111,12 +113,7 @@ export async function GET() {
 
   try {
     await connectDB();
-    const [ads, articles, tagAgg, authorAgg] = await Promise.all([
-      Ad.find({ status: 'approved' })
-        .select('_id updatedAt createdAt')
-        .sort({ updatedAt: -1 })
-        .limit(MAX_ADS)
-        .lean(),
+    const [articles, tagAgg, authorAgg] = await Promise.all([
       Article.find({ status: 'published' })
         .select('slug updatedAt createdAt')
         .sort({ updatedAt: -1 })
@@ -146,13 +143,6 @@ export async function GET() {
       changeFrequency: 'weekly',
       // City landing pages are particularly SEO-valuable, give them a boost.
       priority: p.pageType === 'city' ? 0.9 : 0.7,
-    }));
-
-    adRoutes = ads.map((ad: any) => ({
-      url: `${base}/ads/${ad._id}`,
-      lastModified: ad.updatedAt || ad.createdAt || now,
-      changeFrequency: 'weekly',
-      priority: 0.7,
     }));
 
     articleRoutes = articles.map((a: any) => ({
@@ -185,7 +175,6 @@ export async function GET() {
     ...staticRoutes,
     ...landingRoutes,
     ...countryCityRoutes,
-    ...adRoutes,
     ...articleRoutes,
     ...tagRoutes,
     ...authorRoutes,

@@ -10,15 +10,15 @@ import toast from 'react-hot-toast';
 import { BILLS_INFO_OPTIONS, CATEGORIES, CITIES, LISTING_MODES } from '@/lib/constants';
 import Navbar from '@/components/layout/Navbar';
 import dynamic from 'next/dynamic';
-import { Upload, X, ChevronLeft, Save, Package, Sparkles } from 'lucide-react';
+import { ChevronLeft, Save, Package, Sparkles, Image as ImageIcon, Tag, MapPin } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import type { LatLng } from '@/lib/map-data';
 import ProductsEditor, {
   draftsToProducts,
   productsToDrafts,
   type ProductDraft,
 } from '@/components/ads/ProductsEditor';
+import AdImageManager from '@/components/ads/AdImageManager';
 
 const HousingLocationPicker = dynamic(() => import('@/components/maps/HousingLocationPicker'), { ssr: false });
 
@@ -57,7 +57,6 @@ export default function EditAdPage() {
   const params = useParams();
   const adId = params?.id as string;
   const [images, setImages] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingAd, setLoadingAd] = useState(true);
   const [location, setLocation] = useState<LatLng | null>(null);
@@ -131,26 +130,6 @@ export default function EditAdPage() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    if (images.length + files.length > 8) { toast.error('حداکثر ۸ تصویر'); return; }
-
-    setUploading(true);
-    const formData = new FormData();
-    files.forEach(f => formData.append('images', f));
-
-    try {
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (res.ok) setImages(prev => [...prev, ...data.urls]);
-    } catch {
-      toast.error('خطا در آپلود');
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const onSubmit = async (data: AdForm) => {
     // When in catalog mode, validate at least one product. Sending an empty
     // products[] (clearing the catalog) is allowed when the toggle is off.
@@ -218,9 +197,22 @@ export default function EditAdPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
-        <div className="flex items-center gap-2 mb-6">
-          <Link href="/profile/ads" className="text-gray-400"><ChevronLeft size={20} /></Link>
-          <h1 className="text-xl font-bold text-gray-800">ویرایش آگهی</h1>
+        {/* Header */}
+        <div className="mb-5">
+          <Link
+            href="/profile/ads"
+            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 mb-2"
+          >
+            <ChevronLeft size={14} />
+            بازگشت به آگهی‌ها
+          </Link>
+          <div className="rounded-3xl bg-gradient-to-br from-orange-500 via-rose-500 to-amber-500 text-white p-5 shadow-lg">
+            <h1 className="text-2xl font-black mb-1">ویرایش آگهی</h1>
+            <p className="text-xs text-white/90 leading-6">
+              تغییرات‌ت بعد از بررسی توسط ادمین بروز می‌شوند. تصاویر رو می‌تونی با
+              دکمه‌های جابه‌جایی مرتب کنی یا ستاره رو بزنی تا کاور بشه.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -399,25 +391,97 @@ export default function EditAdPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-2xl p-4 border border-gray-100">
-            <h2 className="font-semibold text-gray-800 mb-3">تصاویر</h2>
-            <div className="grid grid-cols-4 gap-2">
-              {images.map((url, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
-                  <Image src={url} alt="" fill className="object-cover" />
-                  <button type="button" onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
-                    className="absolute top-1 left-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center">
-                    <X size={10} />
-                  </button>
+          {/* Price section is hidden when the catalog mode is active —
+              the parent ad price is auto-derived from the cheapest product. */}
+          {!multiProduct && (
+            <div className="bg-white rounded-2xl p-4 border border-gray-100">
+              <h2 className="font-bold text-gray-800 mb-3 inline-flex items-center gap-2">
+                <Tag size={16} className="text-orange-500" />
+                قیمت
+              </h2>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {[
+                  { value: 'fixed', label: 'قیمت ثابت' },
+                  { value: 'negotiable', label: 'توافقی' },
+                  { value: 'free', label: 'رایگان' },
+                  { value: 'exchange', label: 'معاوضه' },
+                ].map((type) => (
+                  <label
+                    key={type.value}
+                    className={`flex items-center gap-2 p-3 border rounded-xl cursor-pointer transition-colors ${
+                      priceType === type.value
+                        ? 'border-brand-400 bg-brand-50'
+                        : 'border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value={type.value}
+                      {...register('priceType')}
+                      className="accent-brand-500"
+                    />
+                    <span className="text-sm">{type.label}</span>
+                  </label>
+                ))}
+              </div>
+              {priceType === 'fixed' && (
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1.5">
+                    قیمت (یورو)
+                  </label>
+                  <div className="relative">
+                    <input
+                      {...register('price')}
+                      type="number"
+                      placeholder="0"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pl-12 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+                      dir="ltr"
+                    />
+                    <span className="absolute left-4 top-2.5 text-gray-400 text-sm">
+                      EUR €
+                    </span>
+                  </div>
                 </div>
-              ))}
-              {images.length < 8 && (
-                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-brand-400">
-                  {uploading ? <div className="w-5 h-5 border-2 border-brand-300 border-t-brand-500 rounded-full animate-spin" /> : <Upload size={18} className="text-gray-400" />}
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={uploading} />
-                </label>
               )}
             </div>
+          )}
+
+          {/* Contact */}
+          <div className="bg-white rounded-2xl p-4 border border-gray-100">
+            <h2 className="font-bold text-gray-800 mb-3 inline-flex items-center gap-2">
+              <MapPin size={16} className="text-orange-500" />
+              اطلاعات تماس
+            </h2>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1.5">
+                شماره تماس
+              </label>
+              <input
+                {...register('phone')}
+                type="tel"
+                placeholder="+39 ..."
+                dir="ltr"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+              />
+            </div>
+            <label className="flex items-center gap-2 mt-3 cursor-pointer">
+              <input
+                type="checkbox"
+                {...register('showPhone')}
+                className="accent-brand-500"
+              />
+              <span className="text-sm text-gray-600">
+                نمایش شماره تماس در آگهی
+              </span>
+            </label>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-gray-100">
+            <h2 className="font-bold text-gray-800 mb-3 inline-flex items-center gap-2">
+              <ImageIcon size={16} className="text-orange-500" />
+              تصاویر آگهی
+            </h2>
+            <AdImageManager value={images} onChange={setImages} max={8} />
           </div>
 
           <button type="submit" disabled={submitting} className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white py-3.5 rounded-2xl font-bold text-base transition-colors flex items-center justify-center gap-2">

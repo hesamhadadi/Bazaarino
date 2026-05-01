@@ -1,51 +1,63 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Ad from '@/models/Ad';
+import Article from '@/models/Article';
 import { getAppUrl } from '@/lib/app-url';
 
 export const revalidate = 3600;
 
-// Image sitemap — helps Google Images index ad photos.
-// https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps
+/**
+ * Image sitemap — surfaces editorial cover images so Google Images can
+ * index them. We deliberately do *not* list ad images here:
+ *
+ *  - /ads/<id> pages are `noindex, follow` (see src/app/ads/[id]/page.tsx)
+ *    and Google does not index images embedded on noindex pages, so
+ *    listing them would only burn crawl budget.
+ *  - Articles, on the other hand, are evergreen indexable assets with
+ *    a stable cover image — exactly what an image sitemap should target.
+ *
+ * Reference:
+ *   https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps
+ */
 export async function GET() {
-  const base = getAppUrl();
+  const base = getAppUrl().replace(/\/$/, '');
 
-  let ads: any[] = [];
+  let articles: any[] = [];
   try {
     await connectDB();
-    ads = await Ad.find({ status: 'approved', images: { $exists: true, $ne: [] } })
-      .select('_id title images updatedAt')
+    articles = await Article.find({
+      status: 'published',
+      coverImage: { $exists: true, $ne: '' },
+    })
+      .select('slug title coverImage updatedAt')
       .sort({ updatedAt: -1 })
       .limit(2000)
       .lean();
   } catch {
-    ads = [];
+    articles = [];
   }
 
-  const escape = (s: string) => s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+  const escape = (s: string) =>
+    s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
 
-  const urls = ads.map((ad) => {
-    const loc = `${base}/ads/${ad._id}`;
-    const imgs = (ad.images as string[])
-      .slice(0, 5)
-      .map((img) => {
-        const url = img.startsWith('http') ? img : `${base}${img}`;
-        return `    <image:image>
-      <image:loc>${escape(url)}</image:loc>
-      <image:title>${escape(ad.title || '')}</image:title>
-    </image:image>`;
-      })
-      .join('\n');
-    return `  <url>
+  const urls = articles
+    .map((a) => {
+      const loc = `${base}/news/${encodeURIComponent(a.slug)}`;
+      const img = a.coverImage as string;
+      const imgUrl = img.startsWith('http') ? img : `${base}${img}`;
+      return `  <url>
     <loc>${escape(loc)}</loc>
-${imgs}
+    <image:image>
+      <image:loc>${escape(imgUrl)}</image:loc>
+      <image:title>${escape(a.title || '')}</image:title>
+    </image:image>
   </url>`;
-  }).join('\n');
+    })
+    .join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"

@@ -72,7 +72,26 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     // Owner can update content
     if (isOwner) {
-      const allowedFields = ['title', 'description', 'price', 'priceType', 'city', 'phone', 'email', 'showPhone', 'showEmail', 'images', 'housing', 'listingMode'];
+      // category/subcategory are owner-editable so the seller can correct
+      // a wrong choice without re-creating the ad. Image array is fully
+      // owner-controlled (replace, reorder, prune) — the client always
+      // sends the canonical list.
+      const allowedFields = [
+        'title',
+        'description',
+        'category',
+        'subcategory',
+        'price',
+        'priceType',
+        'city',
+        'phone',
+        'email',
+        'showPhone',
+        'showEmail',
+        'images',
+        'housing',
+        'listingMode',
+      ];
       allowedFields.forEach(field => {
         if (body[field] !== undefined) (ad as any)[field] = body[field];
       });
