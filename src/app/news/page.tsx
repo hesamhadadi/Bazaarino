@@ -366,9 +366,7 @@ function HeroArticle({ article }: { article: any }) {
           <span className="inline-flex items-center gap-1">
             <Clock size={12} /> {toFaDigits(String(minutes))} دقیقه
           </span>
-          <span className="inline-flex items-center gap-1">
-            <Eye size={12} /> {toFaDigits(String(article.views || 0))} بازدید
-          </span>
+          {/* View counts are admin-only across the public site. */}
         </div>
         <div className="mt-5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
@@ -432,14 +430,7 @@ function ArticleCard({ article, compact }: { article: any; compact?: boolean }) 
           <span className="inline-flex items-center gap-1">
             <Clock size={11} /> {toFaDigits(String(minutes))} دقیقه
           </span>
-          {(article.views || 0) > 0 && (
-            <>
-              <span className="text-gray-300">·</span>
-              <span className="inline-flex items-center gap-1">
-                <Eye size={11} /> {toFaDigits(String(article.views))}
-              </span>
-            </>
-          )}
+          {/* View counts are admin-only across the public site. */}
         </div>
 
         <h3 className={`font-black text-gray-900 group-hover:text-orange-600 transition leading-tight line-clamp-2 ${compact ? 'text-sm' : 'text-base md:text-lg'}`}>

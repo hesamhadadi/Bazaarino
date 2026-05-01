@@ -413,7 +413,7 @@ export async function ArticleGridSection({ data }: { data: ArticleGridData }) {
               )}
               <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400">
                 {a.readTime ? <span>{a.readTime} دقیقه مطالعه</span> : null}
-                {a.views ? <span>· {a.views} بازدید</span> : null}
+                {/* View counts are admin-only across the public site. */}
               </div>
             </div>
           </Link>

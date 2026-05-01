@@ -137,9 +137,9 @@ export default function MyAdsPage() {
                           {StatusIcon && <StatusIcon size={10} />}
                           {statusInfo?.label}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-gray-400">
-                          <Eye size={10} /> {ad.views}
-                        </span>
+                        {/* View counts are admin-only across the site —
+                            even owners don't see their own ad views to keep
+                            stats reporting centralized in /admin. */}
                         {ad.isUrgent && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">فوری</span>
                         )}

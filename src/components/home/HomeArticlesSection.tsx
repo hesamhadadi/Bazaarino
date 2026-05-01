@@ -177,12 +177,7 @@ function FeaturedCard({ article }: { article: Article }) {
               <Clock size={11} />
               {toFaDigits(String(estimateReadMinutes(article.excerpt)))} دقیقه
             </span>
-            {typeof article.views === 'number' && article.views > 0 && (
-              <span className="inline-flex items-center gap-1">
-                <Eye size={11} />
-                {toFaDigits(String(article.views))}
-              </span>
-            )}
+            {/* View counts are admin-only across the public site. */}
           </div>
           <span className="inline-flex items-center gap-0.5 text-orange-600 font-bold group-hover:gap-1.5 transition-all">
             ادامه

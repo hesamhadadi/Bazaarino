@@ -330,12 +330,7 @@ export default async function AuthorPage({ params }: { params: { id: string } })
                 value={toFaDigits(String(stats.articleCount))}
                 color="text-orange-600 bg-orange-50 border-orange-100"
               />
-              <StatPill
-                Icon={Eye}
-                label="بازدید"
-                value={toFaDigits(formatCompact(stats.totalViews))}
-                color="text-emerald-700 bg-emerald-50 border-emerald-100"
-              />
+              {/* Total view count is admin-only and surfaced in /admin only. */}
             </div>
 
             {/* Social row */}
@@ -424,15 +419,7 @@ export default async function AuthorPage({ params }: { params: { id: string } })
                       <time dateTime={new Date(a.createdAt).toISOString()}>
                         {toFaDigits(new Date(a.createdAt).toLocaleDateString('fa-IR'))}
                       </time>
-                      {(a.views || 0) > 0 && (
-                        <>
-                          <span>·</span>
-                          <span className="inline-flex items-center gap-0.5">
-                            <Eye size={10} />
-                            {toFaDigits(String(a.views))}
-                          </span>
-                        </>
-                      )}
+                      {/* Per-article view counts are admin-only. */}
                     </div>
                     <h3 className="text-base font-bold text-gray-900 group-hover:text-orange-600 transition mb-2 line-clamp-2 leading-6">
                       {a.title}

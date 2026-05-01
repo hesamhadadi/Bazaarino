@@ -38,6 +38,18 @@ async function isPrivilegedViewer() {
   }
 }
 
+/** View-count chip is admin-only — public visitors should not see how
+ * popular (or unpopular) a piece is, to avoid social-proof bias and to
+ * keep traffic stats private to the site owner. */
+async function isAdminViewer() {
+  try {
+    const session = await getServerSession(authOptions);
+    return session?.user?.role === 'admin';
+  } catch {
+    return false;
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -96,6 +108,7 @@ export async function generateMetadata({
 
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
   const canPreview = await isPrivilegedViewer();
+  const isAdmin = await isAdminViewer();
   const article = await fetchArticleBySlug(params.slug, {
     includeUnpublished: canPreview,
   });
@@ -283,9 +296,15 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             <span className="inline-flex items-center gap-1 text-xs text-gray-500">
               <Clock size={12} /> {toFaDigits(String(readMinutes))} دقیقه مطالعه
             </span>
-            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-              <Eye size={12} /> {toFaDigits(String((article.views || 0) + 1))} بازدید
-            </span>
+            {/* Views chip is admin-only — see isAdminViewer() above. */}
+            {isAdmin && (
+              <span
+                className="inline-flex items-center gap-1 text-xs text-gray-500"
+                title="فقط برای ادمین قابل مشاهده"
+              >
+                <Eye size={12} /> {toFaDigits(String((article.views || 0) + 1))} بازدید
+              </span>
+            )}
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4">
             {article.title}

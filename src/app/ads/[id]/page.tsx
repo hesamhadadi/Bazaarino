@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
@@ -157,6 +159,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 export default async function AdDetailPage({ params }: { params: { id: string } }) {
   const ad = await getAd(params.id);
   if (!ad) notFound();
+  // View-count chip is restricted to the site admin to keep traffic
+  // analytics private. Owners and the public never see it.
+  const session = await getServerSession(authOptions).catch(() => null);
+  const isAdmin = session?.user?.role === 'admin';
   const ratingSummary = await getUserRating(ad.userId?._id?.toString());
   const now = new Date();
   const isFeaturedActive = ad.isFeatured && (!ad.featuredUntil || new Date(ad.featuredUntil) >= now);
@@ -360,9 +366,15 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                     <FileText size={12} /> متقاضی
                   </span>
                 )}
-                <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
-                  <Eye size={12} /> {toFaDigits(ad.views)} بازدید
-                </span>
+                {/* Views are admin-only — see isAdmin guard above. */}
+                {isAdmin && (
+                  <span
+                    className="flex items-center gap-1 bg-amber-50 text-amber-700 text-xs px-3 py-1.5 rounded-full ring-1 ring-amber-200"
+                    title="فقط برای ادمین قابل مشاهده"
+                  >
+                    <Eye size={12} /> {toFaDigits(ad.views)} بازدید
+                  </span>
+                )}
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full">
                   <Clock size={12} /> {timeAgo(ad.createdAt)}
                 </span>

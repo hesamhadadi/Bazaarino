@@ -109,9 +109,9 @@ export default function AdCard({ ad }: AdCardProps) {
               نردبان‌شده
             </div>
           )}
-          <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Eye size={10} /> {toFaDigits(ad.views)}
-          </div>
+          {/* View counts are intentionally hidden from public ad cards.
+              They remain visible only inside the /admin panel — see the
+              isAdmin guard in src/app/ads/[id]/page.tsx for the rationale. */}
         </div>
         <div className="p-3 flex-1 flex flex-col">
           <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2 leading-relaxed">{ad.title}</h3>
