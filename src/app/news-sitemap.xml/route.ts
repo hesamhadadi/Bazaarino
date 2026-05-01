@@ -5,8 +5,18 @@ import { getAppUrl } from '@/lib/app-url';
 
 export const revalidate = 600;
 
-// Google News sitemap. Only articles from last 48h are eligible.
-// https://developers.google.com/search/docs/crawling-indexing/sitemaps/news-sitemap
+// Google News sitemap. Officially only articles from the last 48 hours are
+// eligible for News rich-results, but if the site has had no fresh posts
+// in that window the sitemap would otherwise be an empty <urlset>, which
+// Google Search Console flags as "Missing url tag" / sitemap error.
+//
+// To keep the file always valid we fall back to the most recent published
+// articles regardless of age. Older items will simply not be picked up by
+// News; the rest of regular Search continues to work, and most importantly
+// the sitemap stops failing validation.
+//
+// Reference:
+//   https://developers.google.com/search/docs/crawling-indexing/sitemaps/news-sitemap
 export async function GET() {
   const base = getAppUrl();
   const since = new Date(Date.now() - 48 * 60 * 60 * 1000);
@@ -14,11 +24,25 @@ export async function GET() {
   let articles: any[] = [];
   try {
     await connectDB();
-    articles = await Article.find({ status: 'published', createdAt: { $gte: since } })
+    articles = await Article.find({
+      status: 'published',
+      createdAt: { $gte: since },
+    })
       .select('title slug createdAt tags')
       .sort({ createdAt: -1 })
       .limit(1000)
       .lean();
+
+    // Fallback: if no fresh articles were published in the 48h window,
+    // emit the latest 20 published articles instead of returning an
+    // empty sitemap (which Search Console rejects).
+    if (articles.length === 0) {
+      articles = await Article.find({ status: 'published' })
+        .select('title slug createdAt tags')
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean();
+    }
   } catch (err) {
     console.error('[news-sitemap] failed', err);
   }
