@@ -35,6 +35,16 @@ type Stats = {
   pendingIdentityUsers: number;
   totalFavorites: number;
   totalViews: number;
+  totalSiteViews?: number;
+  todayViews?: number;
+  todayViewsByType?: { _id: string; count: number }[];
+  dailyViewsTrend?: {
+    _id: string;
+    count: number;
+    ad: number;
+    article: number;
+    landingPage: number;
+  }[];
   adsTrend?: { _id: string; count: number }[];
   usersTrend?: { _id: string; count: number }[];
   topCities?: { _id: string; count: number }[];
@@ -147,7 +157,7 @@ export default function AdminOverview() {
     },
     {
       label: 'بازدید کل',
-      value: stats.totalViews,
+      value: stats.totalSiteViews || stats.totalViews,
       icon: Eye,
     },
     {
@@ -207,6 +217,12 @@ export default function AdminOverview() {
         </div>
       </section>
 
+      <DailyViewsCard
+        todayViews={stats.todayViews || 0}
+        byType={stats.todayViewsByType || []}
+        trend={stats.dailyViewsTrend || []}
+      />
+
       {/* Top lists */}
       <section className="grid lg:grid-cols-3 gap-4">
         <ListCard
@@ -261,6 +277,83 @@ export default function AdminOverview() {
 }
 
 /* ─── Components ──────────────────────────────────────────── */
+
+function DailyViewsCard({
+  todayViews,
+  byType,
+  trend,
+}: {
+  todayViews: number;
+  byType: { _id: string; count: number }[];
+  trend: { _id: string; count: number; ad: number; article: number; landingPage: number }[];
+}) {
+  const last14 = trend.slice(-14);
+  const max = Math.max(...last14.map((d) => d.count), 1);
+  const typeCounts = {
+    ad: byType.find((row) => row._id === 'ad')?.count || 0,
+    article: byType.find((row) => row._id === 'article')?.count || 0,
+    landingPage: byType.find((row) => row._id === 'landingPage')?.count || 0,
+  };
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
+        <div>
+          <p className="text-sm font-bold text-gray-900">بازدید روزانه سایت</p>
+          <p className="text-xs text-gray-500 mt-1">
+            شمارش از امروز به بعد بر اساس روز ایتالیا ثبت می‌شود.
+          </p>
+        </div>
+        <div className="text-left">
+          <p className="text-[11px] text-gray-500">امروز</p>
+          <p className="text-2xl font-black text-gray-900 tabular-nums">
+            {toFaDigits(String(todayViews))}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-[1fr_220px] gap-4 items-end">
+        <div className="flex items-end gap-1 h-32 border-b border-gray-100">
+          {last14.length === 0 ? (
+            <div className="w-full text-center text-xs text-gray-400 pb-8">
+              هنوز آمار روزانه‌ای ثبت نشده است.
+            </div>
+          ) : (
+            last14.map((day) => (
+              <div key={day._id} className="flex-1 min-w-0 flex flex-col items-center gap-1">
+                <div
+                  className="w-full max-w-8 rounded-t-md bg-gradient-to-t from-orange-500 to-amber-400"
+                  style={{ height: `${Math.max(6, (day.count / max) * 104)}px` }}
+                  title={`${day._id}: ${day.count}`}
+                />
+                <span className="text-[10px] text-gray-400 tabular-nums truncate">
+                  {toFaDigits(day._id.slice(5).replace('-', '/'))}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="grid grid-cols-3 md:grid-cols-1 gap-2">
+          <MiniStat label="آگهی" value={typeCounts.ad} />
+          <MiniStat label="مقاله" value={typeCounts.article} />
+          <MiniStat label="صفحه‌ها" value={typeCounts.landingPage} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+      <p className="text-[11px] text-gray-500">{label}</p>
+      <p className="text-base font-black text-gray-900 tabular-nums">
+        {toFaDigits(String(value))}
+      </p>
+    </div>
+  );
+}
 
 function KpiCard({
   label,

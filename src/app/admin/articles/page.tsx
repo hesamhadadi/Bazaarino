@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Calendar, Eye, Plus, Edit3, ArrowUpRight, Flame, FileText, Clock } from 'lucide-react';
+import { Calendar, Eye, Plus, Edit3, ArrowUpRight, Flame, FileText, Clock, ArrowDownUp } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Article from '@/models/Article';
 import '@/models/User';
@@ -8,7 +8,23 @@ import { toFaDigits } from '@/lib/locale';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-async function getArticles() {
+type ArticleSort = 'smart' | 'newest' | 'oldest' | 'views' | 'title' | 'published' | 'scheduled';
+
+const sortOptions: { value: ArticleSort; label: string }[] = [
+  { value: 'smart', label: 'پیش‌فرض' },
+  { value: 'newest', label: 'جدیدترین' },
+  { value: 'oldest', label: 'قدیمی‌ترین' },
+  { value: 'views', label: 'پربازدیدترین' },
+  { value: 'title', label: 'عنوان' },
+  { value: 'published', label: 'منتشر شده‌ها' },
+  { value: 'scheduled', label: 'زمان‌بندی' },
+];
+
+function normalizeSort(value?: string): ArticleSort {
+  return sortOptions.some((option) => option.value === value) ? (value as ArticleSort) : 'smart';
+}
+
+async function getArticles(sort: ArticleSort) {
   try {
     await connectDB();
     const items = await Article.find({})
@@ -16,10 +32,25 @@ async function getArticles() {
       .sort({ createdAt: -1 })
       .limit(200)
       .lean();
-    // Display order: scheduled (soonest first) → drafts → published (newest first).
-    const order = (a: any) =>
-      a.status === 'scheduled' ? 0 : a.status === 'draft' ? 1 : 2;
     items.sort((a: any, b: any) => {
+      if (sort === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sort === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sort === 'views') return (b.views || 0) - (a.views || 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sort === 'title') return String(a.title || '').localeCompare(String(b.title || ''), 'fa');
+      if (sort === 'published') {
+        const statusDelta = Number(b.status === 'published') - Number(a.status === 'published');
+        if (statusDelta) return statusDelta;
+        return new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime();
+      }
+      if (sort === 'scheduled') {
+        const statusDelta = Number(b.status === 'scheduled') - Number(a.status === 'scheduled');
+        if (statusDelta) return statusDelta;
+        return new Date(a.scheduledFor || a.createdAt).getTime() - new Date(b.scheduledFor || b.createdAt).getTime();
+      }
+
+      // Display order: scheduled (soonest first) → drafts → published (newest first).
+      const order = (item: any) =>
+        item.status === 'scheduled' ? 0 : item.status === 'draft' ? 1 : 2;
       const oa = order(a);
       const ob = order(b);
       if (oa !== ob) return oa - ob;
@@ -34,8 +65,13 @@ async function getArticles() {
   }
 }
 
-export default async function AdminArticlesPage() {
-  const articles = await getArticles();
+export default async function AdminArticlesPage({
+  searchParams,
+}: {
+  searchParams?: { sort?: string };
+}) {
+  const sort = normalizeSort(searchParams?.sort);
+  const articles = await getArticles(sort);
   const publishedCount = articles.filter((a: any) => a.status === 'published').length;
   const scheduledCount = articles.filter((a: any) => a.status === 'scheduled').length;
   const draftCount = articles.filter((a: any) => a.status === 'draft').length;
@@ -84,6 +120,28 @@ export default async function AdminArticlesPage() {
             </Link>
           </div>
         ) : (
+          <>
+          <div className="flex items-center justify-between gap-3 flex-wrap border-b border-gray-100 px-4 py-3 bg-gray-50/70">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+              <ArrowDownUp size={13} />
+              مرتب‌سازی مقالات
+            </div>
+            <div className="flex items-center gap-1 overflow-x-auto pb-1">
+              {sortOptions.map((option) => (
+                <Link
+                  key={option.value}
+                  href={`/admin/articles${option.value === 'smart' ? '' : `?sort=${option.value}`}`}
+                  className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                    sort === option.value
+                      ? 'border-orange-200 bg-orange-50 text-orange-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {option.label}
+                </Link>
+              ))}
+            </div>
+          </div>
           <div className="divide-y divide-gray-100">
             {articles.map((a: any) => (
               <div
@@ -183,6 +241,7 @@ export default async function AdminArticlesPage() {
               </div>
             ))}
           </div>
+          </>
         )}
       </div>
     </div>

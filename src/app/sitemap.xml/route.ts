@@ -3,11 +3,11 @@ import { getAppUrl } from '@/lib/app-url';
 import connectDB from '@/lib/mongodb';
 import Article from '@/models/Article';
 import LandingPage from '@/models/LandingPage';
-import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
 
 export const revalidate = 3600;
 
 const MAX_ARTICLES = 2000;
+const MIN_TAG_ARTICLES_FOR_INDEX = 3;
 
 type ChangeFreq =
   | 'always'
@@ -64,7 +64,6 @@ export async function GET() {
 
   const staticRoutes: Entry[] = [
     { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { url: `${base}/search`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/house-reservation`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/news`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
     { url: `${base}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
@@ -74,46 +73,20 @@ export async function GET() {
     { url: `${base}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
-  const countryCityRoutes: Entry[] = [];
-  for (const country of COUNTRIES) {
-    countryCityRoutes.push({
-      url: `${base}/search?country=${encodeURIComponent(country.value)}`,
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 0.7,
-    });
-  }
-  for (const city of CITIES) {
-    if (city.country === 'other') continue;
-    countryCityRoutes.push({
-      url: `${base}/search?country=${encodeURIComponent(city.country)}&city=${encodeURIComponent(city.value)}`,
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 0.7,
-    });
-  }
-  for (const cat of CATEGORIES) {
-    countryCityRoutes.push({
-      url: `${base}/search?category=${encodeURIComponent(cat.id)}`,
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 0.6,
-    });
-  }
-
   // Note: individual /ads/<id> pages are intentionally NOT in the sitemap.
   // They emit `robots: noindex, follow` (see src/app/ads/[id]/page.tsx)
   // because each ad is short-lived and thin-content; surfacing thousands
   // of them would burn crawl budget that should go to articles, city
-  // landings and category search pages instead.
+  // landings and editorial content instead. The same applies to /search
+  // and filtered search URLs: they are useful to users, but are thin,
+  // volatile result sets and should not be submitted for indexing.
   let articleRoutes: Entry[] = [];
   let tagRoutes: Entry[] = [];
-  let authorRoutes: Entry[] = [];
   let landingRoutes: Entry[] = [];
 
   try {
     await connectDB();
-    const [articles, tagAgg, authorAgg] = await Promise.all([
+    const [articles, tagAgg] = await Promise.all([
       Article.find({ status: 'published' })
         .select('slug updatedAt createdAt')
         .sort({ updatedAt: -1 })
@@ -122,13 +95,15 @@ export async function GET() {
       Article.aggregate([
         { $match: { status: 'published' } },
         { $unwind: '$tags' },
-        { $group: { _id: '$tags', lastModified: { $max: '$updatedAt' } } },
+        {
+          $group: {
+            _id: '$tags',
+            count: { $sum: 1 },
+            lastModified: { $max: '$updatedAt' },
+          },
+        },
+        { $match: { count: { $gte: MIN_TAG_ARTICLES_FOR_INDEX } } },
         { $limit: 500 },
-      ]),
-      Article.aggregate([
-        { $match: { status: 'published' } },
-        { $group: { _id: '$authorId', lastModified: { $max: '$updatedAt' } } },
-        { $limit: 200 },
       ]),
     ]);
 
@@ -158,15 +133,6 @@ export async function GET() {
       changeFrequency: 'weekly',
       priority: 0.5,
     }));
-
-    authorRoutes = (authorAgg as any[])
-      .filter((a) => a._id)
-      .map((a) => ({
-        url: `${base}/news/author/${a._id}`,
-        lastModified: a.lastModified || now,
-        changeFrequency: 'weekly',
-        priority: 0.4,
-      }));
   } catch (e) {
     console.error('[sitemap] DB error', e);
   }
@@ -174,10 +140,8 @@ export async function GET() {
   const all: Entry[] = [
     ...staticRoutes,
     ...landingRoutes,
-    ...countryCityRoutes,
     ...articleRoutes,
     ...tagRoutes,
-    ...authorRoutes,
   ];
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>

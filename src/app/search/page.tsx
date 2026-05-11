@@ -175,6 +175,7 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   return {
     title: titleBase,
     description,
+    robots: { index: false, follow: true },
     alternates: { canonical: '/search' },
     openGraph: { title: titleBase, description, type: 'website', locale: 'fa_IR' },
   };

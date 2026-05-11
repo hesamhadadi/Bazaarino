@@ -9,6 +9,8 @@ import BottomNav from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
 import { renderSection } from '@/components/landing/sections';
 import { getAppUrl } from '@/lib/app-url';
+import { isLikelyBot, recordDailyView } from '@/lib/view-stats';
+import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
@@ -82,7 +84,13 @@ export default async function LandingPageView({ params }: PageProps) {
   if (!page) notFound();
 
   // Fire-and-forget view counter — never blocks the render path.
-  LandingPage.updateOne({ _id: page._id }, { $inc: { views: 1 } }).catch(() => {});
+  const ua = headers().get('user-agent') || '';
+  if (!isLikelyBot(ua)) {
+    Promise.all([
+      LandingPage.updateOne({ _id: page._id }, { $inc: { views: 1 } }),
+      recordDailyView('landingPage', String(page._id)),
+    ]).catch(() => {});
+  }
 
   const baseUrl = getAppUrl();
   const pageUrl = `${baseUrl}/p/${page.slug}`;

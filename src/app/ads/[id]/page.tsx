@@ -33,12 +33,14 @@ import mongoose from 'mongoose';
 import { getMarketPriceSnapshot } from '@/lib/market-price';
 import { RENTAL_REAL_ESTATE_SUBCATEGORIES } from '@/lib/reservation';
 import { getAppUrl } from '@/lib/app-url';
+import { isLikelyBot, recordDailyView } from '@/lib/view-stats';
+import { headers } from 'next/headers';
 
 const HousingLocationPreview = nextDynamic(() => import('@/components/maps/HousingLocationPreview'), { ssr: false });
 
 export const dynamic = 'force-dynamic';
 
-async function getAd(id: string) {
+async function getAd(id: string, countView = true) {
   try {
     await connectDB();
     const ad = await Ad.findById(id)
@@ -50,7 +52,12 @@ async function getAd(id: string) {
     }
 
     // Keep view counting separate to avoid null results from findAndUpdate edge-cases.
-    await Ad.findByIdAndUpdate(id, { $inc: { views: 1 } });
+    if (countView) {
+      await Promise.all([
+        Ad.findByIdAndUpdate(id, { $inc: { views: 1 } }),
+        recordDailyView('ad', id),
+      ]);
+    }
 
     return JSON.parse(JSON.stringify(ad));
   } catch (error) {
@@ -157,7 +164,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function AdDetailPage({ params }: { params: { id: string } }) {
-  const ad = await getAd(params.id);
+  const ua = headers().get('user-agent') || '';
+  const ad = await getAd(params.id, !isLikelyBot(ua));
   if (!ad) notFound();
   // View-count chip is restricted to the site admin to keep traffic
   // analytics private. Owners and the public never see it.

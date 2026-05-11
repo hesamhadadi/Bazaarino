@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import connectDB from '@/lib/mongodb';
 import Article from '@/models/Article';
+import { recordDailyView } from '@/lib/view-stats';
 import '@/models/User'; // ensure User schema registered for populate('authorId')
 
 /**
@@ -134,7 +135,10 @@ export async function fetchPrevNextArticles(currentCreatedAt: Date) {
 export async function incrementArticleViews(articleId: string) {
   try {
     await connectDB();
-    await Article.updateOne({ _id: articleId }, { $inc: { views: 1 } });
+    await Promise.all([
+      Article.updateOne({ _id: articleId }, { $inc: { views: 1 } }),
+      recordDailyView('article', articleId),
+    ]);
   } catch (err) {
     console.error('[incrementArticleViews] failed', err);
   }

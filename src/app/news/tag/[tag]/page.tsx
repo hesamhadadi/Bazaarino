@@ -11,6 +11,7 @@ import { getAppUrl } from '@/lib/app-url';
 import { Tag as TagIcon, Calendar, ArrowRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+const MIN_TAG_ARTICLES_FOR_INDEX = 3;
 
 async function getArticlesByTag(tag: string, limit = 30) {
   try {
@@ -27,19 +28,37 @@ async function getArticlesByTag(tag: string, limit = 30) {
   }
 }
 
+async function getTagArticleCount(tag: string) {
+  try {
+    await connectDB();
+    return Article.countDocuments({ status: 'published', tags: tag });
+  } catch {
+    return 0;
+  }
+}
+
+function tagDescription(tag: string, count?: number) {
+  const countText = typeof count === 'number' && count > 0 ? ` شامل ${count} مطلب منتشرشده` : '';
+  return `آرشیو موضوعی ${tag} در مجله بازارینو${countText}؛ راهنماها و خبرهای کاربردی برای ایرانیان ساکن اروپا.`;
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: { tag: string };
 }): Promise<Metadata> {
   const tag = decodeURIComponent(params.tag);
+  const count = await getTagArticleCount(tag);
+  const shouldIndex = count >= MIN_TAG_ARTICLES_FOR_INDEX;
+  const description = tagDescription(tag, count);
   return {
     title: `مقالات با برچسب «${tag}»`,
-    description: `همه مقالات و خبرهای بازارینو با برچسب ${tag}.`,
+    description,
+    robots: { index: shouldIndex, follow: true },
     alternates: { canonical: `/news/tag/${encodeURIComponent(tag)}` },
     openGraph: {
       title: `برچسب: ${tag}`,
-      description: `مقالات بازارینو با برچسب ${tag}`,
+      description,
       type: 'website',
     },
   };
@@ -90,6 +109,11 @@ export default async function TagArchivePage({ params }: { params: { tag: string
           <p className="text-sm text-gray-500">
             {toFaDigits(String(articles.length))} مقاله با این برچسب
           </p>
+          {articles.length >= MIN_TAG_ARTICLES_FOR_INDEX && (
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-gray-600">
+              {tagDescription(tag, articles.length)}
+            </p>
+          )}
         </header>
 
         {articles.length === 0 ? (

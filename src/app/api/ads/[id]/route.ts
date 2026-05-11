@@ -7,6 +7,7 @@ import { resolveSessionUserId } from '@/lib/session-user';
 import { computeHousingNearby } from '@/lib/map-data';
 import { updateAdStatusAndNotifyOwner } from '@/lib/ad-moderation';
 import { normalizeProducts } from '@/lib/ad-products';
+import { isLikelyBot, recordDailyView } from '@/lib/view-stats';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -18,8 +19,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ message: 'آگهی یافت نشد' }, { status: 404 });
     }
 
-    // Increment views
-    await Ad.findByIdAndUpdate(params.id, { $inc: { views: 1 } });
+    const userAgent = request.headers.get('user-agent') || '';
+    if (!isLikelyBot(userAgent)) {
+      await Promise.all([
+        Ad.findByIdAndUpdate(params.id, { $inc: { views: 1 } }),
+        recordDailyView('ad', params.id),
+      ]);
+    }
 
     return NextResponse.json({ ad });
   } catch (error) {

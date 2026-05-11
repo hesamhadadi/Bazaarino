@@ -95,12 +95,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const author = await getAuthor(params.id);
   if (!author) return { title: 'نویسنده یافت نشد', robots: { index: false, follow: true } };
+  const stats = await getAuthorStats(params.id);
+  const shouldIndex = Boolean(author.bio?.trim()) && stats.articleCount >= 3;
   const desc =
     author.bio?.slice(0, 160) ||
     `مقالات و خبرهای منتشرشده توسط ${author.name} در بازارینو.`;
   return {
     title: `${author.name} | نویسنده بازارینو`,
     description: desc,
+    robots: { index: shouldIndex, follow: true },
     alternates: { canonical: `/news/author/${params.id}` },
     openGraph: {
       title: `${author.name} | نویسنده بازارینو`,
