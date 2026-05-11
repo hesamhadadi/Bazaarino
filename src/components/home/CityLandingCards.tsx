@@ -114,21 +114,11 @@ export default async function CityLandingCards() {
   if (cards.length === 0) return null;
 
   return (
-    <section className="relative border-b border-gray-100 overflow-hidden">
-      {/* Soft decorative blob — pure CSS, no extra request */}
-      <div
-        aria-hidden
-        className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-gradient-to-br from-orange-200/40 via-rose-200/30 to-transparent blur-3xl pointer-events-none"
-      />
-      <div
-        aria-hidden
-        className="absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-gradient-to-tr from-amber-200/40 via-pink-200/20 to-transparent blur-3xl pointer-events-none"
-      />
-
+    <section className="relative border-b border-gray-100 overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#fafafa_100%)]">
       <div className="relative max-w-6xl mx-auto px-4 py-10 md:py-14">
         <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-orange-600 mb-1.5">
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-brand-600 mb-1.5">
               <Sparkles size={12} className="animate-pulse" />
               صفحات شهری
             </div>
@@ -167,10 +157,10 @@ export default async function CityLandingCards() {
                   }}
                 />
                 {/* Bottom darkening so text stays readable */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
 
                 {/* Floating emoji badge */}
-                <div className="absolute top-2 right-2 w-8 h-8 rounded-xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-base group-hover:scale-110 group-hover:rotate-6 transition">
+                <div className="absolute top-2 right-2 w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-base group-hover:scale-110 group-hover:rotate-6 transition">
                   {theme.emoji}
                 </div>
 

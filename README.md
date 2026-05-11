@@ -1,10 +1,16 @@
 # Bazaarino
 
+[![Sponsor Bazaarino](https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/hesamhadadi)
+
 Bazaarino is a marketplace and community platform for Persian-speaking users across Europe, focused on classifieds, housing, reservations, messaging, local services, articles, and user-to-user trust.
 
 The product is built around a simple idea: make everyday life easier for Iranian and Persian-speaking communities in countries such as Italy, Germany, and the United Kingdom. Users can publish listings, search by country and city, chat with sellers or hosts, save searches, follow notifications, read local articles, and manage housing-related requests from one place.
 
 Website: [bazaarino.com](https://bazaarino.com)
+
+## Support
+
+If Bazaarino helps your community or inspires your own marketplace work, you can support development through [GitHub Sponsors](https://github.com/sponsors/hesamhadadi). Sponsorship helps keep product work, maintenance, moderation tooling, and infrastructure improvements moving.
 
 ## What The Product Does
 

@@ -8,17 +8,22 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+const DISMISSED_KEY = 'bazaarino.pwaInstallPromptDismissed';
+
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const [standalone, setStandalone] = useState(false);
 
   useEffect(() => {
     const inStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const wasDismissed = localStorage.getItem(DISMISSED_KEY) === 'true';
     setStandalone(inStandalone);
-    if (!inStandalone) setVisible(true);
+    setDismissed(wasDismissed);
+    if (!inStandalone && !wasDismissed) setVisible(true);
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => undefined);
@@ -31,7 +36,9 @@ export default function PWAInstallPrompt() {
 
     const onInstalled = () => {
       setVisible(false);
+      setDismissed(false);
       setDeferredPrompt(null);
+      localStorage.removeItem(DISMISSED_KEY);
     };
 
     window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
@@ -46,13 +53,42 @@ export default function PWAInstallPrompt() {
   const isInstallable = useMemo(() => Boolean(deferredPrompt), [deferredPrompt]);
 
   const installApp = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      setVisible(true);
+      return;
+    }
     await deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
+    const choice = await deferredPrompt.userChoice;
+    if (choice.outcome === 'dismissed') {
+      localStorage.setItem(DISMISSED_KEY, 'true');
+      setDismissed(true);
+      setVisible(false);
+    }
     setDeferredPrompt(null);
   };
 
-  if (!visible || standalone) return null;
+  const dismissPrompt = () => {
+    localStorage.setItem(DISMISSED_KEY, 'true');
+    setDismissed(true);
+    setVisible(false);
+  };
+
+  if (standalone) return null;
+
+  if (!visible && dismissed) {
+    return (
+      <button
+        type="button"
+        onClick={installApp}
+        className="fixed left-4 top-20 z-[60] inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white/95 px-3 py-2 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur transition hover:border-brand-300 hover:bg-brand-50"
+      >
+        <Download size={14} />
+        نصب اپ
+      </button>
+    );
+  }
+
+  if (!visible) return null;
 
   return (
     <div className="fixed bottom-4 inset-x-4 z-[60]">
@@ -75,7 +111,7 @@ export default function PWAInstallPrompt() {
               نصب
             </button>
           )}
-          <button onClick={() => setVisible(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-md">
+          <button onClick={dismissPrompt} className="text-gray-400 hover:text-gray-600 p-1 rounded-md">
             <X size={16} />
           </button>
         </div>

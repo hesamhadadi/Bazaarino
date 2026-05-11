@@ -16,6 +16,8 @@ import {
   Plus,
   Hash,
   User as UserIcon,
+  Activity,
+  Sparkles,
 } from 'lucide-react';
 
 type Action = {
@@ -34,11 +36,14 @@ type SearchResult =
 
 const STATIC_ACTIONS: Action[] = [
   { id: 'overview', label: 'نمای کلی', hint: 'KPIها و آمار', icon: LayoutGrid, href: '/admin', keywords: ['dashboard', 'home'] },
+  { id: 'operations', label: 'مرکز عملیات', hint: 'کارهای فوری و سلامت سایت', icon: Activity, href: '/admin/operations', keywords: ['health', 'ops', 'server'] },
   { id: 'pending', label: 'آگهی‌های در صف بررسی', icon: ShieldAlert, href: '/admin/legacy?tab=pending', keywords: ['moderate', 'pending'] },
   { id: 'all', label: 'همه آگهی‌ها', icon: Files, href: '/admin/legacy?tab=all', keywords: ['ads'] },
   { id: 'reports', label: 'گزارش‌ها', icon: AlertTriangle, href: '/admin/legacy?tab=reports', keywords: ['reports'] },
   { id: 'users', label: 'کاربران', icon: Users, href: '/admin/legacy?tab=users' },
   { id: 'banners', label: 'بنر و تصاویر شهری', icon: ImageIcon, href: '/admin/legacy?tab=banners' },
+  { id: 'homepage-studio', label: 'Homepage Studio', hint: 'کنترل صفحه اصلی', icon: Sparkles, href: '/admin/homepage-studio', keywords: ['home', 'homepage', 'visual'] },
+  { id: 'media-library', label: 'Media Library', hint: 'عکس‌ها و فضای سرور', icon: ImageIcon, href: '/admin/media-library', keywords: ['media', 'images', 'disk'] },
   { id: 'settings', label: 'تنظیمات', icon: Settings, href: '/admin/legacy?tab=settings' },
   { id: 'new-article', label: 'انتشار مقاله جدید', icon: Newspaper, href: '/news/new' },
   { id: 'new-ad', label: 'ثبت آگهی جدید', icon: Plus, href: '/ads/new' },

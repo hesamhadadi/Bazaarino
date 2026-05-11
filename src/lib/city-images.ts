@@ -81,6 +81,7 @@ export const CITY_VISUALS: Record<string, CityVisual> = {
     emoji: '🏰',
   },
   brescia: {
+    image: 'https://images.unsplash.com/photo-1509701246627-15f55746157d?w=900&q=70&auto=format&fit=crop',
     gradient: 'from-stone-700 via-stone-800 to-zinc-900',
     accent: 'bg-stone-300',
     emoji: '🏟️',
@@ -98,6 +99,7 @@ export const CITY_VISUALS: Record<string, CityVisual> = {
     emoji: '🏖️',
   },
   catania: {
+    image: 'https://images.unsplash.com/photo-1718911414024-dbe3573af610?w=900&q=70&auto=format&fit=crop',
     gradient: 'from-orange-600 via-red-600 to-stone-800',
     accent: 'bg-orange-200',
     emoji: '🌋',
@@ -115,16 +117,46 @@ export const CITY_VISUALS: Record<string, CityVisual> = {
     emoji: '🐻',
   },
   munich: {
-    image: 'https://images.unsplash.com/photo-1595867818082-083862f3d630?w=900&q=70&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1773349930832-6aec804706d8?w=900&q=70&auto=format&fit=crop',
     gradient: 'from-blue-600 via-sky-700 to-indigo-800',
     accent: 'bg-blue-200',
     emoji: '🍺',
+  },
+  hamburg: {
+    image: 'https://images.unsplash.com/photo-1542620597-6604533e5e2d?w=900&q=70&auto=format&fit=crop',
+    gradient: 'from-cyan-600 via-sky-700 to-slate-900',
+    accent: 'bg-cyan-200',
+    emoji: '⚓',
+  },
+  frankfurt: {
+    image: 'https://images.unsplash.com/photo-1602452563153-12074004b08e?w=900&q=70&auto=format&fit=crop',
+    gradient: 'from-amber-500 via-orange-500 to-rose-600',
+    accent: 'bg-amber-200',
+    emoji: '🏙️',
+  },
+  cologne: {
+    image: 'https://images.unsplash.com/photo-1744035052483-32fcd793434a?w=900&q=70&auto=format&fit=crop',
+    gradient: 'from-slate-700 via-zinc-800 to-stone-900',
+    accent: 'bg-yellow-200',
+    emoji: '⛪',
   },
   london: {
     image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=900&q=70&auto=format&fit=crop',
     gradient: 'from-red-600 via-rose-700 to-slate-900',
     accent: 'bg-red-200',
     emoji: '☂️',
+  },
+  manchester: {
+    image: 'https://images.unsplash.com/photo-1724135869739-6055627ba5df?w=900&q=70&auto=format&fit=crop',
+    gradient: 'from-slate-700 via-blue-800 to-slate-950',
+    accent: 'bg-sky-200',
+    emoji: '🏗️',
+  },
+  birmingham: {
+    image: 'https://images.unsplash.com/photo-1771317599673-51e95360caa7?w=900&q=70&auto=format&fit=crop',
+    gradient: 'from-zinc-700 via-neutral-800 to-slate-950',
+    accent: 'bg-zinc-200',
+    emoji: '🏢',
   },
 };
 

@@ -8,6 +8,15 @@ import crypto from 'crypto';
 import { DEFAULT_BRAND_PRIMARY, normalizeBrandPrimary } from '@/lib/brand-color';
 import { invalidateSettingsCache } from '@/lib/settings';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  Pragma: 'no-cache',
+  Expires: '0',
+};
+
 async function ensureAdmin() {
   const session = await getServerSession(authOptions);
   return !!session && session.user.role === 'admin';
@@ -20,28 +29,32 @@ export async function GET() {
     }
     await connectDB();
     const settings = (await Setting.findOne({ key: 'global' }).lean()) as any;
-    return NextResponse.json({
-      settings: {
-        telegramToken: settings?.telegramToken || '',
-        telegramChatId: settings?.telegramChatId || '',
-        telegramSecret: settings?.telegramSecret || '',
-        siteUrl: settings?.siteUrl || '',
-        siteName: settings?.siteName || '',
-        siteDescription: settings?.siteDescription || '',
-        brandPrimary: settings?.brandPrimary || DEFAULT_BRAND_PRIMARY,
-        supportEmail: settings?.supportEmail || '',
-        supportPhone: settings?.supportPhone || '',
-        maintenanceMode: !!settings?.maintenanceMode,
-        registrationEnabled: settings?.registrationEnabled !== false,
-        adAutoApprove: !!settings?.adAutoApprove,
-        maxAdsPerUser: settings?.maxAdsPerUser || 0,
-        featuredPrice1d: settings?.featuredPrice1d || 0,
-        featuredPrice7d: settings?.featuredPrice7d || 0,
-        featuredPrice30d: settings?.featuredPrice30d || 0,
-        announcementText: settings?.announcementText || '',
-        announcementEnabled: !!settings?.announcementEnabled,
+    return NextResponse.json(
+      {
+        settings: {
+          telegramToken: settings?.telegramToken || '',
+          telegramChatId: settings?.telegramChatId || '',
+          telegramSecret: settings?.telegramSecret || '',
+          siteUrl: settings?.siteUrl || '',
+          siteName: settings?.siteName || '',
+          siteDescription: settings?.siteDescription || '',
+          brandPrimary: normalizeBrandPrimary(settings?.brandPrimary || DEFAULT_BRAND_PRIMARY),
+          supportEmail: settings?.supportEmail || '',
+          supportPhone: settings?.supportPhone || '',
+          maintenanceMode: !!settings?.maintenanceMode,
+          registrationEnabled: settings?.registrationEnabled !== false,
+          adAutoApprove: !!settings?.adAutoApprove,
+          maxAdsPerUser: settings?.maxAdsPerUser || 0,
+          featuredPrice1d: settings?.featuredPrice1d || 0,
+          featuredPrice7d: settings?.featuredPrice7d || 0,
+          featuredPrice30d: settings?.featuredPrice30d || 0,
+          announcementText: settings?.announcementText || '',
+          announcementEnabled: !!settings?.announcementEnabled,
+          updatedAt: settings?.updatedAt ? new Date(settings.updatedAt).toISOString() : null,
+        },
       },
-    });
+      { headers: NO_STORE_HEADERS }
+    );
   } catch {
     return NextResponse.json({ message: 'خطای سرور' }, { status: 500 });
   }

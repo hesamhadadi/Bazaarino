@@ -1,10 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Home, Search, Plus, User, MessageCircle, House } from 'lucide-react';
+import { Home, Search, Plus, Newspaper, MessageCircle } from 'lucide-react';
 import { useChat } from '@/components/providers/ChatProvider';
 import { toFaDigits } from '@/lib/locale';
 
@@ -13,8 +12,7 @@ const navItems = [
   { href: '/search', icon: Search, label: 'جستجو' },
   { href: '/ads/new', icon: Plus, label: 'افزودن آگهی', special: true },
   { href: '/messages', icon: MessageCircle, label: 'گفتگوها' },
-  { href: '/house-reservation', icon: House, label: 'رزرو' },
-  { href: '/profile', icon: User, label: '' },
+  { href: '/news', icon: Newspaper, label: 'اخبار' },
 ];
 
 export default function BottomNav() {
@@ -25,49 +23,33 @@ export default function BottomNav() {
   if (!pathname || pathname.startsWith('/admin')) return null;
 
   return (
-    <nav className="bottom-nav md:hidden">
-      <div className="flex items-center justify-around py-2">
+    <nav className="bottom-nav md:hidden px-3 pt-2">
+      <div className="grid grid-cols-5 items-end gap-1 rounded-2xl border border-gray-100 bg-white px-2 pb-2 pt-3 shadow-[0_-10px_30px_rgba(15,23,42,0.08)]">
         {navItems.map(({ href, icon: Icon, label, special }) => {
           const isActive = pathname === href;
-          const isProfile = href === '/profile';
+          const targetHref = href === '/ads/new' || href === '/messages' ? (session ? href : '/auth/login') : href;
 
           if (special) {
             return (
-              <Link key={href} href={session ? href : '/auth/login'} className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg -mt-5">
-                  <Icon size={22} className="text-white" />
-                </div>
-                <span className="text-xs text-gray-500 mt-1">{label}</span>
-              </Link>
-            );
-          }
-
-          if (isProfile) {
-            return (
-              <Link key={href} href={session ? href : '/auth/login'} className="flex flex-col items-center gap-0.5 px-3 py-1">
-                {session?.user?.image ? (
-                  <span className={`w-6 h-6 rounded-full overflow-hidden border ${isActive ? 'border-orange-500' : 'border-gray-200'}`}>
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name || 'profile'}
-                      width={24}
-                      height={24}
-                      className="w-full h-full object-cover"
-                    />
+              <Link key={href} href={targetHref} className="relative flex min-w-0 flex-col items-center justify-end">
+                <div className="absolute -top-8 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-[0_-6px_20px_rgba(15,23,42,0.10)]">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 shadow-lg shadow-orange-300/40">
+                    <Icon size={22} className="text-white" />
                   </span>
-                ) : (
-                  <Icon size={22} className={isActive ? 'text-orange-500' : 'text-gray-400'} />
-                )}
+                </div>
+                <span className="mt-8 max-w-full truncate text-[11px] font-semibold text-brand-600">{label}</span>
               </Link>
             );
           }
 
           return (
-            <Link key={href} href={href} className="flex flex-col items-center gap-0.5 px-3 py-1 relative">
-              <Icon size={22} className={isActive ? 'text-orange-500' : 'text-gray-400'} />
-              <span className={`text-xs ${isActive ? 'text-orange-500 font-medium' : 'text-gray-400'}`}>{label}</span>
+            <Link key={href} href={targetHref} className="relative flex min-w-0 flex-col items-center justify-end gap-1 rounded-xl px-1 py-1.5">
+              <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${isActive ? 'bg-brand-50' : 'bg-transparent'}`}>
+                <Icon size={21} className={isActive ? 'text-brand-600' : 'text-gray-400'} />
+              </span>
+              <span className={`max-w-full truncate text-[11px] ${isActive ? 'font-semibold text-brand-600' : 'text-gray-400'}`}>{label}</span>
               {href === '/messages' && unreadCount > 0 && (
-                <span className="absolute -top-0.5 right-1 min-w-4 h-4 px-1 rounded-full bg-brand-500 text-white text-[9px] flex items-center justify-center">
+                <span className="absolute top-0 left-1/2 min-w-4 h-4 px-1 rounded-full bg-brand-500 text-white text-[9px] flex items-center justify-center">
                   {toFaDigits(unreadCount > 99 ? '99+' : unreadCount)}
                 </span>
               )}

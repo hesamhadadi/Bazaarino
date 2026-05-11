@@ -180,7 +180,7 @@ export default function AdminDashboard() {
   };
 
   const fetchSettings = async () => {
-    const res = await fetch('/api/admin/settings');
+    const res = await fetch('/api/admin/settings', { cache: 'no-store' });
     const data = await res.json();
     setSettings(data.settings || DEFAULT_SETTINGS);
   };
@@ -364,6 +364,7 @@ export default function AdminDashboard() {
         const safeColor = normalizeBrandPrimary(settings.brandPrimary);
         applyBrandPaletteToDocument(safeColor);
         localStorage.setItem('bazaarino.brandPrimary', safeColor);
+        localStorage.setItem('bazaarino.brandPrimaryUpdatedAt', String(Date.now()));
         toast.success('تنظیمات ذخیره شد');
         fetchSettings();
       } else {

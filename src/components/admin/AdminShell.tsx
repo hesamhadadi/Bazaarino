@@ -24,6 +24,7 @@ import {
   Award,
   Layers,
   MapPin,
+  Activity,
 } from 'lucide-react';
 import CommandPalette from './CommandPalette';
 
@@ -74,6 +75,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           icon: LayoutGrid,
           match: (p) => p === '/admin',
         },
+        {
+          href: '/admin/operations',
+          label: 'مرکز عملیات',
+          icon: Activity,
+          match: (p) => p.startsWith('/admin/operations'),
+        },
       ],
     },
     {
@@ -113,6 +120,18 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           label: 'بنرهای تبلیغاتی',
           icon: ImageIcon,
           match: (p) => p.startsWith('/admin/banners') || isLegacyTab('banners'),
+        },
+        {
+          href: '/admin/homepage-studio',
+          label: 'Homepage Studio',
+          icon: Sparkles,
+          match: (p) => p.startsWith('/admin/homepage-studio'),
+        },
+        {
+          href: '/admin/media-library',
+          label: 'Media Library',
+          icon: ImageIcon,
+          match: (p) => p.startsWith('/admin/media-library'),
         },
         {
           href: '/admin/articles',
@@ -343,6 +362,12 @@ function Breadcrumb({ pathname, tab }: { pathname: string; tab: string }) {
     pageName = 'کاربران';
   } else if (pathname.startsWith('/admin/badges')) {
     pageName = 'بج‌ها';
+  } else if (pathname.startsWith('/admin/operations')) {
+    pageName = 'مرکز عملیات';
+  } else if (pathname.startsWith('/admin/media-library')) {
+    pageName = 'Media Library';
+  } else if (pathname.startsWith('/admin/homepage-studio')) {
+    pageName = 'Homepage Studio';
   }
 
   return (

@@ -13,7 +13,7 @@ import RecentlyViewedStrip from '@/components/ads/RecentlyViewedStrip';
 import CityIcon from '@/components/ui/CityIcon';
 import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
 import { getCategoryImage } from '@/lib/category-images';
-import { getCityVisual } from '@/lib/city-images';
+import { DEFAULT_VISUAL, getCityVisualsBulk } from '@/lib/city-images';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import { attachMarketPriceToAds } from '@/lib/market-price';
@@ -90,10 +90,12 @@ const TRENDING_QUERIES = [
 ];
 
 export default async function HomePage() {
-  const [latestData, featuredAds, homeArticles] = await Promise.all([
+  const homeCitySlugs = CITIES.filter((city) => city.country !== 'other').map((city) => city.value);
+  const [latestData, featuredAds, homeArticles, cityVisuals] = await Promise.all([
     getLatestAds(),
     getFeaturedAds(),
     getHomeArticles(),
+    getCityVisualsBulk(homeCitySlugs),
   ]);
   const latestAds = latestData.ads;
 
@@ -231,27 +233,27 @@ export default async function HomePage() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   {group.cities.map((city) => {
-                    const visual = getCityVisual(city.value);
+                    const visual = cityVisuals[city.value] || DEFAULT_VISUAL;
                     const backgroundImage = visual.image
-                      ? `linear-gradient(to top, rgba(15,23,42,0.60), rgba(15,23,42,0.12)), url(${visual.image}), linear-gradient(135deg, #f97316, #0f172a)`
+                      ? `linear-gradient(to top, rgba(15,23,42,0.66), rgba(15,23,42,0.18)), url(${visual.image}), linear-gradient(135deg, #f97316, #0f172a)`
                       : undefined;
 
                     return (
                       <Link
                         key={city.value}
                         href={`/search?country=${city.country}&city=${city.value}`}
-                        className={`group relative min-h-24 overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br ${visual.gradient} p-3 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg`}
+                        className={`group relative min-h-[108px] overflow-hidden rounded-2xl border border-white/60 bg-gradient-to-br ${visual.gradient} p-3 text-white shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-lg`}
                         style={backgroundImage ? { backgroundImage, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
                       >
-                        <span className={`absolute -left-6 -top-7 h-20 w-20 rounded-full ${visual.accent} opacity-35 blur-sm transition-transform group-hover:scale-125`} />
+                        <span className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10 opacity-0 transition group-hover:opacity-100" />
                         <span className="relative flex items-center justify-between gap-2">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-sm">
+                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-white shadow-sm backdrop-blur-sm ring-1 ring-white/25">
                             <CityIcon city={city.value} size={16} />
                           </span>
                           <span className="text-2xl leading-none drop-shadow-sm">{visual.emoji}</span>
                         </span>
-                        <span className="relative mt-3 block truncate text-xs font-bold drop-shadow-sm">{city.label}</span>
-                        <span className="relative mt-1 block text-[10px] text-white/75">{group.label}</span>
+                        <span className="relative mt-4 block truncate text-sm font-black drop-shadow-sm">{city.label}</span>
+                        <span className="relative mt-1 block text-[10px] font-medium text-white/80">{group.label}</span>
                       </Link>
                     );
                   })}

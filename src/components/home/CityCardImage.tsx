@@ -25,7 +25,7 @@ export default function CityCardImage({
       loading="lazy"
       decoding="async"
       onError={() => setOk(false)}
-      className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay group-hover:scale-110 group-hover:opacity-70 transition-all duration-700"
+      className="absolute inset-0 w-full h-full object-cover opacity-95 group-hover:scale-110 group-hover:opacity-100 transition-all duration-700"
     />
   );
 }
