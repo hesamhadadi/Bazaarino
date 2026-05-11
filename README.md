@@ -1,247 +1,222 @@
-# 🇮🇹 بازارینو (Bazaarino)
+# Bazaarino
 
-پلتفرم آگهی، چت لحظه‌ای، و رزرو مسکن برای فارسی‌زبانان ایتالیا، آلمان و انگلستان — ساخته‌شده با Next.js 14 + MongoDB.
+Bazaarino is a marketplace and community platform for Persian-speaking users across Europe, focused on classifieds, housing, reservations, messaging, local services, articles, and user-to-user trust.
+
+The product is built around a simple idea: make everyday life easier for Iranian and Persian-speaking communities in countries such as Italy, Germany, and the United Kingdom. Users can publish listings, search by country and city, chat with sellers or hosts, save searches, follow notifications, read local articles, and manage housing-related requests from one place.
 
 Website: [bazaarino.com](https://bazaarino.com)
 
----
+## What The Product Does
 
-## ✨ امکانات
+Bazaarino combines several related workflows into one platform:
 
-### آگهی و جستجو
-- ثبت و مدیریت آگهی با ۱۱ دسته‌بندی و ۵۲ زیر‌دسته
-- پشتیبانی از ۳ کشور (ایتالیا، آلمان، انگلستان) و ۲۴ شهر
-- جستجو و فیلتر پیشرفته
-- آپلود تصاویر با Cloudinary
-- نقشه Leaflet روی صفحه آگهی
-- ذخیره آگهی در علاقه‌مندی‌ها
+- Classified listings for housing, vehicles, electronics, services, jobs, food, requests, and other everyday needs.
+- Location-first search across supported European countries and cities.
+- Real-time conversations between users, including unread counts and chat image upload.
+- Housing and room reservation flows with date selection and host-side status management.
+- Saved searches, favorites, profile pages, ratings, badges, and notifications.
+- Persian-language news, articles, city landing pages, and SEO-friendly public content.
+- Admin tooling for moderation, users, reports, banners, comments, articles, badges, landing pages, and city visuals.
+- PWA support, web push notifications, and a companion mobile app scaffold under `mobile/`.
 
-### چت و تعامل لحظه‌ای
-- چت خریدار و فروشنده با Socket.IO (Conversation, Message, Read receipt)
-- ارسال تصویر در چت
-- نشانگر آنلاین بودن / آخرین بازدید (Presence)
-- شمارنده پیام‌های خوانده‌نشده
-- گزارش آگهی یا کاربر متخلف
+## Core Features
 
-### رزرو مسکن
-- سیستم رزرو اتاق و خانه (`/house-reservation`)
-- تأیید/رد رزرو توسط صاحب ملک
-- تقویم شمسی/میلادی برای انتخاب تاریخ
-- تخمین قیمت بازار از feed خارجی
+### Listings And Search
 
-### احراز هویت
-- ورود با Email/Password (NextAuth Credentials)
-- ورود با Google OAuth
-- بازنشانی رمز عبور با ایمیل (token-based)
+- Create, edit, moderate, and browse classified ads.
+- Search by keyword, country, city, category, subcategory, price, listing mode, images, residence eligibility, availability, and housing-specific fields.
+- Support for featured, urgent, bumped, sold, expired, approved, rejected, and pending listing states.
+- Public ad detail pages with image galleries, seller context, rating actions, favorites, reports, and map previews for housing listings.
+- Market-price enrichment for housing-related ads when price data is available.
 
-### اعلان‌ها
-- Web Push Notification (PWA آماده نصب)
-- اعلان ایمیلی تأیید/رد آگهی
-- تلگرام bot برای اعلان‌های ادمین
+### Countries, Cities, And Local Discovery
 
-### پنل مدیریت
-- تأیید/رد آگهی
-- مدیریت کاربران، بنرها، و تصاویر شهرها
-- داشبورد آمار (تعداد آگهی، کاربر فعال، و ...)
-- مدیریت گزارش‌های تخلف
-- تنظیمات global اپ
+- City and country constants are centralized in `src/lib/constants.ts`.
+- City-specific visual identity is managed through `src/lib/city-images.ts` and admin overrides.
+- The public home page highlights categories, city groups, featured ads, recently viewed items, articles, and reservation entry points.
+- City landing pages and generated sitemap/feed routes help the platform scale beyond a generic listing board.
 
-### سایر
-- بخش اخبار و مقاله (`/news`)
-- پروفایل عمومی کاربران (`/u/[id]`)
-- سیستم امتیازدهی به کاربران
-- Import آگهی از کانال تلگرام (`scripts/import-telegram-ads.js`)
-- طراحی موبایل‌فرست، RTL کامل، فونت وزیرمتن
-- نسخه Expo/React Native در `mobile/`
+### Messaging And Notifications
 
----
+- Conversations and messages are modeled in MongoDB and surfaced through `/messages`.
+- Socket.IO powers live chat behavior where the runtime supports it.
+- Users can receive notification badges, unread counts, and push notifications.
+- Chat image uploads are handled separately from listing image uploads.
 
-## 🛠 تکنولوژی‌ها
+### Housing Reservations
 
-| بخش | ابزار |
-|-----|------|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript 5 |
-| UI | React 18, Tailwind CSS 3, lucide-react |
-| State / Forms | React Hook Form + Zod |
-| Auth | NextAuth.js (Credentials + Google OAuth) |
-| Database | MongoDB 7 + Mongoose |
+- The `/house-reservation` area supports reservation-oriented housing discovery.
+- Reservation APIs track user requests and status changes.
+- Date range selection supports localized calendar behavior.
+- Housing listings include fields such as bills, agency fees, all-inclusive pricing, preferred roommate details, and availability.
+
+### Admin Area
+
+The admin area has been split into focused pages plus a legacy operations view:
+
+- `/admin` gives a high-level operational overview.
+- `/admin/legacy` keeps the heavier moderation tools for ads, users, reports, settings, banners, and housing city images.
+- `/admin/banners` manages advertising placements.
+- `/admin/articles` manages editorial content.
+- `/admin/comments` moderates article comments.
+- `/admin/badges` manages user badges.
+- `/admin/pages` manages landing pages.
+- `/admin/city-visuals` manages city imagery, gradients, accents, and image checks.
+
+This gives operators both a fast dashboard and deeper operational controls without crowding every feature into one screen.
+
+### Authentication And User Trust
+
+- NextAuth handles user sessions.
+- Users can register, log in, reset passwords, and manage profiles.
+- Public profiles, ratings, badges, reports, and identity-related admin workflows help build marketplace trust.
+- Middleware protects private and admin-only areas.
+
+### Content And SEO
+
+- News and article pages support public editorial content.
+- Static informational pages include about, contact, FAQ, privacy, and terms.
+- RSS/feed and sitemap routes are available.
+- Metadata, Open Graph data, schema markup, and city/category pages support discoverability.
+
+## Tech Stack
+
+| Area | Technology |
+| --- | --- |
+| Web framework | Next.js 14, App Router |
+| Language | TypeScript |
+| UI | React, Tailwind CSS, lucide-react |
+| Forms and validation | React Hook Form, Zod |
+| Auth | NextAuth |
+| Database | MongoDB, Mongoose |
 | Realtime | Socket.IO |
-| Maps | Leaflet + react-leaflet |
-| Media | Cloudinary |
-| Email | Nodemailer (SMTP) |
-| Push | web-push (VAPID) |
-| Date | date-fns, react-multi-date-picker |
-| Local DB | Docker Compose (mongo:7) |
-| Mobile | Expo 54, React Native 0.81 |
-| Deploy | Vercel |
+| Maps | Leaflet, react-leaflet |
+| Uploads | Cloudinary integration |
+| Email | Nodemailer |
+| Push | Web Push / VAPID |
+| Dates | date-fns, react-multi-date-picker |
+| Observability | Vercel Analytics, Speed Insights, optional Sentry integration |
+| Mobile | Expo / React Native under `mobile/` |
+| Deployment target | Vercel |
 
----
+## Project Structure
 
-## 📦 ساختار پروژه
-
-```
+```text
 src/
-├── app/
-│   ├── ads/                  # لیست، جزئیات، ثبت آگهی
-│   ├── search/               # جستجو و فیلتر
-│   ├── messages/             # چت کاربران
-│   ├── house-reservation/    # رزرو خانه/اتاق
-│   ├── news/                 # اخبار و مقالات
-│   ├── favorites/            # علاقه‌مندی‌ها
-│   ├── notifications/        # اعلان‌ها
-│   ├── profile/              # پروفایل کاربر
-│   ├── u/[id]/               # پروفایل عمومی کاربر
-│   ├── auth/                 # ورود، ثبت‌نام، reset
-│   ├── admin/                # پنل مدیریت
-│   └── api/                  # API routes (ads, auth, conversations, ...)
-├── components/
-│   ├── ads/                  # AdCard و ...
-│   ├── home/                 # Hero و بنرها
-│   ├── layout/               # Navbar, BottomNav
-│   ├── maps/                 # Leaflet wrapper
-│   ├── notifications/
-│   ├── providers/            # Auth, Theme, ...
-│   ├── pwa/                  # Service worker و install prompt
-│   ├── reservations/
-│   └── ui/                   # اجزای عمومی
-├── lib/
-│   ├── mongodb.ts            # اتصال Mongoose (با cache)
-│   ├── auth.ts               # NextAuth config
-│   ├── email.ts              # SMTP helpers
-│   ├── push-notifications.ts # web-push + VAPID
-│   ├── socket-server.ts      # Socket.IO server
-│   ├── telegram.ts           # Telegram bot client
-│   ├── market-price.ts       # قیمت بازار مسکن
-│   ├── ad-moderation.ts      # منطق تأیید/رد آگهی
-│   ├── constants.ts          # کشورها، شهرها، دسته‌بندی‌ها
-│   └── ...
-├── models/                   # Ad, User, Conversation, Message, Reservation,
-│                             # Rating, Report, Article, Banner, Notification,
-│                             # PushSubscription, ...
-├── pages/                    # (اگر نیاز به Pages Router داریم)
-├── types/
-└── middleware.ts             # Auth guard برای /admin, /profile, /messages, ...
-mobile/                       # نسخه Expo/React Native
-scripts/
-└── import-telegram-ads.js    # import آگهی از کانال تلگرام
-docker-compose.yml            # MongoDB محلی
+  app/
+    admin/                  Admin dashboard and management screens
+    ads/                    Create, edit, and view listings
+    api/                    App Router API routes
+    auth/                   Login, registration, reset, phone login
+    favorites/              Saved favorite listings
+    house-reservation/      Housing reservation experience
+    messages/               User conversations
+    news/                   Articles and public editorial content
+    notifications/          User notifications
+    p/[slug]/               Dynamic landing pages
+    profile/                User account pages
+    saved-searches/         Saved search workflow
+    search/                 Listing search and filters
+    u/[id]/                 Public user profiles
+  components/
+    admin/                  Admin shell and command palette
+    ads/                    Listing cards, galleries, actions
+    articles/               Article rendering components
+    home/                   Home page sections
+    layout/                 Navbar, footer, bottom nav, banners
+    maps/                   Housing map picker and preview
+    notifications/          Notification UI
+    providers/              Auth, brand, chat, push providers
+    reservations/           Reservation UI
+    search/                 Search-specific controls
+    ui/                     Shared UI primitives
+  lib/
+    auth.ts                 NextAuth configuration
+    mongodb.ts              Mongoose connection helper
+    constants.ts            Countries, cities, categories
+    city-images.ts          City visuals and fallbacks
+    market-price.ts         Housing price enrichment
+    notifications.ts        Notification helpers
+    push-notifications.ts   Web push helpers
+    socket-server.ts        Socket.IO server setup
+    telegram.ts             Telegram integration helper
+  models/                   Mongoose models
+  pages/api/socket.ts       Socket.IO endpoint
+  middleware.ts             Route protection
+
+mobile/                     Expo / React Native app
+scripts/                    Operational scripts
+public/                     Static assets and PWA files
 ```
 
----
+## Local Development
 
-## 🚀 اجرای محلی
-
-### ۱. نصب وابستگی‌ها
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### ۲. بالا آوردن MongoDB محلی (اختیاری)
+Optionally start the local MongoDB service:
 
 ```bash
-npm run db:up       # MongoDB روی localhost:27017
-npm run db:logs     # مشاهده لاگ
-npm run db:down     # خاموش کردن
+npm run db:up
 ```
 
-### ۳. تنظیم متغیرهای محیطی
+Create a local environment file using the project owner's private configuration as a reference. Do not commit environment files, secrets, API keys, tokens, database URLs, or production credentials.
 
-یک فایل `.env.local` در ریشه پروژه بساز:
-
-```bash
-# ---- Database ----
-MONGODB_URI=mongodb://localhost:27017/bazaarino
-
-# ---- NextAuth ----
-NEXTAUTH_SECRET=your-random-secret
-NEXTAUTH_URL=http://localhost:3000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# ---- Google OAuth (اختیاری) ----
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-
-# ---- Cloudinary (برای آپلود تصویر) ----
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-
-# ---- SMTP (برای ایمیل تأیید/رد آگهی و reset پسورد) ----
-SMTP_HOST=
-SMTP_PORT=587                 # 587 یا 465
-SMTP_SECURE=false             # true برای TLS مستقیم (port 465)
-SMTP_USER=
-SMTP_PASS=
-SMTP_FROM=                    # اختیاری، در غیر این صورت از SMTP_USER
-
-# ---- Web Push (PWA notifications) ----
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=
-VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=mailto:you@example.com
-
-# ---- Cron (برای پردازش اعلان‌های چت) ----
-CRON_SECRET=your-cron-secret
-
-# ---- Market Price Feed (اختیاری) ----
-EXTERNAL_HOUSING_PRICE_FEED_URL=
-EXTERNAL_HOUSING_PRICE_STATIC=
-EXTERNAL_HOUSING_PRICE_STATIC_SOURCE=
-```
-
-> **VAPID keys:** می‌تونی با `npx web-push generate-vapid-keys` بسازی‌شون.
-
-### ۴. اجرای dev server
+Start the web app:
 
 ```bash
 npm run dev
 ```
 
-اپ روی http://localhost:3000 بالا میاد.
+The app runs at [http://localhost:3000](http://localhost:3000).
 
----
+## Useful Scripts
 
-## 📜 Scripts
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Next.js development server |
+| `npm run build` | Build the production app |
+| `npm start` | Start the production build |
+| `npm run lint` | Run Next.js linting |
+| `npm run db:up` | Start local MongoDB with Docker Compose |
+| `npm run db:down` | Stop local MongoDB |
+| `npm run db:logs` | Show local MongoDB logs |
+| `npm run mobile:start` | Start the Expo development server |
+| `npm run mobile:android` | Run the mobile app on Android |
+| `npm run mobile:typecheck` | Type-check the mobile app |
 
-| دستور | کار |
-|------|-----|
-| `npm run dev` | اجرای dev (Next.js) |
-| `npm run build` | ساخت production |
-| `npm start` | اجرای build |
-| `npm run lint` | lint |
-| `npm run db:up` / `db:down` / `db:logs` | MongoDB محلی با Docker |
-| `npm run mobile:start` | اجرای Expo dev server |
-| `npm run mobile:android` | اجرای اندروید |
-| `npm run mobile:typecheck` | type-check اپ موبایل |
-| `node scripts/import-telegram-ads.js` | import آگهی از کانال تلگرام |
+## Mobile App
 
----
+The `mobile/` directory contains the Expo / React Native client. It shares the same product domain as the web app and is intended to connect to the Bazaarino API.
 
-## 📱 نسخه موبایل (React Native / Expo)
+See `mobile/README.md` for mobile-specific setup and build notes.
 
-نسخه موبایل در پوشه [`mobile/`](./mobile) قرار داره و به همان API وصل می‌شه. برای اجرا، به `mobile/README.md` مراجعه کن.
+## Deployment Notes
 
-خلاصه build اندروید:
+Bazaarino is designed to run well on Vercel with MongoDB and external services configured through the hosting provider's secret management. Keep production configuration outside the repository.
 
-```bash
-cd mobile
-npx eas-cli login
-npx eas-cli build --platform android --profile preview
-```
+Before deploying, verify:
 
----
+- Required service credentials are configured in the deployment environment.
+- MongoDB access is allowed from the deployment platform.
+- File upload, email, push, auth, and optional analytics providers are available.
+- Scheduled jobs and webhook endpoints are configured where needed.
+- `npm run build` passes in the deployment environment.
 
-## 🚢 Deploy (Vercel)
+## Operational Notes
 
-- تمام متغیرهای `.env.local` رو توی Vercel Project → Settings → Environment Variables کپی کن
-- `NEXTAUTH_URL` رو روی domain production بگذار
-- MongoDB Atlas (یا هر cluster خارجی) برای `MONGODB_URI`
-- Webhook تلگرام رو روی `https://<domain>/api/telegram/webhook` ست کن
+- Admin pages are protected by server-side session checks and role checks.
+- Public content routes should remain SEO-friendly and fast to render.
+- Database-backed sitemap and feed routes should fail gracefully when the database is unavailable.
+- Marketplace safety depends on moderation, reporting, ratings, and identity workflows working together.
+- City visuals should always have safe fallbacks so broken external images do not break public pages.
 
----
+## Author
 
-## 👤 نویسنده
+Built by Hesam Hadadi.
 
-**Hesam Hadadi** — [hesamhaddadi.com](https://hesamhaddadi.com) · [GitHub](https://github.com/hesamhadadi)
-
+- Website: [hesamhaddadi.com](https://hesamhaddadi.com)
+- GitHub: [github.com/hesamhadadi](https://github.com/hesamhadadi)
