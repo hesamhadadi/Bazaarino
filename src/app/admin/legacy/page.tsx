@@ -597,6 +597,14 @@ export default function AdminDashboard() {
     if (!stats?.totalAds) return 0;
     return Math.round(((stats.pendingAds || 0) / Math.max(1, stats.totalAds)) * 100);
   }, [stats]);
+  const activeHousingCityImageCities = useMemo(
+    () => new Set(housingCityImages.filter((item) => item.isActive).map((item) => item.city)),
+    [housingCityImages]
+  );
+  const missingHousingCityImages = useMemo(
+    () => CITIES.filter((city) => city.country !== 'other' && !activeHousingCityImageCities.has(city.value)),
+    [activeHousingCityImageCities]
+  );
   const activeAdFilterCount = useMemo(
     () => Object.entries(adFilters).filter(([key, value]) => key !== 'status' ? Boolean(value) : activeTab === 'all' && value !== 'all').length,
     [adFilters, activeTab]
@@ -1406,8 +1414,39 @@ export default function AdminDashboard() {
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">عکس شهرهای مسکن</h3>
-              <p className="text-xs text-gray-500 mb-3">این عکس‌ها در هدر جستجوی دسته «مسکن و ملک» برای شهر انتخابی نمایش داده می‌شوند.</p>
+              <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-800">عکس شهرهای مسکن</h3>
+                  <p className="mt-1 text-xs text-gray-500">این عکس‌ها در هدر جستجوی دسته «مسکن و ملک» برای شهر انتخابی نمایش داده می‌شوند.</p>
+                </div>
+                <div className="rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-xs text-orange-700">
+                  {missingHousingCityImages.length === 0
+                    ? 'برای همه شهرها تصویر فعال ثبت شده'
+                    : `${missingHousingCityImages.length} شهر بدون تصویر فعال`}
+                </div>
+              </div>
+
+              {missingHousingCityImages.length > 0 && (
+                <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                  <p className="mb-2 text-xs font-medium text-gray-600">شهرهای بدون تصویر فعال</p>
+                  <div className="flex flex-wrap gap-2">
+                    {missingHousingCityImages.slice(0, 12).map((city) => (
+                      <button
+                        key={city.value}
+                        onClick={() => setCityImageForm((prev) => ({ ...prev, city: city.value }))}
+                        className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[11px] text-gray-600 hover:border-brand-200 hover:text-brand-600"
+                      >
+                        {city.label}
+                      </button>
+                    ))}
+                    {missingHousingCityImages.length > 12 && (
+                      <span className="rounded-full bg-white px-3 py-1.5 text-[11px] text-gray-400">
+                        +{missingHousingCityImages.length - 12}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="grid md:grid-cols-3 gap-3">
                 <select value={cityImageForm.city} onChange={(e) => setCityImageForm((p) => ({ ...p, city: e.target.value }))} className="border border-gray-200 rounded-xl px-3 py-2 text-sm">
@@ -1427,22 +1466,27 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              <div className="space-y-3 mt-4">
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {housingCityImages.map((item: any) => (
-                  <div key={item._id} className="bg-gray-50 rounded-xl border border-gray-100 p-3 flex items-center gap-3">
-                    <div className="w-20 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                      <Image src={item.imageUrl} alt={item.title || item.city} width={80} height={48} className="w-full h-full object-cover" />
+                  <div key={item._id} className="overflow-hidden rounded-2xl border border-gray-100 bg-gray-50">
+                    <div className="relative h-28 bg-gray-100">
+                      <Image src={item.imageUrl} alt={item.title || item.city} fill sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw" className="object-cover" />
+                      <span className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[11px] ${item.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {item.isActive ? 'فعال' : 'غیرفعال'}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="p-3">
                       <p className="text-sm font-medium text-gray-800">{CITIES.find((c) => c.value === item.city)?.label || item.city}</p>
-                      <p className="text-xs text-gray-500 line-clamp-1">{item.title || 'بدون عنوان'}</p>
+                      <p className="mt-1 line-clamp-1 text-xs text-gray-500">{item.title || 'بدون عنوان'}</p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <button onClick={() => toggleCityImageActive(item._id, item.isActive)} className={`px-3 py-1.5 rounded-lg text-xs ${item.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                          {item.isActive ? 'غیرفعال کردن' : 'فعال کردن'}
+                        </button>
+                        <button onClick={() => deleteCityImage(item._id)} className="mr-auto p-2 rounded-lg bg-red-50 text-red-600">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
-                    <button onClick={() => toggleCityImageActive(item._id, item.isActive)} className={`px-3 py-1.5 rounded-lg text-xs ${item.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {item.isActive ? 'فعال' : 'غیرفعال'}
-                    </button>
-                    <button onClick={() => deleteCityImage(item._id)} className="p-2 rounded-lg bg-red-50 text-red-600">
-                      <Trash2 size={14} />
-                    </button>
                   </div>
                 ))}
               </div>

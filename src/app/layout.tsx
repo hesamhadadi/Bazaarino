@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import { Vazirmatn } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -14,6 +15,7 @@ import PushNotificationProvider from '@/components/providers/PushNotificationPro
 import CookieBanner from '@/components/layout/CookieBanner';
 import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import MaintenanceGate from '@/components/layout/MaintenanceGate';
+import RouteScrollManager from '@/components/layout/RouteScrollManager';
 import { getAppUrl } from '@/lib/app-url';
 
 const vazir = Vazirmatn({
@@ -141,6 +143,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${vazir.className} font-vazir bg-gray-50 min-h-screen`}>
         <AuthProvider>
           <BrandColorProvider />
+          <Suspense fallback={null}>
+            <RouteScrollManager />
+          </Suspense>
           <ChatProvider>
             <AnnouncementBar />
             <MaintenanceGate>{children}</MaintenanceGate>

@@ -11,8 +11,9 @@ import CityLandingCards from '@/components/home/CityLandingCards';
 import HomeBanner from '@/components/home/HomeBanner';
 import RecentlyViewedStrip from '@/components/ads/RecentlyViewedStrip';
 import CityIcon from '@/components/ui/CityIcon';
-import { CATEGORIES, CITIES } from '@/lib/constants';
+import { CATEGORIES, CITIES, COUNTRIES } from '@/lib/constants';
 import { getCategoryImage } from '@/lib/category-images';
+import { getCityVisual } from '@/lib/city-images';
 import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import { attachMarketPriceToAds } from '@/lib/market-price';
@@ -96,8 +97,10 @@ export default async function HomePage() {
   ]);
   const latestAds = latestData.ads;
 
-  // Top 8 cities for the city pill row
-  const topCities = CITIES.filter((c) => c.country !== 'other').slice(0, 12);
+  const cityGroups = COUNTRIES.map((country) => ({
+    ...country,
+    cities: CITIES.filter((city) => city.country === country.value),
+  }));
 
   const itemListLd = {
     '@context': 'https://schema.org',
@@ -208,25 +211,53 @@ export default async function HomePage() {
       {/* CITY ROW */}
       <section className="border-b border-gray-100 bg-gray-50/50">
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-900">شهرهای محبوب</h2>
+          <div className="flex items-end justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-gray-900">شهرهای محبوب</h2>
+              <p className="text-xs text-gray-500 mt-1">مرتب‌شده بر اساس کشور برای جست‌وجوی سریع‌تر.</p>
+            </div>
             <Link href="/search" className="text-xs text-gray-500 hover:text-gray-700 inline-flex items-center gap-0.5">
               همه <ArrowLeft size={12} />
             </Link>
           </div>
-          <div className="-mx-4 px-4 overflow-x-auto no-scrollbar">
-            <div className="flex md:flex-wrap gap-2 min-w-max md:min-w-0">
-              {topCities.map((city) => (
-                <Link
-                  key={city.value}
-                  href={`/search?country=${city.country}&city=${city.value}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white hover:border-gray-300 hover:bg-white px-3 py-2 text-xs text-gray-700 transition"
-                >
-                  <CityIcon city={city.value} size={14} />
-                  {city.label.split(' ')[0]}
-                </Link>
-              ))}
-            </div>
+          <div className="space-y-5">
+            {cityGroups.map((group) => (
+              <div key={group.value}>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-bold text-gray-500">{group.label}</p>
+                  <Link href={`/search?country=${group.value}`} className="text-[11px] font-medium text-orange-600 hover:text-orange-700">
+                    همه آگهی‌های {group.label}
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                  {group.cities.map((city) => {
+                    const visual = getCityVisual(city.value);
+                    const backgroundImage = visual.image
+                      ? `linear-gradient(to top, rgba(15,23,42,0.60), rgba(15,23,42,0.12)), url(${visual.image}), linear-gradient(135deg, #f97316, #0f172a)`
+                      : undefined;
+
+                    return (
+                      <Link
+                        key={city.value}
+                        href={`/search?country=${city.country}&city=${city.value}`}
+                        className={`group relative min-h-24 overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br ${visual.gradient} p-3 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg`}
+                        style={backgroundImage ? { backgroundImage, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                      >
+                        <span className={`absolute -left-6 -top-7 h-20 w-20 rounded-full ${visual.accent} opacity-35 blur-sm transition-transform group-hover:scale-125`} />
+                        <span className="relative flex items-center justify-between gap-2">
+                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-sm">
+                            <CityIcon city={city.value} size={16} />
+                          </span>
+                          <span className="text-2xl leading-none drop-shadow-sm">{visual.emoji}</span>
+                        </span>
+                        <span className="relative mt-3 block truncate text-xs font-bold drop-shadow-sm">{city.label}</span>
+                        <span className="relative mt-1 block text-[10px] text-white/75">{group.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

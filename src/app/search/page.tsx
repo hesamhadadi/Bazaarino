@@ -8,6 +8,7 @@ import connectDB from '@/lib/mongodb';
 import Ad from '@/models/Ad';
 import Banner from '@/models/Banner';
 import HousingCityImage from '@/models/HousingCityImage';
+import { getCityHeroBackground, getCityVisual } from '@/lib/city-images';
 import { attachMarketPriceToAds } from '@/lib/market-price';
 import Link from 'next/link';
 import { SearchX, SlidersHorizontal } from 'lucide-react';
@@ -190,6 +191,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const selectedCity = CITIES.find((c) => c.value === searchParams.city);
   const selectedCountry = searchParams.country || selectedCity?.country || getCountryByCity(searchParams.city);
   const citiesForCountry = getCitiesByCountry(selectedCountry);
+  const selectedCityVisual = getCityVisual(selectedCity?.value);
 
   const itemListLd = ads.length > 0 ? {
     '@context': 'https://schema.org',
@@ -215,11 +217,19 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           <div
             className="rounded-2xl overflow-hidden h-40 md:h-52 relative mb-4 border border-gray-200"
             style={{
-              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0.05)), url(${housingCityImage?.imageUrl || `https://source.unsplash.com/1600x500/?${selectedCity.value},${selectedCountry || 'europe'},city`})`,
+              backgroundImage: getCityHeroBackground(selectedCity.value, housingCityImage?.imageUrl),
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
           >
+            {!housingCityImage?.imageUrl && (
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -left-8 -top-8 h-28 w-28 rounded-full bg-white/20 blur-sm"></div>
+                <div className="absolute bottom-4 left-6 text-6xl font-black text-white/10 md:text-8xl">
+                  {selectedCityVisual.emoji}
+                </div>
+              </div>
+            )}
             <div className="absolute inset-0 flex items-end p-4">
               <div className="text-white">
                 <p className="text-xs opacity-90">شهر انتخابی</p>

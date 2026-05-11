@@ -139,6 +139,21 @@ export function getCityVisual(city?: string): CityVisual {
   return CITY_VISUALS[city] || DEFAULT_VISUAL;
 }
 
+export function getCityHeroBackground(city?: string, imageUrl?: string) {
+  const visual = getCityVisual(city);
+  const visualImage = imageUrl || visual.image;
+  const layers = [
+    'linear-gradient(to top, rgba(0,0,0,0.52), rgba(0,0,0,0.10))',
+  ];
+
+  if (visualImage) {
+    layers.push(`url(${visualImage})`);
+  }
+
+  layers.push('linear-gradient(135deg, #f97316, #0f172a)');
+  return layers.join(', ');
+}
+
 /**
  * Async variant that merges DB-managed overrides on top of the static map.
  * Used by server components (CityLandingCards, landing-page Hero). When

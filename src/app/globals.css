@@ -29,6 +29,10 @@ body {
   text-align: right;
 }
 
+body.route-settling {
+  animation: routeSettle 420ms ease-out;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -140,6 +144,17 @@ input, textarea, select, button {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes routeSettle {
+  from {
+    opacity: 0.96;
+    filter: saturate(0.96);
+  }
+  to {
+    opacity: 1;
+    filter: saturate(1);
   }
 }
 
@@ -300,10 +315,12 @@ select {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  body.route-settling,
   .fade-up, .fade-up-delay-1, .fade-up-delay-2, .fade-up-delay-3, .soft-float {
     animation: none;
     opacity: 1;
     transform: none;
+    filter: none;
   }
 }
 
