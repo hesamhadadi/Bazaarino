@@ -36,6 +36,9 @@ type Stats = {
   totalFavorites: number;
   totalViews: number;
   totalSiteViews?: number;
+  totalTrackedDailyViews?: number;
+  untrackedHistoricalViews?: number;
+  firstDailyViewDateKey?: string | null;
   todayViews?: number;
   todayViewsByType?: { _id: string; count: number }[];
   dailyViewsTrend?: {
@@ -219,6 +222,9 @@ export default function AdminOverview() {
 
       <DailyViewsCard
         todayViews={stats.todayViews || 0}
+        totalTracked={stats.totalTrackedDailyViews || 0}
+        untrackedHistorical={stats.untrackedHistoricalViews || 0}
+        firstDateKey={stats.firstDailyViewDateKey || null}
         byType={stats.todayViewsByType || []}
         trend={stats.dailyViewsTrend || []}
       />
@@ -280,10 +286,16 @@ export default function AdminOverview() {
 
 function DailyViewsCard({
   todayViews,
+  totalTracked,
+  untrackedHistorical,
+  firstDateKey,
   byType,
   trend,
 }: {
   todayViews: number;
+  totalTracked: number;
+  untrackedHistorical: number;
+  firstDateKey: string | null;
   byType: { _id: string; count: number }[];
   trend: { _id: string; count: number; ad: number; article: number; landingPage: number }[];
 }) {
@@ -301,7 +313,9 @@ function DailyViewsCard({
         <div>
           <p className="text-sm font-bold text-gray-900">بازدید روزانه سایت</p>
           <p className="text-xs text-gray-500 mt-1">
-            شمارش از امروز به بعد بر اساس روز ایتالیا ثبت می‌شود.
+            {firstDateKey
+              ? `ثبت روزانه از ${formatDateKey(firstDateKey)} شروع شده است؛ داده‌های قبل از آن فقط به‌صورت بازدید کل موجودند.`
+              : 'هنوز هیچ بازدید روزانه‌ای ثبت نشده است؛ بازدیدهای قدیمی فقط به‌صورت بازدید کل موجودند.'}
           </p>
         </div>
         <div className="text-left">
@@ -322,8 +336,12 @@ function DailyViewsCard({
             last14.map((day) => (
               <div key={day._id} className="flex-1 min-w-0 flex flex-col items-center gap-1">
                 <div
-                  className="w-full max-w-8 rounded-t-md bg-gradient-to-t from-orange-500 to-amber-400"
-                  style={{ height: `${Math.max(6, (day.count / max) * 104)}px` }}
+                  className={`w-full max-w-8 rounded-t-md ${
+                    day.count > 0
+                      ? 'bg-gradient-to-t from-orange-500 to-amber-400'
+                      : 'bg-gray-200'
+                  }`}
+                  style={{ height: `${day.count > 0 ? Math.max(6, (day.count / max) * 104) : 2}px` }}
                   title={`${day._id}: ${day.count}`}
                 />
                 <span className="text-[10px] text-gray-400 tabular-nums truncate">
@@ -340,8 +358,31 @@ function DailyViewsCard({
           <MiniStat label="صفحه‌ها" value={typeCounts.landingPage} />
         </div>
       </div>
+
+      <div className="mt-4 grid md:grid-cols-2 gap-2">
+        <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2">
+          <p className="text-[11px] text-emerald-700">بازدیدهای ثبت‌شده با تاریخ روزانه</p>
+          <p className="text-base font-black text-emerald-900 tabular-nums">
+            {toFaDigits(String(totalTracked))}
+          </p>
+        </div>
+        {untrackedHistorical > 0 && (
+          <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+            <p className="text-[11px] text-amber-700">بازدیدهای قدیمی بدون تفکیک روز</p>
+            <p className="text-base font-black text-amber-900 tabular-nums">
+              {toFaDigits(String(untrackedHistorical))}
+            </p>
+          </div>
+        )}
+      </div>
     </section>
   );
+}
+
+function formatDateKey(dateKey: string) {
+  const date = new Date(`${dateKey}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return toFaDigits(dateKey);
+  return toFaDigits(date.toLocaleDateString('fa-IR'));
 }
 
 function MiniStat({ label, value }: { label: string; value: number }) {

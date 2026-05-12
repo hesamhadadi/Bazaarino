@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
     startToday.setHours(0, 0, 0, 0);
     const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const last14Days = new Date(Date.now() - 13 * 24 * 60 * 60 * 1000);
+    const last14ViewDateKeys = Array.from({ length: 14 }, (_, index) =>
+      getViewDateKey(new Date(Date.now() - (13 - index) * 24 * 60 * 60 * 1000)),
+    );
     const last30DaysKey = getViewDateKey(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000));
     const todayKey = getViewDateKey(now);
 
@@ -52,6 +55,8 @@ export async function GET(request: NextRequest) {
       totalViewsAgg,
       totalArticleViewsAgg,
       totalLandingPageViewsAgg,
+      totalTrackedDailyViewsAgg,
+      firstDailyViewAgg,
       dailyViewsTrend,
       todayViewsByType,
       recentAds,
@@ -98,6 +103,8 @@ export async function GET(request: NextRequest) {
       Ad.aggregate([{ $group: { _id: null, totalViews: { $sum: '$views' }, avgViews: { $avg: '$views' } } }]),
       Article.aggregate([{ $group: { _id: null, totalViews: { $sum: '$views' } } }]),
       LandingPage.aggregate([{ $group: { _id: null, totalViews: { $sum: '$views' } } }]),
+      DailyView.aggregate([{ $group: { _id: null, totalViews: { $sum: '$count' } } }]),
+      DailyView.aggregate([{ $group: { _id: null, firstDateKey: { $min: '$dateKey' } } }]),
       DailyView.aggregate([
         { $match: { dateKey: { $gte: last30DaysKey } } },
         {
@@ -185,19 +192,32 @@ export async function GET(request: NextRequest) {
     const totalViews = totalViewsAgg[0]?.totalViews || 0;
     const totalArticleViews = totalArticleViewsAgg[0]?.totalViews || 0;
     const totalLandingPageViews = totalLandingPageViewsAgg[0]?.totalViews || 0;
-    const normalizedDailyViewsTrend = dailyViewsTrend.map((item: any) => {
+    const totalSiteViews = totalViews + totalArticleViews + totalLandingPageViews;
+    const totalTrackedDailyViews = totalTrackedDailyViewsAgg[0]?.totalViews || 0;
+    const firstDailyViewDateKey = firstDailyViewAgg[0]?.firstDateKey || null;
+    const dailyViewsByDate = dailyViewsTrend.reduce((acc: any, item: any) => {
       const byType = (item.byType || []).reduce((acc: any, row: any) => {
         acc[row.entityType] = row.count;
         return acc;
       }, {});
-      return {
+      acc[item._id] = {
         _id: item._id,
         count: item.total || 0,
         ad: byType.ad || 0,
         article: byType.article || 0,
         landingPage: byType.landingPage || 0,
       };
-    });
+      return acc;
+    }, {});
+    const normalizedDailyViewsTrend = last14ViewDateKeys.map((dateKey) => (
+      dailyViewsByDate[dateKey] || {
+        _id: dateKey,
+        count: 0,
+        ad: 0,
+        article: 0,
+        landingPage: 0,
+      }
+    ));
     const todayViews = todayViewsByType.reduce((sum: number, row: any) => sum + (row.count || 0), 0);
 
     return NextResponse.json({
@@ -223,7 +243,10 @@ export async function GET(request: NextRequest) {
         totalViews,
         totalArticleViews,
         totalLandingPageViews,
-        totalSiteViews: totalViews + totalArticleViews + totalLandingPageViews,
+        totalSiteViews,
+        totalTrackedDailyViews,
+        untrackedHistoricalViews: Math.max(0, totalSiteViews - totalTrackedDailyViews),
+        firstDailyViewDateKey,
         todayViews,
         todayViewsByType,
         dailyViewsTrend: normalizedDailyViewsTrend,
