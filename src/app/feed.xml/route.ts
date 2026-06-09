@@ -5,6 +5,7 @@ import '@/models/User';
 import { getAppUrl } from '@/lib/app-url';
 
 export const revalidate = 1800;
+export const dynamic = 'force-dynamic';
 
 const escape = (s: string) =>
   s

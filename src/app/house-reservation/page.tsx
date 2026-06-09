@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Search } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
@@ -18,6 +19,20 @@ import {
 import { formatFaNumber, toFaDigits } from '@/lib/locale';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'رزرو کوتاه‌مدت خانه در اروپا',
+  description:
+    'رزرو خانه و اقامت کوتاه‌مدت برای ایرانیان در ایتالیا، آلمان و انگلستان با جست‌وجوی تاریخ، شهر و قیمت.',
+  alternates: { canonical: '/house-reservation' },
+  openGraph: {
+    title: 'رزرو کوتاه‌مدت خانه در اروپا',
+    description:
+      'خانه‌های قابل رزرو را بر اساس تاریخ ورود و خروج، شهر و قیمت پیدا کنید.',
+    url: '/house-reservation',
+    type: 'website',
+  },
+};
 
 type SearchParams = {
   country?: string;

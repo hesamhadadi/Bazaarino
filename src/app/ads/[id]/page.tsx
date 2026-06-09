@@ -127,20 +127,16 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const image = Array.isArray(ad.images) && ad.images[0] ? ad.images[0] : '/og-default.png';
     const base = getAppUrl();
     const url = `${base}/ads/${ad._id}`;
+    const isIndexable = ad.status === 'approved';
 
     return {
       title,
       description,
-      // Individual ads are deliberately *not* indexed:
-      //  - They are short-lived (sold/expired/removed) and would generate
-      //    long tails of soft-404s if indexed.
-      //  - They are typically thin content (3-line description + photos)
-      //    which drags down whole-domain quality signals.
-      //  - Hosts crawl budget should be spent on durable assets:
-      //    articles, city landing pages, category search pages.
-      // We still keep `follow` so anchor links from ads still pass weight
-      // to the indexable category/city/article pages they reference.
-      robots: { index: false, follow: true },
+      // Approved listings are the marketplace's primary search content.
+      // Keep drafts, rejected, sold and expired listings out of the index.
+      robots: isIndexable
+        ? { index: true, follow: true }
+        : { index: false, follow: true, nocache: true },
       alternates: { canonical: `/ads/${ad._id}` },
       openGraph: {
         title,

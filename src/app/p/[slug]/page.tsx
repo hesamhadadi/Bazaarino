@@ -42,7 +42,9 @@ export async function generateMetadata({
     `${page.title} در بازارینو — مارکت‌پلیس فارسی‌زبانان مقیم اروپا`;
 
   return {
-    title: page.title,
+    title: page.title.includes('بازارینو')
+      ? { absolute: page.title }
+      : page.title,
     description,
     keywords: page.metaKeywords?.join(', '),
     alternates: {

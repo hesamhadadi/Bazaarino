@@ -35,7 +35,6 @@ const siteDescription =
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   alternates: {
-    canonical: '/',
     types: {
       'application/rss+xml': '/feed.xml',
     },

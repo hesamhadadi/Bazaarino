@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { ArrowLeft, Home as HomeIcon, Calendar, Plus, TrendingUp } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import BottomNav from '@/components/layout/BottomNav';
@@ -21,6 +22,10 @@ import { toFaDigits } from '@/lib/locale';
 import { getAppUrl } from '@/lib/app-url';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 async function getLatestAds() {
   try {

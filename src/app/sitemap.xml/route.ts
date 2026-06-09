@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getAppUrl } from '@/lib/app-url';
 import connectDB from '@/lib/mongodb';
+import Ad from '@/models/Ad';
 import Article from '@/models/Article';
 import LandingPage from '@/models/LandingPage';
 
 export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
+const MAX_ADS = 5000;
 const MAX_ARTICLES = 2000;
 const MIN_TAG_ARTICLES_FOR_INDEX = 3;
 
@@ -47,7 +50,9 @@ function toIso(d: Date | string | undefined): string {
 
 function entryToXml(e: Entry): string {
   const url = xmlEscape(e.url);
-  const lastmod = toIso(e.lastModified);
+  const lastmod = e.lastModified
+    ? `\n    <lastmod>${toIso(e.lastModified)}</lastmod>`
+    : '';
   const cf = e.changeFrequency
     ? `\n    <changefreq>${e.changeFrequency}</changefreq>`
     : '';
@@ -55,7 +60,7 @@ function entryToXml(e: Entry): string {
     typeof e.priority === 'number'
       ? `\n    <priority>${e.priority.toFixed(1)}</priority>`
       : '';
-  return `  <url>\n    <loc>${url}</loc>\n    <lastmod>${lastmod}</lastmod>${cf}${pr}\n  </url>`;
+  return `  <url>\n    <loc>${url}</loc>${lastmod}${cf}${pr}\n  </url>`;
 }
 
 export async function GET() {
@@ -63,30 +68,29 @@ export async function GET() {
   const now = new Date();
 
   const staticRoutes: Entry[] = [
-    { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { url: `${base}/house-reservation`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${base}/news`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
-    { url: `${base}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${base}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${base}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${base}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
-    { url: `${base}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${base}/`, changeFrequency: 'daily', priority: 1 },
+    { url: `${base}/house-reservation`, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${base}/news`, changeFrequency: 'daily', priority: 0.8 },
+    { url: `${base}/about`, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${base}/terms`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${base}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${base}/contact`, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${base}/faq`, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
-  // Note: individual /ads/<id> pages are intentionally NOT in the sitemap.
-  // They emit `robots: noindex, follow` (see src/app/ads/[id]/page.tsx)
-  // because each ad is short-lived and thin-content; surfacing thousands
-  // of them would burn crawl budget that should go to articles, city
-  // landings and editorial content instead. The same applies to /search
-  // and filtered search URLs: they are useful to users, but are thin,
-  // volatile result sets and should not be submitted for indexing.
+  let adRoutes: Entry[] = [];
   let articleRoutes: Entry[] = [];
   let tagRoutes: Entry[] = [];
   let landingRoutes: Entry[] = [];
 
   try {
     await connectDB();
-    const [articles, tagAgg] = await Promise.all([
+    const [ads, articles, tagAgg] = await Promise.all([
+      Ad.find({ status: 'approved' })
+        .select('_id updatedAt createdAt')
+        .sort({ updatedAt: -1 })
+        .limit(MAX_ADS)
+        .lean(),
       Article.find({ status: 'published' })
         .select('slug updatedAt createdAt')
         .sort({ updatedAt: -1 })
@@ -120,6 +124,13 @@ export async function GET() {
       priority: p.pageType === 'city' ? 0.9 : 0.7,
     }));
 
+    adRoutes = ads.map((ad: any) => ({
+      url: `${base}/ads/${ad._id}`,
+      lastModified: ad.updatedAt || ad.createdAt,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }));
+
     articleRoutes = articles.map((a: any) => ({
       url: `${base}/news/${encodeURIComponent(a.slug)}`,
       lastModified: a.updatedAt || a.createdAt || now,
@@ -140,6 +151,7 @@ export async function GET() {
   const all: Entry[] = [
     ...staticRoutes,
     ...landingRoutes,
+    ...adRoutes,
     ...articleRoutes,
     ...tagRoutes,
   ];

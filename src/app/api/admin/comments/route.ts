@@ -6,6 +6,8 @@ import Comment from '@/models/Comment';
 import '@/models/User';
 import '@/models/Article';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/comments?status=pending|approved|rejected|all
  * Returns comments with article+author populated for the moderation panel.
